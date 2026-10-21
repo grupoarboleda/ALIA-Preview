@@ -22,9 +22,13 @@ if exist "%DEST%\.git" (
  if errorlevel 1 goto :error
 ) else (
  if exist "%DEST%" (
-  echo La carpeta %DEST% existe sin Git. No se sobrescribira.
-  pause
-  exit /b 1
+  dir /a /b "%DEST%" | findstr . >nul
+  if not errorlevel 1 (
+   echo La carpeta %DEST% contiene archivos sin Git. No se sobrescribira.
+   pause
+   exit /b 1
+  )
+  echo Carpeta vacia detectada: se instalara ALIA aqui.
  )
  echo Descargando ALIA develop por primera vez...
  git clone --branch develop --single-branch https://github.com/grupoarboleda/ALIA-Preview.git "%DEST%"
