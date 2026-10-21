@@ -99,7 +99,15 @@ function renderPanes(){
 function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
 function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=filterBy(records,currentPath),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
-$("ex-budget").textContent=money(v.budget);$("ex-committed").textContent=money(v.committed);$("ex-accrued").textContent=money(v.accrued);$("ex-advance").textContent=money(v.accrued+v.advance);$("ex-rate").textContent=percent(v).toFixed(1)+"%";$("ex-advance-rate").textContent=(v.budget?100*(v.accrued+v.advance)/v.budget:0).toFixed(1)+"%";
+const committedRate=v.budget?100*v.committed/v.budget:0,accruedRate=percent(v),advanceRate=v.budget?100*(v.accrued+v.advance)/v.budget:0;
+$("ex-budget").textContent=money(v.budget);
+$("ex-committed").textContent=money(v.committed);
+$("ex-accrued").textContent=money(v.accrued);
+$("ex-advance").textContent=money(v.accrued+v.advance);
+$("ex-committed-rate").textContent=committedRate.toFixed(1)+"%";
+$("ex-rate").textContent=accruedRate.toFixed(1)+"%";
+$("ex-advance-rate").textContent=advanceRate.toFixed(1)+"%";
+for(const [id,rate] of [["ex-committed-progress",committedRate],["ex-accrued-progress",accruedRate],["ex-advance-progress",advanceRate]])$(id).style.width=Math.max(0,Math.min(100,rate))+"%";
 renderPanes();
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",goHome,"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
