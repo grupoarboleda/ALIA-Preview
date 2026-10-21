@@ -483,8 +483,7 @@ function renderManagementTemporal(rs,cutMonth){
  const physical=months.map((_,i)=>i<contracted?0:Math.min(100,(i-contracted+1)*15));
  const projected=months.map((_,i)=>i<contracted?0:Math.min(100,(i-contracted+1)*17));
  const series=contract?[
-  {name:"DEVENGADO REAL",values:dev,color:"#66e9d1"},
-  {name:"DEVENGADO PROYECTADO",values:projected,color:"#f0bd70",dashed:true},
+  {name:"DEVENGADO",values:dev,color:"#66e9d1"},
   {name:"AVANCE FÍSICO REAL",values:physical,color:"#74a9ff"},
   {name:"COMPROMETIDO",values:months.map(()=>100),color:"#d7e8f1",dashed:true}
  ]:[{name:"AVANCE DE GESTIÓN",values:milestones,color:"#66e9d1"}];
@@ -523,20 +522,40 @@ function renderManagementTemporal(rs,cutMonth){
   }
 
   for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=v+"%";}
+  const cutIndex=Math.max(0,Math.min(11,cutMonth-1));
+  const drawLine=(values,color,dashed=false,reference=false)=>{
+   if(!values.length)return;
+   const path=add("path",{d:values.map(p=>(p.i===values[0].i?"M":"L")+x(p.i)+" "+y(p.v)).join(" "),stroke:color,"stroke-width":reference?1.8:3,fill:"none","stroke-linejoin":"round"});
+   if(dashed)path.setAttribute("stroke-dasharray",reference?"3 7":"9 6");
+   path.classList.add("exv-trend-animated");
+   if(reference)path.classList.add("exv-trend-reference");
+   if(!reference)values.forEach(p=>add("circle",{cx:x(p.i),cy:y(p.v),r:2.6,fill:color,class:"exv-trend-point"}));
+  };
   for(const item of series){
    if(!visible.has(item.name))continue;
-   const values=item.values.slice(0,contract?(item.name==="DEVENGADO PROYECTADO"?12:Math.max(1,Math.min(12,cutMonth))):Math.max(1,Math.min(12,cutMonth)));
-   const path=add("path",{d:values.map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join(" "),stroke:item.color,"stroke-width":item.name==="COMPROMETIDO"?1.8:3,fill:"none","stroke-linejoin":"round"});
-   if(item.dashed)path.setAttribute("stroke-dasharray",item.name==="COMPROMETIDO"?"3 7":"9 6");
-   if(item.name!=="COMPROMETIDO")values.forEach((v,i)=>add("circle",{cx:x(i),cy:y(v),r:2.6,fill:item.color,class:"exv-trend-point"}));
-   path.classList.add("exv-trend-animated");
-   if(item.name==="COMPROMETIDO")path.classList.add("exv-trend-reference");
+   if(contract&&item.name==="DEVENGADO"){
+    // One continuous line: observed accrual to cutoff, then future plan increments
+    // anchored at the last actual value. Never plot historical planned accrual as a second curve.
+    drawLine(dev.slice(0,cutIndex+1).map((v,i)=>({i,v})),"#66e9d1");
+    if(cutIndex<11){
+     const points=[{i:cutIndex,v:dev[cutIndex]}];
+     for(let i=cutIndex+1;i<12;i++)points.push({i,v:Math.min(100,Math.max(0,dev[cutIndex]+projected[i]-projected[cutIndex]))});
+     drawLine(points,"#f0bd70",true);
+    }
+   }else{
+    const values=item.values.slice(0,contract&&item.name==="COMPROMETIDO"?12:cutIndex+1);
+    drawLine(values.map((v,i)=>({i,v})),item.color,!!item.dashed,item.name==="COMPROMETIDO");
+   }
+  }
+  if(contract){
+   const line=add("line",{x1:x(cutIndex),x2:x(cutIndex),y1:T,y2:H-B,stroke:"#d8f4fa","stroke-width":1.3,"stroke-dasharray":"4 5"});
+   const label=add("text",{x:Math.max(L+16,Math.min(W-R-16,x(cutIndex))),y:T-7,fill:"#d8f4fa","font-size":10,"text-anchor":"middle"});label.textContent="CORTE";
   }
   if(!contract){const cutIndex=Math.max(0,Math.min(11,cutMonth-1));const future=add("rect",{x:x(cutIndex)+((x(1)-x(0))/2),y:T,width:Math.max(0,W-R-x(cutIndex)-((x(1)-x(0))/2)),height:H-T-B,fill:"#071c2b","fill-opacity":".56"});}
   months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
   chart.append(svg);
   const note=document.createElement("p");note.className="exv-temporal-note";
-  if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos al corte · Devengado real "+last+"% · Proyectado "+planned+"% · Brecha "+(last-planned)+" puntos porcentuales · "+idle+" intervalos mensuales sin incremento. Las tres series son simuladas; aún no hay programación real conectada.";}
+  if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos · Verde: devengado hasta el corte; naranja: continuación proyectada desde el valor real al corte. Brecha frente al plan original: "+(last-planned)+" pp. El avance físico y la programación mensual son ilustrativos.";}
   else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
   chart.append(note);
   if(contract){
@@ -549,6 +568,7 @@ function renderManagementTemporal(rs,cutMonth){
   }
   const action=document.createElement("p");action.className="exv-management-attention";action.textContent=contract?(idleMessage(dev,cutMonth)):(stageMessage(stages,cutMonth));chart.append(action);
  };
+ if(contract){const legend=document.createElement("div");legend.className="exv-contract-legend";legend.innerHTML='<span><i class="exv-legend-real"></i>Devengado real · hasta corte</span><span><i class="exv-legend-plan"></i>Proyección · después del corte</span><span><i class="exv-legend-physical"></i>Avance físico real</span><span><i class="exv-legend-commit"></i>Comprometido</span>';host.append(legend);}
  for(const s of series){const b=button("✓ "+s.name,()=>{if(visible.has(s.name))visible.delete(s.name);else visible.add(s.name);b.setAttribute("aria-pressed",String(visible.has(s.name)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}
  if(!contract){for(const stage of ["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
  if(!contract){
