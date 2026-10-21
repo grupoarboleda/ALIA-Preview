@@ -526,3 +526,9 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-balance-priority:hover,#explorer .exv-balance-priority[aria-expanded="true"]{border-color:#6ee6d4;background:#194558}
 #explorer .exv-balance-ranking-note{font-size:12px;color:#a7c5d2;line-height:1.5;margin:0 0 12px}
 @media(max-width:640px){#explorer .exv-management-metrics:has(.exv-balance-priority){grid-template-columns:1fr}}
+
+#explorer .exv-balance-priority{position:relative}
+#explorer .exv-balance-info{position:absolute;right:14px;bottom:14px;display:inline-grid;place-items:center;width:27px;height:27px;border:1px solid #65899c;border-radius:50%;color:#b9e5ed;font-size:19px;cursor:pointer}
+#explorer .exv-balance-info:hover,#explorer .exv-balance-info:focus-visible{color:#fff;border-color:#6ee6d4;outline-offset:2px}
+#explorer .exv-balance-explanation{display:block;margin-top:5px;padding:10px 12px;padding-right:30px;background:#0b2232;border:1px solid #416477;border-radius:8px;font-size:12px;line-height:1.55;color:#d3e9f1}
+#explorer .exv-balance-explanation[hidden]{display:none}
