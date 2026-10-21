@@ -36,40 +36,69 @@ const r=document.createElement("div");r.className="exv-tile-rate";const label=do
 const counts=document.createElement("div");counts.className="exv-tile-counts";counts.append(button("PROYECTOS ↗ "+projects,()=>{if(key)trail.push({key,value:g.value});$("ex-project").value="all";render("project");},"exv-count-link"),button("PROCESOS ↗ "+processes,()=>{if(key)trail.push({key,value:g.value});render("process");},"exv-count-link"));
 const explore=button(key?"EXPLORAR SIGUIENTE NIVEL ↗":"SELECCIONA UNA RAMA ARRIBA ↗",()=>enter(key,g.value),"exv-explore-link");el.append(heading,amounts,r,track,counts,explore);return el;}
 
-const paneTrails={area:[],source:[]},paneOverrides={area:null,source:null},crossSelections={area:null,source:null};let activePane="area";
-const opposite=p=>p==="area"?"source":"area";
-function otherFilter(pane){const other=opposite(pane),selection=crossSelections[other];return selection?[selection]:[];}
-function filterBy(rs,conditions){return rs.filter(r=>conditions.every(p=>r[p.key]===p.value));}
-function selectCross(pane,key,value){activePane=pane;const prev=crossSelections[pane];crossSelections[pane]=prev&&prev.key===key&&prev.value===value?null:{key,value};render();}
+const paneTrails={area:[],source:[]};let activePane="area";
 const paneOrder={area:["area","project","process"],source:["source","area","project","process"]};
+const filterBy=(rows,conditions)=>rows.filter(r=>conditions.every(p=>r[p.key]===p.value));
+const focusPath=()=>paneTrails[activePane];
+function drillPane(pane,key,value){
+ if(!key)return;
+ // A selection in either branch becomes the single shared analytical context.
+ // Clear the opposite trail to avoid stale, contradictory filters.
+ if(activePane!==pane)paneTrails[activePane]=[];
+ paneTrails[pane].push({key,value});
+ activePane=pane;
+ override=null;
+ render();
+}
+function goBack(pane){
+ if(activePane!==pane){activePane=pane;paneTrails[pane]=[];}
+ else paneTrails[pane].pop();
+ override=null;render();
+}
+function goHome(){paneTrails.area=[];paneTrails.source=[];activePane="area";override=null;render();}
 function renderPanes(){
+ const focus=focusPath();
  for(const pane of ["area","source"]){
-  const path=paneTrails[pane],levels=paneOrder[pane],level=paneOverrides[pane]||levels[path.length],root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
-  const filtered=filterBy(records,[...path,...otherFilter(pane)]);
+  const own=paneTrails[pane],isFocused=pane===activePane;
+  const path=isFocused?own:[],levels=paneOrder[pane],level=levels[path.length];
+  const filtered=filterBy(records,focus);
+  const root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
   root.replaceChildren();crumb.replaceChildren();
-  crumb.append(button(pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO",()=>{paneTrails[pane]=[];paneOverrides[pane]=null;activePane=pane;render();},"exv-pane-crumb"));
-  path.forEach((p,i)=>crumb.append(button("› "+p.value,()=>{paneTrails[pane]=path.slice(0,i+1);paneOverrides[pane]=null;activePane=pane;render();},"exv-pane-crumb")));
+  const back=$("ex-back-"+pane);
+  if(back)back.disabled=!isFocused||!own.length;
+  const rootLabel=pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO";
+  const rootButton=button(rootLabel,()=>{if(pane===activePane)goBackTo(pane,0);else{paneTrails[activePane]=[];activePane=pane;render();}},"exv-pane-crumb");
+  crumb.append(rootButton);
+  if(isFocused)own.forEach((p,i)=>crumb.append(button("› "+p.value,()=>goBackTo(pane,i+1),"exv-pane-crumb")));
+  else if(focus.length){const indicator=document.createElement("span");indicator.className="exv-cross-context";indicator.textContent="FILTRADO POR "+focus.map(p=>p.value).join(" / ");crumb.append(indicator);}
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
-  if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para esta combinación. Limpia un filtro para continuar.";root.append(empty);}
+  if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   for(const item of items){
-   const v=sum(item.rows,cut()),p=percent(v),projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
-   const card=document.createElement("div");card.className="exv-node";card.classList.toggle("cross-selected",!!crossSelections[pane]&&crossSelections[pane].key===level&&crossSelections[pane].value===item.value);card.style.flexGrow=String(Math.max(1,v.budget/total*100));card.style.flexBasis=items.length>4?"39%":"43%";
+   const v=sum(item.rows,cut()),p=percent(v);
+   const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
+   const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
+   card.disabled=!level;
+   card.setAttribute("aria-label",item.value+": codificado "+money(v.budget)+", devengado "+money(v.accrued)+". Abrir siguiente nivel");
+   card.style.flexGrow=String(Math.max(1,v.budget/total*100));
+   card.style.flexBasis=items.length>4?"39%":"43%";
    const name=document.createElement("strong");name.textContent=item.value;
-   const values=document.createElement("div");values.className="exv-node-values";
-   for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){const part=document.createElement("span");const small=document.createElement("small");small.textContent=label;const num=document.createElement("b");num.textContent=value;part.append(small,num);values.append(part);}
-   const bar=document.createElement("div");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
-   const summary=document.createElement("div");summary.className="exv-node-summary";summary.textContent=p.toFixed(1)+"% DEVENGADO";
-   const actions=document.createElement("div");actions.className="exv-node-actions";
-   const drill=()=>{activePane=pane;if(level){paneTrails[pane].push({key:level,value:item.value});crossSelections[pane]={key:level,value:item.value};}paneOverrides[pane]=null;render();};
-   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;crossSelections[pane]=level?{key:level,value:item.value}:null;paneOverrides[pane]=target;render(target);};
-   if(level){const sel=button(crossSelections[pane]&&crossSelections[pane].key===level&&crossSelections[pane].value===item.value?"✓ FILTRANDO":"◎ SELECCIONAR",()=>selectCross(pane,level,item.value),"exv-node-action exv-node-select");sel.setAttribute("aria-pressed",String(!!crossSelections[pane]&&crossSelections[pane].key===level&&crossSelections[pane].value===item.value));actions.append(sel);actions.append(button("ABRIR ↗",drill,"exv-node-action"));actions.append(button("PROYECTOS "+projects,()=>jump("project"),"exv-node-action"));actions.append(button("PROCESOS "+processes,()=>jump("process"),"exv-node-action"));}
-   card.append(name,values,summary,bar,actions);root.append(card);
+   const values=document.createElement("span");values.className="exv-node-values";
+   for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){
+    const part=document.createElement("span"),small=document.createElement("small"),num=document.createElement("b");
+    small.textContent=label;num.textContent=value;part.append(small,num);values.append(part);
+   }
+   const summary=document.createElement("span");summary.className="exv-node-summary";summary.textContent=p.toFixed(1)+"% DEVENGADO";
+   const bar=document.createElement("span");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
+   const foot=document.createElement("span");foot.className="exv-node-foot";
+   foot.textContent=projects+" PROYECTO"+(projects===1?"":"S")+" · "+processes+" PROCESO"+(processes===1?"":"S")+(level?"   ↗":"");
+   card.append(name,values,summary,bar,foot);root.append(card);
   }
-  $("ex-pane-"+pane).classList.toggle("is-active",activePane===pane);
+  $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
  }
 }
+function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
-function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=filterBy(records,[...currentPath,...otherFilter(activePane)]),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];$("ex-root-budget").textContent=money(sum(records,c).budget);
+function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=filterBy(records,currentPath),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];$("ex-root-budget").textContent=money(sum(records,c).budget);
 $("ex-budget").textContent=money(v.budget);$("ex-committed").textContent=money(v.committed);$("ex-accrued").textContent=money(v.accrued);$("ex-advance").textContent=money(v.accrued+v.advance);$("ex-rate").textContent=percent(v).toFixed(1)+"%";
 renderPanes();
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value),...Object.values(crossSelections).filter(Boolean).map(p=>"FILTRO "+p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
@@ -78,10 +107,13 @@ $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto
 const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>{override=null;enter(level,g.value);},"exv-link"));tr.append(td);body.append(tr);}
 renderChart(rs);$("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
-for(const pane of ["area","source"])$("ex-reset-"+pane).addEventListener("click",()=>{paneTrails[pane]=[];paneOverrides[pane]=null;crossSelections[pane]=null;activePane=pane;override=null;render();});
-$("ex-home").addEventListener("click",()=>{paneTrails.area=[];paneTrails.source=[];paneOverrides.area=null;paneOverrides.source=null;crossSelections.area=null;crossSelections.source=null;activePane="area";override=null;render();});
-$("ex-back").addEventListener("click",()=>{if(override)override=null;else paneTrails[activePane].pop();paneOverrides[activePane]=null;render();});
-$("ex-cut").addEventListener("change",()=>render());
-for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",()=>render());
+for(const pane of ["area","source"]){
+ $("ex-reset-"+pane).addEventListener("click",goHome);
+ $("ex-back-"+pane).addEventListener("click",()=>goBack(pane));
+}
+$("ex-home").addEventListener("click",goHome);
+$("ex-back").addEventListener("click",()=>goBack(activePane));
+$("ex-cut").addEventListener("change",render);
+for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",render);
 render();
 })();
