@@ -262,6 +262,57 @@ function renderPanes(){
   $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
  }
 }
+
+function renderTemporal(rs,cutMonth){
+ const host=$("ex-pane-source");if(!host)return;
+ host.classList.add("exv-temporal-pane");host.setAttribute("aria-label","Evolución y proyección presupuestaria");
+ host.replaceChildren();
+ const head=document.createElement("div");head.className="exv-temporal-head";
+ const title=document.createElement("div");title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / INTELIGENCIA TEMPORAL</span><h3>EVOLUCIÓN Y PROYECCIÓN</h3><p>Histórico al corte · proyección diferenciada</p>';
+ const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador financiero");
+ for(const [key,label] of [["accrued","Devengado"],["budget","Codificado"],["committed","Comprometido"],["advance","Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
+ picker.value=host.dataset.metric||"accrued";picker.addEventListener("change",()=>{host.dataset.metric=picker.value;renderTemporal(rs,cutMonth);});
+ head.append(title,picker);host.append(head);
+ const metric=picker.value,months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+ const actual=sum(rs,cutMonth),prior=sum(rs,9),current=actual[metric==="advance"?"accrued":metric]+(metric==="advance"?actual.advance:0);
+ const sep=prior[metric==="advance"?"accrued":metric]+(metric==="advance"?prior.advance:0);
+ // Demo interpolation before September is explicitly illustrative, not observed monthly snapshots.
+ const values=months.map((_,i)=>{
+  const m=i+1;
+  if(m<=9)return sep*(0.075+0.925*Math.pow(m/9,1.32));
+  const snap=sum(rs,m);
+  return snap[metric==="advance"?"accrued":metric]+(metric==="advance"?snap.advance:0);
+ });
+ values[8]=sep;
+ const cutIdx=Math.max(0,Math.min(11,cutMonth-1));
+ const projected=values.map((v,i)=>i<=cutIdx?null:v);
+ const historical=values.map((v,i)=>i<=cutIdx?v:null);
+ const baseline=values[cutIdx];
+ const max=Math.max(1,...values)*1.17;
+ const W=620,H=300,L=54,R=20,T=20,B=46;
+ const x=i=>L+i*(W-L-R)/11,y=v=>H-B-(v/max)*(H-T-B);
+ const svgRoot=document.createElementNS("http://www.w3.org/2000/svg","svg");svgRoot.setAttribute("viewBox","0 0 620 300");svgRoot.setAttribute("role","img");svgRoot.setAttribute("aria-label","Curva histórica simulada hasta el corte y proyección demostrativa posterior");
+ svgRoot.classList.add("exv-temporal-svg");
+ const add=(tag,attrs,parent=svgRoot)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
+ const defs=add("defs",{});const grad=add("linearGradient",{id:"exvTemporalFill",x1:"0",y1:"0",x2:"0",y2:"1"},defs);
+ add("stop",{offset:"0%","stop-color":"#54dfd0","stop-opacity":".2"},grad);add("stop",{offset:"100%","stop-color":"#54dfd0","stop-opacity":"0"},grad);
+ for(let i=0;i<5;i++){const v=max*i/4,yy=y(v);add("line",{x1:L,x2:W-R,y1:yy,y2:yy,stroke:"#265269","stroke-dasharray":"3 7"});const t=add("text",{x:L-9,y:yy+4,fill:"#85b4c7","font-size":"10","text-anchor":"end"});t.textContent=v>=1000000?(v/1000000).toFixed(1)+"M":Math.round(v/1000)+"k";}
+ const coords=arr=>arr.map((v,i)=>v===null?null:[x(i),y(v)]).filter(Boolean);
+ const path=points=>points.map(([xx,yy],i)=>(i?"L":"M")+xx.toFixed(1)+" "+yy.toFixed(1)).join(" ");
+ const h=coords(historical),p=coords(projected),continuation=projected.some(v=>v!==null)?[[x(cutIdx),y(baseline)],...p]:[];
+ if(h.length){add("path",{d:path(h)+" L"+x(cutIdx)+" "+y(0)+" L"+x(0)+" "+y(0)+" Z",fill:"url(#exvTemporalFill)"});add("path",{d:path(h),stroke:"#62ebd1","stroke-width":"3.5",fill:"none","stroke-linejoin":"round","stroke-linecap":"round"});}
+ if(continuation.length>1)add("path",{d:path(continuation),stroke:"#f0bd70","stroke-width":"3",fill:"none","stroke-dasharray":"7 6","stroke-linecap":"round"});
+ add("line",{x1:x(cutIdx),x2:x(cutIdx),y1:T,y2:H-B,stroke:"#c6d9e5","stroke-dasharray":"4 5","stroke-opacity":".7"});
+ const cutLabel=add("text",{x:Math.min(W-60,x(cutIdx)+7),y:15,fill:"#d9f5fa","font-size":"10"});cutLabel.textContent="CORTE";
+ for(let i=0;i<12;i++){const t=add("text",{x:x(i),y:H-22,fill:i===cutIdx?"#eaffff":"#8bb5c6","font-size":"10","font-weight":i===cutIdx?"700":"400","text-anchor":"middle"});t.textContent=months[i];}
+ h.forEach(([xx,yy],i)=>{const c=add("circle",{cx:xx,cy:yy,r:i===cutIdx?5:2.5,fill:"#70f0d5"});const tip=add("title",{},c);tip.textContent=months[i]+": "+money(historical[i]);});
+ p.forEach(([xx,yy])=>add("circle",{cx:xx,cy:yy,r:3,fill:"#f0bd70"}));
+ host.append(svgRoot);
+ const legend=document.createElement("div");legend.className="exv-temporal-legend";legend.innerHTML='<span><i class="exv-temporal-real"></i>HISTÓRICO SIMULADO</span><span><i class="exv-temporal-future"></i>PROYECCIÓN DEMO</span>';host.append(legend);
+ const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>VALOR AL CORTE</small><strong>"+money(baseline)+"</strong>";const right=document.createElement("div");right.innerHTML="<small>ESTIMACIÓN DICIEMBRE</small><strong>"+money(values[11])+"</strong>";info.append(left,right);host.append(info);
+ const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Enero–agosto interpolados para ilustrar la interfaz. Septiembre–diciembre usan factores demostrativos. Sin serie histórica oficial ni pronóstico estadístico validado.";host.append(note);
+}
+
 function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
 function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
@@ -274,7 +325,7 @@ $("ex-committed-rate").textContent=committedRate.toFixed(1)+"%";
 $("ex-rate").textContent=accruedRate.toFixed(1)+"%";
 $("ex-advance-rate").textContent=advanceRate.toFixed(1)+"%";
 for(const [id,rate] of [["ex-committed-progress",committedRate],["ex-accrued-progress",accruedRate],["ex-advance-progress",advanceRate]])$(id).style.width=Math.max(0,Math.min(100,rate))+"%";
-renderFundingComposition(filterBy(records,currentPath));renderPanes();
+renderFundingComposition(filterBy(records,currentPath));renderPanes();renderTemporal(rs,c);
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",goHome,"exv-crumb"));if(selectedFunding)crumbs.append(button("✕ FINANCIAMIENTO: "+selectedFunding,()=>{selectedFunding=null;render();},"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
