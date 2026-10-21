@@ -207,3 +207,11 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-kpi-card>small{padding-right:59px;min-height:32px}
 #explorer .exv-kpi-featured .exv-kpi-icon{color:#8afbd9;border-color:#4abda6;background:linear-gradient(135deg,#155c5e,#103c4c);box-shadow:0 0 15px #5fe6c825}
 @media(max-width:520px){#explorer .exv-kpi-icon{width:43px;height:43px;top:12px;right:12px}#explorer .exv-kpi-card>small{padding-right:52px}}
+
+/* Correct SVG icon sizing: override older generic SVG rules and prevent KPI height inflation */
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card{position:relative!important;min-height:156px!important;padding:18px 18px 15px!important;gap:11px!important}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>.exv-kpi-icon{position:absolute!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;display:block!important;width:40px!important;height:40px!important;min-width:0!important;min-height:0!important;max-width:40px!important;max-height:40px!important;padding:7px!important;margin:0!important;flex:none!important;transform:none!important;overflow:visible!important;box-sizing:border-box!important}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>small{display:block!important;min-height:30px!important;padding-right:50px!important}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>strong{margin-top:2px!important}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>.exv-kpi-meta{margin-top:auto!important}
+@media(max-width:520px){#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>.exv-kpi-icon{width:36px!important;height:36px!important;max-width:36px!important;max-height:36px!important}}
