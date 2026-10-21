@@ -314,3 +314,10 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-source-execution-fill{height:100%;background:#f5fcff;box-shadow:0 0 5px #d9ffff80;transition:width .35s ease}
 #explorer .exv-source-execution-rate{display:block!important;text-align:center!important;white-space:nowrap;font:700 10px Consolas,monospace!important;color:#092f3d!important}
 @media(max-width:620px){#explorer .exv-source-segment{padding:5px 2px!important}#explorer .exv-source-share{font-size:10px!important}#explorer .exv-source-execution-rate{font-size:8px!important}}
+
+/* Version 20: highly visible nested financial execution bars */
+#explorer .exv-source-composition-track{min-height:104px!important}
+#explorer .exv-source-segment{min-height:104px!important;justify-content:space-around!important;gap:10px!important}
+#explorer .exv-source-execution{height:18px!important;border:2px solid #052b3b!important;background:#052b3b!important;border-radius:3px!important;overflow:hidden!important}
+#explorer .exv-source-execution-fill{background:#fff!important;box-shadow:none!important}
+#explorer .exv-source-execution-rate{font-size:11px!important;letter-spacing:.2px!important}
