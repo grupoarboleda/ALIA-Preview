@@ -456,9 +456,36 @@ function renderManagementTemporal(rs,cutMonth){
   chart.replaceChildren();const W=620,H=300,L=52,R=18,T=22,B=48,x=i=>L+i*(W-L-R)/11,y=v=>H-B-v*(H-T-B)/100;
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 620 300");svg.classList.add("exv-temporal-svg");svg.setAttribute("role","img");svg.setAttribute("aria-label",contract?"Curvas DEMO de contrato":"Etapas mensuales DEMO del proceso");
   const add=(tag,attrs)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.append(e);return e;};
-  if(!contract){const colors={"POR PUBLICAR":"#a58d55","PUBLICADO":"#3e8bc1","ADJUDICADO":"#8b73ce","CONTRATADO":"#4ba887"};stages.forEach((stage,i)=>{if(visibleStages.has(stage))add("rect",{x:x(i)-(i?12:0),y:T,width:i===11?12:x(Math.min(11,i+1))-x(i)+12,height:H-T-B,fill:colors[stage],"fill-opacity":".13"});});}
+  if(!contract){
+   const colors={"POR PUBLICAR":"#d8a45e","PUBLICADO":"#3e9dd0","ADJUDICADO":"#a28be3","CONTRATADO":"#47bfa5"};
+   const cutIndex=Math.max(0,Math.min(11,cutMonth-1));
+   const runs=[];
+   for(let i=0;i<=cutIndex;i++){
+    const stage=stages[i],last=runs[runs.length-1];
+    if(last&&last.stage===stage)last.end=i;else runs.push({stage,start:i,end:i});
+   }
+   for(const run of runs){
+    if(!visibleStages.has(run.stage))continue;
+    const left=run.start===0?L:x(run.start)-((x(1)-x(0))/2);
+    const right=run.end===11?W-R:x(run.end)+((x(1)-x(0))/2);
+    add("rect",{x:left,y:T,width:right-left,height:H-T-B,fill:colors[run.stage],"fill-opacity":run.end===cutIndex?".20":".11"});
+    if(run.start>0)add("line",{x1:left,x2:left,y1:T,y2:H-B,stroke:colors[run.stage],"stroke-width":1,"stroke-dasharray":"4 5","stroke-opacity":".7"});
+    const center=(left+right)/2,wide=right-left>75;
+    if(wide){
+     const label=add("text",{x:center,y:T+15,fill:colors[run.stage],"font-size":10,"font-weight":700,"text-anchor":"middle"});label.textContent=run.stage;
+     const span=add("text",{x:center,y:T+29,fill:"#c0d7e1","font-size":9,"text-anchor":"middle"});span.textContent=months[run.start]+"–"+months[run.end]+" · "+(run.end-run.start+1)+" rep.";
+    }else{
+     const label=add("text",{x:center,y:T+16,fill:colors[run.stage],"font-size":9,"font-weight":700,"text-anchor":"middle"});label.textContent=run.stage==="POR PUBLICAR"?"P/PUB":run.stage==="ADJUDICADO"?"ADJ.":run.stage==="CONTRATADO"?"CONT.":"PUB.";
+    }
+   }
+   const cutX=x(cutIndex);
+   add("line",{x1:cutX,x2:cutX,y1:T,y2:H-B,stroke:"#d5f8fa","stroke-width":1.5,"stroke-dasharray":"4 4","stroke-opacity":".8"});
+   const cutLabel=add("text",{x:Math.min(W-R-18,Math.max(L+18,cutX)),y:T-7,fill:"#d5f8fa","font-size":10,"text-anchor":"middle"});cutLabel.textContent="CORTE";
+  }
+
   for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=v+"%";}
   for(const s of series){if(!visible.has(s.name))continue;add("path",{d:s.values.map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join(" "),stroke:s.color,"stroke-width":3,fill:"none","stroke-linejoin":"round"});s.values.forEach((v,i)=>add("circle",{cx:x(i),cy:y(v),r:3,fill:s.color}));}
+  if(!contract){const cutIndex=Math.max(0,Math.min(11,cutMonth-1));const future=add("rect",{x:x(cutIndex)+((x(1)-x(0))/2),y:T,width:Math.max(0,W-R-x(cutIndex)-((x(1)-x(0))/2)),height:H-T-B,fill:"#071c2b","fill-opacity":".56"});}
   months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
   chart.append(svg);
   const note=document.createElement("p");note.className="exv-temporal-note";
@@ -468,7 +495,24 @@ function renderManagementTemporal(rs,cutMonth){
   const action=document.createElement("p");action.className="exv-management-attention";action.textContent=contract?(idleMessage(dev,cutMonth)):(stageMessage(stages,cutMonth));chart.append(action);
  };
  for(const s of series){const b=button("✓ "+s.name,()=>{if(visible.has(s.name))visible.delete(s.name);else visible.add(s.name);b.setAttribute("aria-pressed",String(visible.has(s.name)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}
- if(!contract){for(const stage of visibleStages){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
+ if(!contract){for(const stage of ["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
+ if(!contract){
+  const status=document.createElement("div");status.className="exv-management-stage-summary";
+  const currentIndex=Math.max(0,Math.min(11,cutMonth-1));
+  let from=currentIndex;while(from>0&&stages[from-1]===stages[currentIndex])from--;
+  const completed=[...new Set(stages.slice(0,currentIndex+1))];
+  for(const stage of ["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]){
+   const block=document.createElement("div");block.className="exv-management-stage-card";
+   block.dataset.current=String(stages[currentIndex]===stage);
+   const label=document.createElement("small");label.textContent=stage;
+   const value=document.createElement("strong");
+   if(!completed.includes(stage))value.textContent="PENDIENTE";
+   else {const indices=stages.slice(0,currentIndex+1).map((v,i)=>v===stage?i:-1).filter(i=>i>=0);value.textContent=months[indices[0]]+" – "+months[indices.at(-1)];}
+   const foot=document.createElement("span");foot.textContent=!completed.includes(stage)?"Sin registro al corte":stages[currentIndex]===stage?"ETAPA ACTUAL · "+(currentIndex-from+1)+" reportes":"Etapa superada";
+   block.append(label,value,foot);status.append(block);
+  }
+  host.append(status);
+ }
  host.append(toggles,chart);draw();
 }
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
