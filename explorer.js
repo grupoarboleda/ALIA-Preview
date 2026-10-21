@@ -494,13 +494,14 @@ function renderManagementTemporal(rs,cutMonth){
  const metricPlan=projected.map((v,i)=>Math.min(100,v+(metricChoice==="advance"?advancePercent*(i+1)/12:0)));
  const unitScale=unitChoice==="usd"?commit/100:1;
  if(contract){
-  const controls=document.createElement("div");controls.className="exv-temporal-controls exv-contract-controls";
+  const controls=document.createElement("div");controls.className="exv-temporal-controls exv-contract-controls";controls.style.cssText="display:flex!important;visibility:visible!important;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;";
   const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador del contrato");
   for(const [value,label] of [["accrued","Devengado"],["advance","Devengado + anticipo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=label;picker.append(opt);}
   picker.value=metricChoice;picker.addEventListener("change",()=>{host.dataset.contractMetric=picker.value;renderManagementTemporal(rs,cutMonth);});
-  const units=document.createElement("div");units.className="exv-temporal-unit-toggle";
+  const units=document.createElement("div");units.className="exv-temporal-unit-toggle";units.setAttribute("role","group");units.setAttribute("aria-label","Seleccionar porcentaje o dólares");units.style.cssText="display:inline-flex!important;visibility:visible!important;gap:5px;padding:3px;border:1px solid #3c7185;border-radius:9px;background:#081d2a;";
   for(const [value,label] of [["percent","%"],["usd","USD"]]){
    const btn=document.createElement("button");btn.type="button";btn.className="exv-temporal-unit-choice";btn.textContent=label;btn.setAttribute("aria-pressed",String(unitChoice===value));
+   const selected=unitChoice===value;btn.style.cssText="display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;min-width:60px;min-height:36px;padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:800;font-size:13px;border:1px solid "+(selected?"#64ead5":"#45738a")+";background:"+(selected?"#1c6973":"#102c3c")+";color:"+(selected?"#ffffff":"#b7d7e4")+";";
    btn.addEventListener("click",()=>{host.dataset.contractUnit=value;renderManagementTemporal(rs,cutMonth);});units.append(btn);
   }
   controls.append(picker,units);heading.append(controls);
@@ -562,6 +563,12 @@ function renderManagementTemporal(rs,cutMonth){
     dot.style.animationFillMode="both";
    });
   };
+  if(contract&&visible.has("DEVENGADO")){
+   const realPoints=metricActual.slice(0,cutIndex+1).map((v,i)=>({i,v}));
+   const areaPoints=[{i:0,v:0},...realPoints,{i:cutIndex,v:0}];
+   const path=add("path",{d:areaPoints.map((p,i)=>(i?"L":"M")+x(p.i)+" "+y(p.v)).join(" ")+" Z",fill:"#42d8c5","fill-opacity":".14",stroke:"none"});
+   path.classList.add("exv-trend-animated");path.style.animationDuration="2s";
+  }
   for(const item of series){
    if(!visible.has(item.name))continue;
    if(contract&&item.name==="DEVENGADO"){
@@ -589,10 +596,13 @@ function renderManagementTemporal(rs,cutMonth){
    }
    chart.append(legend);
   }
-  const note=document.createElement("p");note.className="exv-temporal-note";
-  if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos. La proyección continúa desde el último devengado real hasta diciembre. La desviación compara el devengado real con la programación del mismo mes ("+(last-planned)+" pp). Datos físicos y financieros ilustrativos.";}
-  else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
-  chart.append(note);
+  if(!contract){
+   const note=document.createElement("p");note.className="exv-temporal-note";
+   const current=stages[Math.max(0,cutMonth-1)];let duration=0;
+   for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;
+   note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";
+   chart.append(note);
+  }
   if(contract){
    const kpis=document.createElement("div");kpis.className="exv-contract-variance";
    const current=Math.max(0,Math.min(11,cutMonth-1));
