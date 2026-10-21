@@ -178,3 +178,11 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 .exv-dual-header{flex-wrap:wrap;justify-content:flex-start}
 .exv-dual-header>span{margin-right:auto}
 .exv-node-click .exv-node-summary{display:block}
+
+/* Six financial KPIs now lead the explorer; two-row responsive layout */
+#explorer .exv-structure>.exv-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+#explorer .exv-structure>.exv-kpis article{min-width:0;padding:18px 19px;min-height:100px}
+#explorer .exv-structure>.exv-kpis article strong{overflow-wrap:anywhere}
+@media(min-width:1450px){#explorer .exv-structure>.exv-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}#explorer .exv-structure>.exv-kpis article{padding:16px 13px}#explorer .exv-structure>.exv-kpis article strong{font-size:clamp(16px,1.3vw,24px)}}
+@media(max-width:700px){#explorer .exv-structure>.exv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){#explorer .exv-structure>.exv-kpis{grid-template-columns:1fr}}
