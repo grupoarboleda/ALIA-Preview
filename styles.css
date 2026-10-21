@@ -569,3 +569,6 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-unit-trigger-arrow{font:700 22px/1 Consolas,monospace;color:#8de9dc}
 #explorer .exv-unit-management[hidden]{display:none!important}
 #explorer .exv-unit-management{margin:-5px 0 16px}
+
+/* Hide the entire area treemap while the unit-wide managerial detail is expanded. */
+#explorer .exv-area-treemap[hidden],#explorer #ex-tree-area[hidden]{display:none!important}
