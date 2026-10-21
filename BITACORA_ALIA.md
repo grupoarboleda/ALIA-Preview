@@ -58,3 +58,10 @@
 - **Pendiente:** validación visual local de los dos bloques gerenciales y rankings Top 5.
 - **Pendiente para fase de datos reales:** importar y validar cortes Excel y series históricas observadas; no presentar series simuladas como registros oficiales.
 - El hecho de registrar un cambio en GitHub no implica que se haya probado la interfaz en la computadora del usuario.
+
+### 2026-10-21 — Priorización por contrato/proceso
+- Cambio aprobado: los dos bloques gerenciales priorizan **contratos/procesos**, no proyectos; cada registro despliega las asignaciones a proyectos y fuentes con sus saldos.
+- Agrupación: `contract` cuando está informado, y `process` como alternativa; un contrato compartido cuenta una sola vez. Se suman los saldos de asignaciones sin duplicar importes contractuales totales.
+- DEMO: `CT-DEMO-01` vincula `PROC-001` y `PROC-007` (proyectos diferentes) para ilustrar la relación; **no representa datos oficiales ni confirma estructura de matriz real**.
+- Commits: `1cc3b3b`, `3dafa70`, `0fbcafa`, `026c294`. Archivos: `explorer.js`, `index.html`.
+- Estado: código guardado en `develop`; validación visual local pendiente. Antes de conectar datos reales, verificar identificadores únicos y cardinalidad contrato–proceso–proyecto.
