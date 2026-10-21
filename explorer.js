@@ -126,6 +126,7 @@ function projectExplorer(pane,root,items,filtered){
     const summary=document.createElement("summary");
     summary.textContent=String(i+1).padStart(2,"0")+" · "+project+" · "+money(total)+" · "+new Set(rows.map(r=>r.project)).size+" proyecto(s) vinculado(s)";
     group.append(summary);
+    const view=button("↗ VER EVOLUCIÓN",()=>{selectedManagement={type,id:project};renderTemporal(fundingScope(filterBy(records,paneTrails[activePane])),cut());},"exv-count-link");group.append(view);
     const processGroups=new Map();
     for(const r of rows){const key=r.project+"\u0001"+r.process+"\u0001"+r.source;if(!processGroups.has(key))processGroups.set(key,{project:r.project,process:r.process,source:r.source,amount:0});processGroups.get(key).amount+=r[type];}
     for(const p of [...processGroups.values()].sort((a,b)=>b.amount-a.amount)){
@@ -310,7 +311,9 @@ function renderPanes(){
  }
 }
 
+let selectedManagement=null;
 function renderTemporal(rs,cutMonth){
+ if(selectedManagement){renderManagementTemporal(rs,cutMonth);return;}
  const host=$("ex-pane-source");if(!host)return;
  host.classList.add("exv-temporal-pane");host.setAttribute("aria-label","Evolución y proyección presupuestaria");
  host.replaceChildren();
@@ -406,9 +409,49 @@ function renderTemporal(rs,cutMonth){
  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados. En modo %, el denominador es el codificado de la selección al corte y el eje vertical va de 0% a 100%; en modo USD se muestran montos acumulados.";host.append(note);
 }
 
-function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
+function renderManagementTemporal(rs,cutMonth){
+ const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
+ const choice=selectedManagement,type=choice.type,contract=type==="committed";
+ const rows=rs.filter(r=>(contract?(r.contract||r.process):r.process)===choice.id);
+ const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+ const heading=document.createElement("div");heading.className="exv-temporal-head";
+ const title=document.createElement("div");title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / SEGUIMIENTO DEMO</span><h3></h3><p></p>';
+ title.querySelector("h3").textContent=(contract?"CONTRATO ":"PROCESO ")+choice.id;
+ title.querySelector("p").textContent=contract?"Evolución financiera y física":"Evolución por hitos · permanencia mensual";
+ heading.append(title,button("✕ VOLVER A EVOLUCIÓN GENERAL",()=>{selectedManagement=null;renderTemporal(rs,cutMonth);},"exv-count-link"));host.append(heading);
+ // DEMO snapshots are month-end states, not elapsed days.
+ const seed=Number((choice.id.match(/\d+/g)||["1"]).at(-1))||1;
+ const publication=1+seed%3,award=publication+1+seed%2,contracted=award+2;
+ const stages=months.map((_,i)=>i<publication?"POR PUBLICAR":i<award?"PUBLICADO":i<contracted?"ADJUDICADO":"CONTRATADO");
+ const milestones=stages.map(stage=>({"POR PUBLICAR":0,"PUBLICADO":20,"ADJUDICADO":30,"CONTRATADO":40})[stage]);
+ const totals=sum(rows,cutMonth),commit=totals.committed;
+ const dev=months.map((_,i)=>i<contracted?0:Math.min(100,Math.max(0,(i-contracted+1)*13-(i>contracted+2?13:0))));
+ const physical=months.map((_,i)=>i<contracted?0:Math.min(100,(i-contracted+1)*15));
+ const series=contract?[{name:"DEVENGADO",values:dev,color:"#66e9d1"},{name:"AVANCE FÍSICO",values:physical,color:"#74a9ff"},{name:"COMPROMETIDO",values:months.map(()=>100),color:"#f0bd70"}]:[{name:"AVANCE DE GESTIÓN",values:milestones,color:"#66e9d1"}];
+ const toggles=document.createElement("div");toggles.className="exv-temporal-legend";
+ const visible=new Set(series.map(s=>s.name)),visibleStages=new Set(["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]);
+ const chart=document.createElement("div");
+ const draw=()=>{
+  chart.replaceChildren();const W=620,H=300,L=52,R=18,T=22,B=48,x=i=>L+i*(W-L-R)/11,y=v=>H-B-v*(H-T-B)/100;
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 620 300");svg.classList.add("exv-temporal-svg");svg.setAttribute("role","img");svg.setAttribute("aria-label",contract?"Curvas DEMO de contrato":"Etapas mensuales DEMO del proceso");
+  const add=(tag,attrs)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.append(e);return e;};
+  if(!contract){const colors={"POR PUBLICAR":"#a58d55","PUBLICADO":"#3e8bc1","ADJUDICADO":"#8b73ce","CONTRATADO":"#4ba887"};stages.forEach((stage,i)=>{if(visibleStages.has(stage))add("rect",{x:x(i)-(i?12:0),y:T,width:i===11?12:x(Math.min(11,i+1))-x(i)+12,height:H-T-B,fill:colors[stage],"fill-opacity":".13"});});}
+  for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=v+"%";}
+  for(const s of series){if(!visible.has(s.name))continue;add("path",{d:s.values.map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join(" "),stroke:s.color,"stroke-width":3,fill:"none","stroke-linejoin":"round"});s.values.forEach((v,i)=>add("circle",{cx:x(i),cy:y(v),r:3,fill:s.color}));}
+  months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
+  chart.append(svg);
+  const note=document.createElement("p");note.className="exv-temporal-note";
+  if(contract){const last=dev.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos al corte · "+last+"% devengado ilustrativo · "+idle+" meses consecutivos sin incremento mensual. Avance físico simulado, no registrado en matriz.";}
+  else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
+  chart.append(note);
+ };
+ for(const s of series){const b=button("✓ "+s.name,()=>{if(visible.has(s.name))visible.delete(s.name);else visible.add(s.name);b.setAttribute("aria-pressed",String(visible.has(s.name)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}
+ if(!contract){for(const stage of visibleStages){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
+ host.append(toggles,chart);draw();
+}
+function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
-function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
+function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
 const committedRate=v.budget?100*v.committed/v.budget:0,accruedRate=percent(v),advanceRate=v.budget?100*(v.accrued+v.advance)/v.budget:0;
 $("ex-budget").textContent=money(v.budget);
 $("ex-committed").textContent=money(v.committed);
