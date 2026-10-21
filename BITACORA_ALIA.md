@@ -102,3 +102,8 @@
 - El usuario rechazó dos tarjetas globales permanentemente visibles sobre el mosaico de áreas. Nuevo diseño: **una sola barra horizontal `GLOBAL · TODA LA UNIDAD`**, cerrada inicialmente; clic despliega/oculta los dos indicadores y rankings existentes de procesos y contratos.
 - El mosaico de áreas permanece visible y sin modificaciones de jerarquía. La apertura persiste en rerenderizados del mismo nivel. Datos y curvas siguen siendo DEMO.
 - Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `30f9ec5`, `af348f4`, `ac75117`. Pendiente validación visual local; sin despliegue público.
+
+### 2026-10-21 — Alternancia GLOBAL / ÁREAS en el mismo espacio
+- Aprobado: al expandir `GLOBAL · TODA LA UNIDAD`, ocultar completamente el mosaico de áreas y mostrar en su lugar los dos bloques de saldo y sus rankings. Al cerrar GLOBAL, volver a mostrar el mosaico original.
+- Cambio mínimo: `root.hidden` ligado al estado `unitManagementOpen`, con regla CSS específica para superar `display:block!important` del treemap. No se cambian cálculos ni navegación individual.
+- Archivos: `explorer.js`, `styles.css`, `index.html`; commits `3ebeaaa`, `ce07e7e`, `b7fd7a2`. Validación visual local pendiente, sin despliegue público.
