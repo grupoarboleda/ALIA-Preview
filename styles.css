@@ -330,3 +330,20 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-source-execution-rate{text-align:left!important;font:700 clamp(10px,.9vw,13px)/1.3 Consolas,monospace!important}
 #explorer .exv-source-execution{height:10px!important;border:1px solid #164858!important}
 @media(max-width:720px){#explorer .exv-source-segment-header{flex-wrap:wrap;gap:3px}#explorer .exv-source-name{font-size:9px}#explorer .exv-source-execution-rate{font-size:9px!important}}
+
+/* ALIA develop: match funding execution bars to the area treemap progress style */
+#explorer .exv-source-execution{
+  height:6px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#062b40!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#explorer .exv-source-execution-fill{
+  height:100%!important;
+  background:linear-gradient(90deg,#32bed2 0%,#76efd1 100%)!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  transition:width .35s ease!important;
+}
