@@ -65,3 +65,10 @@
 - DEMO: `CT-DEMO-01` vincula `PROC-001` y `PROC-007` (proyectos diferentes) para ilustrar la relación; **no representa datos oficiales ni confirma estructura de matriz real**.
 - Commits: `1cc3b3b`, `3dafa70`, `0fbcafa`, `026c294`. Archivos: `explorer.js`, `index.html`.
 - Estado: código guardado en `develop`; validación visual local pendiente. Antes de conectar datos reales, verificar identificadores únicos y cardinalidad contrato–proceso–proyecto.
+
+### 2026-10-21 — Clarificación de procesos y contratos
+- Acuerdo: un proceso tiene código único y genera un contrato; el proceso se identifica como contrato al registrar compromiso. Un proyecto puede tener varios contratos.
+- Panel: `SALDO SIN COMPROMETER` muestra cantidad de **procesos**; `SALDO SIN DEVENGAR` muestra cantidad de **contratos**. Se retiraron fórmulas visibles y se agregó icono de información activable por clic/teclado con concepto y fórmula.
+- Desglose Top 5 se etiqueta por procesos o contratos según el bloque. Recuento distinto por código de proceso; no por filas. Demo usa contrato diferente por proceso; valores y relaciones siguen siendo sintéticos.
+- Commits: `91e33ee`, `f985d85`, `017f6d0`; archivos: `explorer.js`, `styles.css`, `index.html`.
+- Estado: aplicado en `develop`, pendiente validación visual local. Con datos reales debe comprobarse la correspondencia proceso–contrato y el manejo de compromisos parciales.
