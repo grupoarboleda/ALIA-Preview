@@ -166,3 +166,15 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 /* Bidirectional cross-filter cues */
 .exv-node.cross-selected{border-color:#8cf7d7;box-shadow:inset 0 0 0 1px #8cf7d7,0 0 15px #3bf4bd25}.exv-node-select{background:#164f60;border-color:#70c8c8;color:#caffee}.exv-node-select[aria-pressed=true]{background:#1b6c60;color:#e2ffed;border-color:#8cf7d7}.exv-empty{padding:20px;border:1px dashed #50778a;color:#a4d6e2;font:12px/1.6 Consolas,monospace}
+
+/* Clean one-click exploration: the entire financial tile is the drill action */
+.exv-node-click{appearance:none;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;text-align:left!important;white-space:normal!important;cursor:pointer;gap:13px;transition:background .2s,border-color .2s,transform .2s}
+.exv-node-click:hover,.exv-node-click:focus-visible{background:linear-gradient(135deg,#16627b,#0e3850);border-color:#8af5ec;transform:translateY(-2px);outline:2px solid #83ebed;outline-offset:2px}
+.exv-node-click:disabled{cursor:default;opacity:1;transform:none}
+.exv-node-click .exv-node-values{width:100%}
+.exv-node-foot{margin-top:auto;padding-top:10px;border-top:1px solid #38768a70;color:#92cbd9;font:700 10px Consolas,monospace;letter-spacing:.3px}
+.exv-cross-context{display:inline-flex;align-items:center;max-width:100%;font:10px/1.5 Consolas,monospace;color:#81efcc;overflow-wrap:anywhere}
+.exv-pane-reset:disabled{opacity:.35;cursor:default}
+.exv-dual-header{flex-wrap:wrap;justify-content:flex-start}
+.exv-dual-header>span{margin-right:auto}
+.exv-node-click .exv-node-summary{display:block}
