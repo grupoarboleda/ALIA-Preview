@@ -487,6 +487,24 @@ function renderManagementTemporal(rs,cutMonth){
   {name:"AVANCE FÍSICO REAL",values:physical,color:"#74a9ff"},
   {name:"COMPROMETIDO",values:months.map(()=>100),color:"#d7e8f1",dashed:true}
  ]:[{name:"AVANCE DE GESTIÓN",values:milestones,color:"#66e9d1"}];
+ const metricChoice=host.dataset.contractMetric||"accrued";
+ const unitChoice=host.dataset.contractUnit||"percent";
+ const advancePercent=commit?Math.max(0,100*totals.advance/commit):0;
+ const metricActual=dev.map((v,i)=>Math.min(100,v+(metricChoice==="advance"?advancePercent*(i+1)/12:0)));
+ const metricPlan=projected.map((v,i)=>Math.min(100,v+(metricChoice==="advance"?advancePercent*(i+1)/12:0)));
+ const unitScale=unitChoice==="usd"?commit/100:1;
+ if(contract){
+  const controls=document.createElement("div");controls.className="exv-temporal-controls exv-contract-controls";
+  const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador del contrato");
+  for(const [value,label] of [["accrued","Devengado"],["advance","Devengado + anticipo"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=label;picker.append(opt);}
+  picker.value=metricChoice;picker.addEventListener("change",()=>{host.dataset.contractMetric=picker.value;renderManagementTemporal(rs,cutMonth);});
+  const units=document.createElement("div");units.className="exv-temporal-unit-toggle";
+  for(const [value,label] of [["percent","%"],["usd","USD"]]){
+   const btn=document.createElement("button");btn.type="button";btn.className="exv-temporal-unit-choice";btn.textContent=label;btn.setAttribute("aria-pressed",String(unitChoice===value));
+   btn.addEventListener("click",()=>{host.dataset.contractUnit=value;renderManagementTemporal(rs,cutMonth);});units.append(btn);
+  }
+  controls.append(picker,units);heading.append(controls);
+ }
  const toggles=document.createElement("div");toggles.className="exv-temporal-legend";
  const visible=new Set(series.map(s=>s.name)),visibleStages=new Set(["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]);
  const chart=document.createElement("div");
@@ -521,8 +539,12 @@ function renderManagementTemporal(rs,cutMonth){
    const cutLabel=add("text",{x:Math.min(W-R-18,Math.max(L+18,cutX)),y:T-7,fill:"#d5f8fa","font-size":10,"text-anchor":"middle"});cutLabel.textContent="CORTE";
   }
 
-  for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=v+"%";}
+  for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=unitChoice==="usd"?money(commit*v/100):v+"%";}
   const cutIndex=Math.max(0,Math.min(11,cutMonth-1));
+  if(contract){
+   add("line",{x1:x(cutIndex),x2:x(cutIndex),y1:T,y2:H-B,stroke:"#d5f8fa","stroke-width":1.5,"stroke-dasharray":"4 5","stroke-opacity":".8"});
+   const cutLabel=add("text",{x:x(cutIndex),y:T-7,fill:"#d5f8fa","font-size":10,"text-anchor":"middle"});cutLabel.textContent="CORTE";
+  }
   const drawLine=(values,color,{dashed=false,reference=false,delay=0,duration=1.7}={})=>{
    if(!values.length)return;
    const path=add("path",{d:values.map((p,i)=>(i?"L":"M")+x(p.i)+" "+y(p.v)).join(" "),stroke:color,"stroke-width":reference?1.8:3,fill:"none","stroke-linejoin":"round"});
@@ -544,10 +566,11 @@ function renderManagementTemporal(rs,cutMonth){
    if(!visible.has(item.name))continue;
    if(contract&&item.name==="DEVENGADO"){
     // First draw observed accrual through cutoff, then continue from the actual cutoff value.
-    drawLine(dev.slice(0,cutIndex+1).map((v,i)=>({i,v})),"#66e9d1",{duration:2});
+    drawLine(metricActual.slice(0,cutIndex+1).map((v,i)=>({i,v})),"#66e9d1",{duration:2});
+    add("circle",{cx:x(cutIndex),cy:y(metricActual[cutIndex]),r:5.5,fill:"#66e9d1",stroke:"#dffff9","stroke-width":1.2});
     if(cutIndex<11){
-     const points=[{i:cutIndex,v:dev[cutIndex]}];
-     for(let i=cutIndex+1;i<12;i++)points.push({i,v:Math.min(100,Math.max(0,dev[cutIndex]+projected[i]-projected[cutIndex]))});
+     const points=[{i:cutIndex,v:metricActual[cutIndex]}];
+     for(let i=cutIndex+1;i<12;i++)points.push({i,v:Math.min(100,Math.max(0,metricActual[cutIndex]+metricPlan[i]-metricPlan[cutIndex]))});
      drawLine(points,"#f0bd70",{dashed:true,delay:2,duration:1.6});
     }
    }else{
@@ -556,8 +579,16 @@ function renderManagementTemporal(rs,cutMonth){
    }
   }
   if(!contract){const cutIndex=Math.max(0,Math.min(11,cutMonth-1));const future=add("rect",{x:x(cutIndex)+((x(1)-x(0))/2),y:T,width:Math.max(0,W-R-x(cutIndex)-((x(1)-x(0))/2)),height:H-T-B,fill:"#071c2b","fill-opacity":".56"});}
-  months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
+  months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:i===cutIndex?"#ffffff":"#a9cbd7","font-size":i===cutIndex?11:10,"font-weight":i===cutIndex?800:400,"text-anchor":"middle"});t.textContent=m;});
   chart.append(svg);
+  if(contract){
+   const legend=document.createElement("div");legend.className="exv-contract-legend";
+   for(const [color,label,dashed] of [["#66e9d1","HISTÓRICO SIMULADO",false],["#f0bd70","PROYECCIÓN DEMO",true],["#74a9ff","AVANCE FÍSICO REAL · %",false],["#d7e8f1","COMPROMETIDO",true]]){
+    const entry=document.createElement("span");entry.className="exv-contract-legend-entry";const swatch=document.createElement("i");swatch.style.borderTop="3px "+(dashed?"dashed ":"solid ")+color;
+    const labelNode=document.createElement("span");labelNode.textContent=label;entry.append(swatch,labelNode);legend.append(entry);
+   }
+   chart.append(legend);
+  }
   const note=document.createElement("p");note.className="exv-temporal-note";
   if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos. La proyección continúa desde el último devengado real hasta diciembre. La desviación compara el devengado real con la programación del mismo mes ("+(last-planned)+" pp). Datos físicos y financieros ilustrativos.";}
   else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
@@ -565,30 +596,15 @@ function renderManagementTemporal(rs,cutMonth){
   if(contract){
    const kpis=document.createElement("div");kpis.className="exv-contract-variance";
    const current=Math.max(0,Math.min(11,cutMonth-1));
-   const forecastDecember=Math.min(100,Math.max(0,dev[current]+projected[11]-projected[current]));
-   for(const [label,value] of [["DEVENGADO REAL · "+months[current],dev[current]+"%"],["PROYECCIÓN · DICIEMBRE",forecastDecember+"%"],["DESVIACIÓN VS PLAN · "+months[current],(dev[current]-projected[current])+" pp"]]){
+   const forecastDecember=Math.min(100,Math.max(0,metricActual[current]+metricPlan[11]-metricPlan[current]));
+   const fmt=v=>unitChoice==="usd"?money(commit*v/100):v+"%";
+   for(const [label,value] of [["REAL · "+months[current],fmt(metricActual[current])],["PROYECCIÓN · DICIEMBRE",fmt(forecastDecember)],["DESVIACIÓN VS PLAN · "+months[current],unitChoice==="usd"?money(commit*(metricActual[current]-metricPlan[current])/100):(metricActual[current]-metricPlan[current])+" pp"]]){
     const box=document.createElement("div");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
    }
    chart.append(kpis);
   }
   const action=document.createElement("p");action.className="exv-management-attention";action.textContent=contract?(idleMessage(dev,cutMonth)):(stageMessage(stages,cutMonth));chart.append(action);
  };
- if(contract){
-  const legend=document.createElement("div");legend.className="exv-contract-legend";
-  const entries=[
-   ["#66e9d1","DEVENGADO REAL",false],
-   ["#f0bd70","DEVENGADO PROYECTADO",true],
-   ["#74a9ff","AVANCE FÍSICO REAL",false],
-   ["#d7e8f1","COMPROMETIDO · REFERENCIA",true]
-  ];
-  for(const [color,label,dashed] of entries){
-   const entry=document.createElement("span");entry.className="exv-contract-legend-entry";
-   const swatch=document.createElement("i");swatch.style.borderTop="3px "+(dashed?"dashed ":"solid ")+color;
-   const text=document.createElement("span");text.textContent=label;
-   entry.append(swatch,text);legend.append(entry);
-  }
-  host.append(legend);
- }
  for(const s of series){const b=button("✓ "+s.name,()=>{if(visible.has(s.name))visible.delete(s.name);else visible.add(s.name);b.setAttribute("aria-pressed",String(visible.has(s.name)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}
  if(!contract){for(const stage of ["POR PUBLICAR","PUBLICADO","ADJUDICADO","CONTRATADO"]){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
  if(!contract){
