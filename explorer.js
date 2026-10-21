@@ -12,7 +12,7 @@ const records=[
 ["Comercial","Recursos propios","Medición inteligente","PROC-006",370000,310000,190000,11000],
 ["Distribución","CAF","Rehabilitación de alimentadores","PROC-007",800000,640000,390000,34000],
 ["Distribución","Recursos propios","Rehabilitación de alimentadores","PROC-008",650000,490000,360000,18000]
-].map(([area,source,project,process,budget,committed,accrued,advance])=>({area,source,project,process,contract:({"PROC-001":"CT-DEMO-01","PROC-007":"CT-DEMO-01"}[process]||null),budget,committed,accrued,advance}));
+].map(([area,source,project,process,budget,committed,accrued,advance])=>({area,source,project,process,contract:"CT-DEMO-"+process.slice(-3),budget,committed,accrued,advance}));
 const factors={9:[1,1],10:[1.02,1.12],11:[1.04,1.22],12:[1.055,1.32]};
 const names={source:"Fuente de financiamiento",area:"Área",project:"Proyecto",process:"Proceso"};
 let branch=null,trail=[];
@@ -89,14 +89,14 @@ function projectExplorer(pane,root,items,filtered){
  // Independent budget gaps; a project/process can belong to both categories.
  const balanceRows=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};});
  const balances=[
-  {label:"SIN COMPROMETER",type:"uncommitted",description:"Codificado − Comprometido"},
-  {label:"COMPROMETIDO SIN DEVENGAR",type:"committed",description:"Comprometido − Devengado"}
+  {label:"SALDO SIN COMPROMETER",type:"uncommitted",description:"Codificado − Comprometido"},
+  {label:"SALDO SIN DEVENGAR",type:"committed",description:"Comprometido − Devengado"}
  ];
  const balanceStats=type=>{
   const eligible=balanceRows.filter(r=>r[type]>0);
   return {rows:eligible,amount:eligible.reduce((v,r)=>v+r[type],0),
-   projects:new Set(eligible.map(r=>r.contract||r.process)).size,
-   processes:new Set(eligible.map(r=>r.project+"\u0001"+r.process)).size};
+   projects:new Set(eligible.map(r=>r.process)).size,
+   processes:new Set(eligible.map(r=>r.process)).size};
  };
 
  const detail=document.createElement("section");detail.className="exv-balance-detail";detail.hidden=true;
@@ -107,14 +107,14 @@ function projectExplorer(pane,root,items,filtered){
  const detailTable=document.createElement("div");detailTable.className="exv-balance-table";
  detail.append(detailHead,detailTable);
  function showBalance(type,label){
-  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 CONTRATOS / PROCESOS";detailTable.replaceChildren();
+  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 "+(type==="uncommitted"?"PROCESOS":"CONTRATOS");detailTable.replaceChildren();
   insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
   const entries=balanceStats(type).rows;
   const byProject=new Map();
-  for(const r of entries){const entity=r.contract||r.process;if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
+  for(const r of entries){const entity=type==="uncommitted"?r.process:(r.contract||r.process);if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
   const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
-  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+" contratos/procesos · "+entries.length+" asignaciones con saldo. Un contrato puede estar vinculado a varios proyectos.";
+  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+(type==="uncommitted"?" procesos":" contratos")+" · "+entries.length+" asignaciones con saldo. Ordenado por monto pendiente.";
   detailTable.append(note);
   const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
   let showAll=false;
@@ -137,7 +137,7 @@ function projectExplorer(pane,root,items,filtered){
     rankingRoot.append(group);
    }
    if(ranking.length>5){
-    const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+" CONTRATOS / PROCESOS",()=>{showAll=!showAll;paint();},"exv-count-link");
+    const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+(type==="uncommitted"?" PROCESOS":" CONTRATOS"),()=>{showAll=!showAll;paint();},"exv-count-link");
     rankingRoot.append(more);
    }
    if(!ranking.length){const empty=document.createElement("p");empty.textContent="No hay saldos positivos en esta selección.";rankingRoot.append(empty);}
@@ -145,15 +145,21 @@ function projectExplorer(pane,root,items,filtered){
   paint();
  }
  for(const {label,type,description} of balances){
-  const stats=balanceStats(type);
+  const stats=balanceStats(type),unit=type==="uncommitted"?"PROCESOS":"CONTRATOS";
   const card=document.createElement("button");card.type="button";card.className="exv-balance-action exv-balance-priority";card.dataset.balance=type;
-  card.setAttribute("aria-expanded","false");card.title="Ver ranking de contratos y procesos";
+  card.setAttribute("aria-expanded","false");card.title="Ver ranking de "+unit.toLowerCase();
   const small=document.createElement("small");small.textContent=label+" ↗";
   const strong=document.createElement("strong");strong.textContent=money(stats.amount);
   const counts=document.createElement("span");counts.className="exv-balance-counts";
-  counts.textContent=stats.projects+" CONTRATO/PROCESO"+(stats.projects===1?"":"S")+" · "+stats.processes+" PROCESO"+(stats.processes===1?"":"S");
-  const formula=document.createElement("span");formula.className="exv-balance-formula";formula.textContent=description;
-  card.append(small,strong,counts,formula);
+  counts.textContent=stats.projects+" "+unit;
+  const info=document.createElement("span");info.className="exv-balance-info";info.textContent="ⓘ";info.title="Ver definición y fórmula";info.setAttribute("role","button");info.tabIndex=0;
+  info.setAttribute("aria-label","Información sobre "+label);
+  const explanation=document.createElement("span");explanation.className="exv-balance-explanation";explanation.hidden=true;
+  explanation.textContent=(type==="uncommitted"?"Presupuesto codificado todavía disponible para comprometer. ":"Compromisos registrados cuyo devengado aún está pendiente. ")+description+". El recuento utiliza códigos únicos, no filas de la matriz.";
+  const toggleInfo=e=>{e.stopPropagation();explanation.hidden=!explanation.hidden;info.setAttribute("aria-expanded",String(!explanation.hidden));};
+  info.addEventListener("click",toggleInfo);
+  info.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleInfo(e);}});
+  card.append(small,strong,counts,info,explanation);
   card.addEventListener("click",()=>showBalance(type,label));insightMetrics.append(card);
  }
  insight.append(insightTitle,insightMetrics,detail);
