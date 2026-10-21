@@ -143,3 +143,11 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #ex-map .exv-tile-rich .exv-tile-footer{display:block!important;margin-top:auto!important;font-size:10px!important}
 @media(max-width:1250px){#ex-map .exv-tile-rich{min-width:235px}#ex-map .exv-tile-rich .exv-tile-amounts{grid-template-columns:1fr!important}}
 @media(max-width:600px){#ex-map .exv-tile-rich{min-width:0;flex-basis:100%!important}#ex-map .exv-tile-rich .exv-tile-amounts{grid-template-columns:1fr 1fr!important}}
+
+/* Direct navigation from treemap project/process counters */
+#ex-map .exv-tile-rich .exv-tile-counts{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding-top:12px}
+#ex-map .exv-count-link{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0;min-height:46px;text-align:left;background:#092e42;border:1px solid #32748b;border-radius:3px;padding:9px 11px;color:#c5faff;font:700 11px/1.5 Consolas,monospace;white-space:normal;transition:background .15s,border-color .15s,transform .15s}
+#ex-map .exv-count-link:hover,#ex-map .exv-count-link:focus-visible{background:#15516b;border-color:#83eff7;transform:translateY(-1px);outline:2px solid #76eaf3;outline-offset:1px}
+#ex-map .exv-explore-link{display:block;margin-top:auto;padding:8px 0 0;border:0;background:transparent;color:#8be2e9;text-align:left;font:700 10px Consolas,monospace;letter-spacing:.3px;cursor:pointer}
+#ex-map .exv-explore-link:hover,#ex-map .exv-explore-link:focus-visible{color:#fff;text-decoration:underline;outline-offset:3px}
+#ex-map .exv-tile-rich{cursor:default}
