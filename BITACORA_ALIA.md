@@ -120,3 +120,8 @@
 - La tarjeta PROYECCIÓN · DICIEMBRE ahora calcula el mismo extremo final de la curva naranja: devengado real del último mes + incrementos proyectados futuros hasta diciembre, con límite de 0 a 100 %.
 - La tarjeta DESVIACIÓN VS PLAN indica explícitamente el mes al que corresponde; compara devengado real con programación de ese mismo mes. Se simplificó la nota explicativa.
 - Archivos: explorer.js, index.html. Commits 75b9bdc, 766869a. Datos DEMO; validación visual pendiente y sin publicación pública.
+
+### 2026-10-21 — Gráfica contractual con formato de gráfica por área
+- Cambio solicitado: leyenda debajo, línea vertical de CORTE, mes resaltado, punto de transición real/proyectado, controles % y USD, y selector Devengado / Devengado + anticipo.
+- Implementación: las curvas de devengado y su continuación proyectada conservan animación secuencial. Avance físico llega solamente al mes de corte. En USD, la escala financiera usa el monto comprometido; la serie física permanece porcentual. Las tarjetas de real, diciembre y desviación responden a los selectores.
+- Código: explorer.js commit 0475052; caché: index.html commit 96f60aa. Datos y programación DEMO. Validación visual local pendiente. Sin publicación pública.
