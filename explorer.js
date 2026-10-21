@@ -289,17 +289,39 @@ function renderTemporal(rs,cutMonth){
  context.textContent=tags.length?"SELECCIÓN: "+tags.join(" / "):"VISTA GLOBAL · TODAS LAS ÁREAS Y FUENTES";
  head.append(title,picker);host.append(head,context);
  const metric=picker.value,months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
- const actual=sum(rs,cutMonth),prior=sum(rs,9),current=actual[metric==="advance"?"accrued":metric]+(metric==="advance"?actual.advance:0);
- const sep=prior[metric==="advance"?"accrued":metric]+(metric==="advance"?prior.advance:0);
- // Demo interpolation before September is explicitly illustrative, not observed monthly snapshots.
- const values=months.map((_,i)=>{
-  const m=i+1;
-  if(m<=9)return sep*(0.075+0.925*Math.pow(m/9,1.32));
-  const snap=sum(rs,m);
-  return snap[metric==="advance"?"accrued":metric]+(metric==="advance"?snap.advance:0);
- });
- values[8]=sep;
+ // Each synthetic process gets its own cumulative monthly profile. A single
+ // multiplier for every scope made all lines geometrically identical.
+ const metricValue=(v)=>v[metric==="advance"?"accrued":metric]+(metric==="advance"?v.advance:0);
+ const hash=(str)=>{let h=2166136261;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),16777619);}return h>>>0;};
  const cutIdx=Math.max(0,Math.min(11,cutMonth-1));
+ const processValue=(r,m)=>{
+  const seed=hash([r.source,r.area,r.project,r.process].join("|"));
+  const sep=metricValue(sum([r],9));
+  if(m<=9){
+   // Positive, process-specific monthly weights, normalized to the September
+   // value. Distinct distributions preserve the exact total at September.
+   const weights=Array.from({length:9},(_,i)=>{
+    const seasonal=0.75+0.5*Math.sin((i+1)*1.65+(seed%19)*0.32);
+    const timing=0.55+((seed>>>4)%11)/10;
+    const trend=0.6+(i/8)*timing;
+    return Math.max(0.1,seasonal*trend);
+   });
+   const total=weights.reduce((x,y)=>x+y,0);
+   return sep*weights.slice(0,m).reduce((x,y)=>x+y,0)/total;
+  }
+  const v=metricValue(sum([r],m));
+  // Demonstrative forecast divergence: funding and process mix affect the
+  // projected slope; at the selected cut the curve matches the KPI exactly.
+  const sensitivity=0.7+((seed>>>8)%13)/20;
+  return sep+(v-sep)*sensitivity;
+ };
+ const raw=months.map((_,i)=>rs.reduce((total,r)=>total+processValue(r,i+1),0));
+ // Keep the curve anchored to the displayed value at the selected cut.
+ const target=metricValue(sum(rs,cutMonth));
+ const anchor=raw[cutIdx];
+ const values=raw.map((v,i)=>i<=cutIdx
+  ?(anchor>0?v*target/anchor:0)
+  :Math.max(0,target+(v-anchor)));
  const projected=values.map((v,i)=>i<=cutIdx?null:v);
  const historical=values.map((v,i)=>i<=cutIdx?v:null);
  const baseline=values[cutIdx];
@@ -325,7 +347,7 @@ function renderTemporal(rs,cutMonth){
  host.append(svgRoot);
  const legend=document.createElement("div");legend.className="exv-temporal-legend";legend.innerHTML='<span><i class="exv-temporal-real"></i>HISTÓRICO SIMULADO</span><span><i class="exv-temporal-future"></i>PROYECCIÓN DEMO</span>';host.append(legend);
  const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>VALOR AL CORTE</small><strong>"+money(baseline)+"</strong>";const right=document.createElement("div");right.innerHTML="<small>ESTIMACIÓN DICIEMBRE</small><strong>"+money(values[11])+"</strong>";info.append(left,right);host.append(info);
- const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Enero–agosto interpolados para ilustrar la interfaz. Septiembre–diciembre usan factores demostrativos. Sin serie histórica oficial ni pronóstico estadístico validado.";host.append(note);
+ const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Perfiles mensuales sintéticos diferenciados por proceso y fuente; la curva coincide con el valor al corte. La proyección no representa datos oficiales ni un pronóstico estadístico validado.";host.append(note);
 }
 
 function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
