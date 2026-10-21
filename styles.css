@@ -505,3 +505,6 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 @media(max-width:680px){#explorer #ex-pane-source.exv-temporal-pane{padding:13px!important}.exv-temporal-head{flex-direction:column}}
 
 #explorer .exv-temporal-context{font:700 10px/1.5 Consolas,monospace;color:#65e5d1;background:#0b3546;border-left:3px solid #65e5d1;padding:7px 10px;overflow-wrap:anywhere}
+
+#explorer .exv-temporal-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+@media(max-width:680px){#explorer .exv-temporal-controls{justify-content:flex-start;width:100%}#explorer .exv-temporal-controls select{flex:1;min-width:135px}}
