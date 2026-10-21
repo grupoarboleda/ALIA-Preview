@@ -171,3 +171,8 @@
 - Se creó `ARQUITECTURA_DATOS_ALIA.md` con modelo de lotes, filas originales, asignaciones, procesos, contratos, proyectos, snapshots mensuales, conciliación y validación, distinción REAL/SIMULATED y diseño del futuro panel de importación.
 - Decisión: el contrato es unidad de gestión; contar contratos/procesos únicos, conservar asignaciones por proyecto y fuente sin doble conteo financiero. Enero-agosto simulados solo para pruebas, sin confundir con historia real.
 - Commit documento `3e1096a83`. Aún NO se implementa el importador ni se sustituyen los datos DEMO del dashboard; validación funcional pendiente. No se subieron matrices ni se hizo despliegue público.
+
+### 2026-10-21 — Primer importador local y reglas originales de matriz
+- Se recuperaron reglas originales: sumar porciones financieras sin eliminar filas repetidas, contar procesos y contratos únicos, distinguir monto contratado de codificado anual y calcular incrementos mensuales por diferencia de cortes acumulados.
+- Se creó `importador_matriz.py` (commit `19f1f78`), parser XLSX local con lectura de MATRIZ CONSOLIDADA, fecha interna, columnas financieras, claves de proceso/contrato, incidencias y salida JSON opcional de previsualización. No sube archivos, no altera el dashboard ni importa datos automáticamente.
+- Se amplió `ARQUITECTURA_DATOS_ALIA.md` con estas reglas. Pendiente: prueba integral del parser, conciliación de saldos, conexión al panel y carga de 9 reportes históricos que el usuario facilitará mañana. Datos reales no publicados.
