@@ -305,3 +305,12 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-values{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
 #explorer #ex-pane-source.exv-reserved-pane #ex-tree-source,#explorer #ex-pane-source.exv-reserved-pane #ex-path-source,#explorer #ex-pane-source.exv-reserved-pane button{display:none!important}
 @media(max-width:720px){#explorer #ex-tree-area.exv-area-treemap{height:390px!important;min-height:390px!important}#explorer #ex-tree-area.exv-area-treemap>.exv-node{padding:8px!important;font-size:10px!important}#explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-values b{font-size:12px!important}}
+
+/* Nested source execution: outer segment = budget share, inner bar = accrued/budget */
+#explorer .exv-source-composition-track{min-height:68px!important}
+#explorer .exv-source-segment{position:relative!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:5px!important;padding:7px clamp(3px,.8vw,13px)!important;min-height:68px!important;overflow:hidden!important}
+#explorer .exv-source-share{display:block!important;text-align:center!important;font:700 12px Consolas,monospace!important;color:#082e3c!important}
+#explorer .exv-source-execution{height:9px;width:100%;background:#082e3c88;border:1px solid #093e4d77;box-sizing:border-box}
+#explorer .exv-source-execution-fill{height:100%;background:#f5fcff;box-shadow:0 0 5px #d9ffff80;transition:width .35s ease}
+#explorer .exv-source-execution-rate{display:block!important;text-align:center!important;white-space:nowrap;font:700 10px Consolas,monospace!important;color:#092f3d!important}
+@media(max-width:620px){#explorer .exv-source-segment{padding:5px 2px!important}#explorer .exv-source-share{font-size:10px!important}#explorer .exv-source-execution-rate{font-size:8px!important}}
