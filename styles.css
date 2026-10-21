@@ -200,3 +200,10 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 .exv-kpi-focus{font:700 9px Consolas,monospace;color:#88efd3;margin-left:5px}
 @media(max-width:1050px){#explorer .exv-structure>.exv-kpis-compact{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){#explorer .exv-structure>.exv-kpis-compact{grid-template-columns:1fr}#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card{min-height:120px}}
+
+/* Scientific dashboard iconography: lightweight inline SVG, no external dependency */
+#explorer .exv-kpi-card{position:relative;isolation:isolate}
+#explorer .exv-kpi-icon{position:absolute;top:14px;right:14px;width:48px;height:48px;padding:8px;box-sizing:border-box;color:#77bdd0;border:1px solid #32647a;border-radius:10px;background:linear-gradient(135deg,#163b50,#0c293d);opacity:.9;pointer-events:none}
+#explorer .exv-kpi-card>small{padding-right:59px;min-height:32px}
+#explorer .exv-kpi-featured .exv-kpi-icon{color:#8afbd9;border-color:#4abda6;background:linear-gradient(135deg,#155c5e,#103c4c);box-shadow:0 0 15px #5fe6c825}
+@media(max-width:520px){#explorer .exv-kpi-icon{width:43px;height:43px;top:12px;right:12px}#explorer .exv-kpi-card>small{padding-right:52px}}
