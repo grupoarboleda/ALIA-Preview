@@ -235,3 +235,20 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 .exv-project-row-bar>span{display:block;height:100%;background:#55cdd3}
 @media(max-width:1280px){.exv-project-toolbar{grid-template-columns:1fr 1fr}.exv-project-toolbar>strong{grid-column:1/-1}}
 @media(max-width:600px){.exv-project-row{grid-template-columns:20px minmax(60px,1fr) 82px 58px;font-size:9px}.exv-project-toolbar{grid-template-columns:1fr 1fr}.exv-project-strips,.exv-project-rect{min-height:115px}}
+
+/* Specificity repair: legacy #explorer button/input rules must not override project controls */
+#explorer .exv-project-explorer{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%!important;gap:12px!important}
+#explorer .exv-project-toolbar{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(125px,1fr) minmax(135px,.8fr) 96px!important;align-items:center!important;gap:9px!important;width:100%!important}
+#explorer .exv-project-toolbar>strong{display:block!important;font:700 11px/1.4 Consolas,monospace!important;color:#b1e8ee!important}
+#explorer .exv-project-toolbar input,#explorer .exv-project-toolbar select{display:block!important;width:100%!important;min-width:0!important;height:37px!important;padding:8px 10px!important;background:#0b293b!important;border:1px solid #3b7a90!important;border-radius:3px!important;color:#d9f8fc!important;font:11px Consolas,monospace!important;box-sizing:border-box!important}
+#explorer .exv-project-map{display:block!important;width:100%!important;box-sizing:border-box!important;padding:12px!important}
+#explorer .exv-project-strips{display:flex!important;width:100%!important;min-height:130px!important;gap:4px!important}
+#explorer .exv-project-rect{display:block!important;flex-basis:0!important;min-width:18px!important;min-height:130px!important;padding:12px!important;border:1px solid #63b1b9!important;color:#efffff!important;font:700 11px/1.4 Consolas,monospace!important;text-align:left!important;white-space:normal!important;overflow:hidden!important;cursor:pointer!important}
+#explorer .exv-project-ranking{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;width:100%!important;max-height:420px!important;overflow-y:auto!important}
+#explorer .exv-project-ranking>strong{display:block!important;margin:4px 0!important;color:#8fe4dc!important;font:700 11px/1.5 Consolas,monospace!important}
+#explorer .exv-project-row{display:grid!important;grid-template-columns:25px minmax(80px,1fr) 105px 75px 125px!important;align-items:center!important;gap:8px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;min-height:52px!important;padding:10px 9px 16px!important;background:#0e3448!important;border:1px solid #2c657a!important;color:#e5fbfd!important;text-align:left!important;white-space:normal!important;font:11px/1.4 Consolas,monospace!important;cursor:pointer!important}
+#explorer .exv-project-row:hover{background:#15536b!important;border-color:#7be4e5!important}
+#explorer .exv-project-row-name{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#explorer .exv-project-gap{color:#f5c49b!important;text-align:right!important}
+@media(max-width:1200px){#explorer .exv-project-toolbar{grid-template-columns:1fr 1fr!important}#explorer .exv-project-toolbar>strong{grid-column:1/-1}#explorer .exv-project-row{grid-template-columns:24px minmax(75px,1fr) 95px 68px!important}#explorer .exv-project-gap{grid-column:2/-1;text-align:left!important}}
+@media(max-width:550px){#explorer .exv-project-row{grid-template-columns:20px minmax(65px,1fr) 78px!important}#explorer .exv-project-row>span:nth-child(4){grid-column:2}#explorer .exv-project-gap{grid-column:3!important;font-size:9px!important}}
