@@ -137,3 +137,9 @@
 - En área y contrato, las etiquetas principales ahora son idénticas: VALOR AL CORTE (turquesa, histórico real/simulado) y PROYECCIÓN DICIEMBRE (naranja). En contratos se mantiene tercera tarjeta DESVIACIÓN VS PLAN (blanco neutro).
 - Los colores coinciden con las líneas verde/turquesa del histórico y naranja de la proyección; la estructura de las tarjetas y su tipografía son compartidas.
 - Archivos: explorer.js (b042a4f), styles.css (6dfe9f9), index.html (37122c3). Sin cambios en cálculos. Datos DEMO, validación visual pendiente, sin publicación pública.
+
+### 2026-10-21 — GLOBAL vinculado a gráfica consolidada de toda la unidad
+- Al abrir la barra GLOBAL en EMPRESA / ÁREAS, la Rama 02 muestra la evolución y proyección agregada de TODOS los registros de Unidad Esmeraldas (sin restringirse a un área), equivalente a tratar toda la unidad como una sola área.
+- Se conserva el formato estándar de la gráfica temporal, selectores de indicador y %/USD, línea CORTE y tarjetas VALOR AL CORTE y PROYECCIÓN DICIEMBRE. El contexto identifica explícitamente TOTAL UNIDAD ESMERALDAS.
+- Al cerrar GLOBAL se restaura la gráfica del contexto anterior; el panel de áreas vuelve a mostrarse. Se mantiene la capacidad de seleccionar un proceso o contrato en los bloques globales.
+- Archivos: explorer.js (e0be73c), index.html (caché actualizado). Datos DEMO; pendiente validación visual; sin despliegue público.
