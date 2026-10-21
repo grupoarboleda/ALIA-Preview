@@ -186,3 +186,17 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 @media(min-width:1450px){#explorer .exv-structure>.exv-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}#explorer .exv-structure>.exv-kpis article{padding:16px 13px}#explorer .exv-structure>.exv-kpis article strong{font-size:clamp(16px,1.3vw,24px)}}
 @media(max-width:700px){#explorer .exv-structure>.exv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){#explorer .exv-structure>.exv-kpis{grid-template-columns:1fr}}
+
+/* Compact KPI system: monetary amount + corresponding execution percentage */
+#explorer .exv-structure>.exv-kpis-compact{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 16px}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card{display:flex;flex-direction:column;gap:13px;min-height:144px;min-width:0;padding:19px 19px 15px;background:linear-gradient(145deg,#0c2538,#0b1b2c);border:1px solid #29536a;box-sizing:border-box}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>small{font:700 10px/1.5 Consolas,monospace;letter-spacing:.5px;color:#81c6d8}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>strong{font:700 clamp(19px,1.7vw,29px)/1.15 Consolas,monospace;color:#f1ffff;overflow-wrap:anywhere}
+.exv-kpi-meta{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:auto}.exv-kpi-meta span{font:10px/1.4 Consolas,monospace;color:#90b7c7}.exv-kpi-meta b{font:700 17px Consolas,monospace;color:#c2eaf3;white-space:nowrap}
+.exv-kpi-track{height:4px;background:#15384b;overflow:hidden}.exv-kpi-track>span{display:block;height:100%;background:#6bbcd3;transition:width .4s ease}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-featured{border:1px solid #60e7ce;background:linear-gradient(145deg,#104253,#0a2b3c);box-shadow:inset 0 2px #7cf4d7,0 0 20px #50eec51b}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-featured .exv-kpi-meta b{color:#8afbd9}
+#explorer .exv-structure>.exv-kpis-compact .exv-kpi-featured .exv-kpi-track>span{background:linear-gradient(90deg,#43c6d8,#7ef8cc)}
+.exv-kpi-focus{font:700 9px Consolas,monospace;color:#88efd3;margin-left:5px}
+@media(max-width:1050px){#explorer .exv-structure>.exv-kpis-compact{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){#explorer .exv-structure>.exv-kpis-compact{grid-template-columns:1fr}#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card{min-height:120px}}
