@@ -282,3 +282,19 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-balance-project summary:hover{background:#145069}
 #explorer .exv-balance-process{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-top:1px solid #245266;color:#b8dce5}
 #explorer .exv-balance-process strong{white-space:nowrap;color:#8df1d6}
+
+/* Funding allocation always totals 100% of selected codificado */
+#explorer .exv-source-composition{border:1px solid #36768a;background:#0b2739;padding:15px 17px;margin:0 0 13px;min-width:0}
+#explorer .exv-source-composition-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;font:700 11px/1.5 Consolas,monospace;color:#a5dbe5}
+#explorer .exv-source-composition-head>span{color:#ecfbff;white-space:nowrap}
+#explorer .exv-source-composition-track{display:flex;overflow:hidden;min-height:30px;width:100%;background:#15384a;border:1px solid #36758a}
+#explorer .exv-source-segment{min-width:0;display:flex;justify-content:center;align-items:center;box-sizing:border-box;border-right:2px solid #092639;color:#072839;font:700 11px Consolas,monospace;transition:width .35s ease}
+#explorer .exv-source-composition-legend{display:flex;flex-wrap:wrap;gap:9px 20px;margin-top:12px}
+#explorer .exv-source-legend-item{display:flex;align-items:center;gap:7px;font:11px/1.5 Consolas,monospace;color:#b8dbe5}
+#explorer .exv-source-legend-item i{width:10px;height:10px;flex:none}
+#explorer .exv-source-legend-item strong{font-weight:700;color:#f1ffff}
+#explorer #ex-tree-area.exv-pane-tree{display:flex;flex-wrap:nowrap;overflow-x:auto;min-height:235px;align-items:stretch;gap:7px}
+#explorer #ex-tree-area .exv-node{flex-shrink:1;min-width:145px;min-height:225px}
+#explorer .exv-reserved-pane{min-height:290px;background:linear-gradient(150deg,#0b2638,#071827)}
+#explorer .exv-reserved-pane .exv-dual-header{opacity:.6}
+@media(max-width:800px){#explorer .exv-source-composition-head{flex-wrap:wrap}#explorer .exv-source-composition-legend{display:grid;grid-template-columns:1fr}#explorer #ex-tree-area .exv-node{min-width:175px}}
