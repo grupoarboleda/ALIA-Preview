@@ -160,3 +160,8 @@
 - Se restituyó `buildManagementInsight(filtered, 'LECTURA GERENCIAL · ÁREA')` cuando Rama 01 está en nivel proyecto después de seleccionar un área. Vuelven SALDO SIN COMPROMETER (procesos) y SALDO SIN DEVENGAR (contratos), con rankings, selección y gráfica temporal de seguimiento.
 - Se conserva el panel GLOBAL independiente, las tarjetas de proyectos y la eliminación del simulador/treemap/ranking antiguos. El bloque gerencial se dispone a ancho completo encima de tarjetas.
 - Archivos: explorer.js (`bb53f5b`), styles.css (`119c923`), index.html (`c1930db`). Validación visual local pendiente; sin publicación pública.
+
+### 2026-10-21 — Área sin tarjetas de proyectos
+- Al entrar en un área, se muestran exclusivamente los dos bloques gerenciales SALDO SIN COMPROMETER (procesos) y SALDO SIN DEVENGAR (contratos), con rankings clicables que conducen a la gráfica temporal.
+- Se suprimen las tarjetas individuales de proyectos en ese nivel. Se mantienen las tarjetas de áreas en la vista raíz y el panel GLOBAL. No se alteran cálculos ni datos.
+- Código verificado en explorer.js rama develop; caché actualizada en index.html. Validación visual local pendiente; sin despliegue público.
