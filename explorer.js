@@ -70,6 +70,24 @@ function projectExplorer(pane,root,items,filtered){
  for(const [key,label] of [[10,"Top 10"],[20,"Top 20"],[0,"Todos"]]){const option=document.createElement("option");option.value=String(key);option.textContent=label;limit.append(option);}limit.value=String(control.limit);
  tools.append(heading,search,sort,limit);
  const map=document.createElement("div");map.className="exv-project-map";map.setAttribute("aria-label","Mapa de proyectos proporcional al presupuesto codificado");
+ const insight=document.createElement("section");insight.className="exv-management-insight";insight.setAttribute("aria-label","Análisis de prioridad gerencial");
+ const baseline=sum(filtered,cut()),gaps=items.map(g=>({name:g.value,...sum(g.rows,cut())})).map(g=>({...g,gap:Math.max(0,g.budget-g.accrued)})).sort((a,b)=>b.gap-a.gap);
+ const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
+ const insightTitle=document.createElement("h3");insightTitle.textContent="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?";
+ const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
+ for(const [label,value] of [["BRECHA TOTAL",money(totalGap)],["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%"],["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%"]]){
+  const card=document.createElement("div"),small=document.createElement("small"),strong=document.createElement("strong");small.textContent=label;strong.textContent=value;card.append(small,strong);insightMetrics.append(card);
+ }
+ const advice=document.createElement("p");advice.className="exv-management-advice";
+ advice.textContent=top3.length&&topGap>0?"Mayor oportunidad de seguimiento: "+top3.map(g=>g.name).join(" · ")+". Concentran "+(100*topGap/totalGap).toFixed(1)+"% de la brecha presupuestaria.":"Sin brechas positivas de ejecución en la selección actual.";
+ const scenario=document.createElement("div");scenario.className="exv-management-scenario";
+ const scenarioLabel=document.createElement("label");scenarioLabel.textContent="SIMULACIÓN · ¿QUÉ PASARÍA SI SE DEVENGA PARTE DE LA BRECHA TOP 3?";
+ const scenarioSlider=document.createElement("input");scenarioSlider.type="range";scenarioSlider.min="0";scenarioSlider.max="100";scenarioSlider.step="10";scenarioSlider.value="25";scenarioSlider.setAttribute("aria-label","Porcentaje de la brecha de los tres proyectos prioritarios que se podría devengar");
+ const scenarioResult=document.createElement("output");scenarioResult.className="exv-management-result";
+ const updateScenario=()=>{const ratio=Number(scenarioSlider.value)/100,increment=topGap*ratio,newRate=baseline.budget?100*(baseline.accrued+increment)/baseline.budget:0;scenarioResult.textContent=Math.round(ratio*100)+"% de la brecha top 3 → +"+money(increment)+" devengado potencial · Ejecución "+newRate.toFixed(1)+"%";};
+ scenarioSlider.addEventListener("input",updateScenario);updateScenario();
+ const disclaimer=document.createElement("small");disclaimer.className="exv-management-disclaimer";disclaimer.textContent="Escenario hipotético, no pronóstico. La brecha no equivale a atraso: validar cronograma, contratos y elegibilidad antes de decidir.";
+ scenario.append(scenarioLabel,scenarioSlider,scenarioResult,disclaimer);insight.append(insightTitle,insightMetrics,advice,scenario);
  const list=document.createElement("div");list.className="exv-project-ranking";
  const total=sum(filtered,cut()).budget;
  const view=()=>{
@@ -116,7 +134,7 @@ function projectExplorer(pane,root,items,filtered){
  search.addEventListener("input",()=>{control.query=search.value;view();});
  sort.addEventListener("change",()=>{control.sort=sort.value;view();});
  limit.addEventListener("change",()=>{control.limit=Number(limit.value);view();});
- outer.append(tools,map,list);root.append(outer);view();
+ outer.append(insight,tools,map,list);root.append(outer);view();
 }
 function renderPanes(){
  const focus=focusPath();
