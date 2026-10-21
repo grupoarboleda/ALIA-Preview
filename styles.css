@@ -42,3 +42,15 @@ table td{border-color:#19374a}table tbody tr:hover{background:#12334a77}
 footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacing:.2px}
 @media(prefers-reduced-motion:no-preference){.preview-dot{animation:beacon 2.4s infinite}.metric:hover,.panel:hover{border-color:#397e98;transition:border-color .2s}@keyframes beacon{50%{box-shadow:0 0 3px #a7ffca;opacity:.65}}}
 @media(max-width:700px){header::after{display:none}.filters{padding:18px 12px}.sidebar{padding-top:12px}.metric span{font-size:9px}}
+
+/* Orbital telemetry: trace plots reveal progressively, with restrained live signal. */
+@media(prefers-reduced-motion:no-preference){
+.telemetry-line{stroke-dasharray:var(--path-length);stroke-dashoffset:var(--path-length);animation:trace-signal 2.2s cubic-bezier(.25,.7,.12,1) forwards;filter:drop-shadow(0 0 5px currentColor)}
+.telemetry-point{opacity:0;transform-box:fill-box;transform-origin:center;animation:signal-arrival .35s ease-out 1.9s forwards,signal-beacon 3s ease-in-out 2.3s infinite}
+@keyframes trace-signal{0%{stroke-dashoffset:var(--path-length)}100%{stroke-dashoffset:0}}
+@keyframes signal-arrival{to{opacity:1}}
+@keyframes signal-beacon{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(1.55)}}
+.filters::after{content:"";position:absolute;bottom:-1px;left:0;height:1px;width:28%;background:linear-gradient(90deg,transparent,#57eaff,transparent);box-shadow:0 0 12px #57eaff;animation:scan-track 7s linear infinite;pointer-events:none}
+@keyframes scan-track{0%{left:-28%}100%{left:100%}}
+}
+@media(prefers-reduced-motion:reduce){.telemetry-line{stroke-dasharray:none!important;stroke-dashoffset:0!important}.telemetry-point{opacity:1!important}}
