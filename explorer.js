@@ -35,21 +35,48 @@ const amounts=document.createElement("div");amounts.className="exv-tile-amounts"
 const r=document.createElement("div");r.className="exv-tile-rate";const label=document.createElement("span");label.textContent="% DEVENGADO";const value=document.createElement("strong");value.textContent=rate.toFixed(1)+"%";r.append(label,value);const track=document.createElement("span");track.className="exv-tile-track";const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(rate,100))+"%";track.append(fill);
 const counts=document.createElement("div");counts.className="exv-tile-counts";counts.append(button("PROYECTOS ↗ "+projects,()=>{if(key)trail.push({key,value:g.value});$("ex-project").value="all";render("project");},"exv-count-link"),button("PROCESOS ↗ "+processes,()=>{if(key)trail.push({key,value:g.value});render("process");},"exv-count-link"));
 const explore=button(key?"EXPLORAR SIGUIENTE NIVEL ↗":"SELECCIONA UNA RAMA ARRIBA ↗",()=>enter(key,g.value),"exv-explore-link");el.append(heading,amounts,r,track,counts,explore);return el;}
+
+const paneTrails={area:[],source:[]};let activePane="area";
+const paneOrder={area:["area","project","process"],source:["source","area","project","process"]};
+function renderPanes(){
+ for(const pane of ["area","source"]){
+  const path=paneTrails[pane],levels=paneOrder[pane],level=levels[path.length],root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
+  const filtered=records.filter(r=>path.every(p=>r[p.key]===p.value));
+  root.replaceChildren();crumb.replaceChildren();
+  crumb.append(button(pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO",()=>{paneTrails[pane]=[];activePane=pane;render();},"exv-pane-crumb"));
+  path.forEach((p,i)=>crumb.append(button("› "+p.value,()=>{paneTrails[pane]=path.slice(0,i+1);activePane=pane;render();},"exv-pane-crumb")));
+  const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
+  for(const item of items){
+   const v=sum(item.rows,cut()),p=percent(v),projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
+   const card=document.createElement("div");card.className="exv-node";card.style.flexGrow=String(Math.max(1,v.budget/total*100));card.style.flexBasis=items.length>4?"39%":"43%";
+   const name=document.createElement("strong");name.textContent=item.value;
+   const values=document.createElement("div");values.className="exv-node-values";
+   for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){const part=document.createElement("span");const small=document.createElement("small");small.textContent=label;const num=document.createElement("b");num.textContent=value;part.append(small,num);values.append(part);}
+   const bar=document.createElement("div");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
+   const summary=document.createElement("div");summary.className="exv-node-summary";summary.textContent=p.toFixed(1)+"% DEVENGADO";
+   const actions=document.createElement("div");actions.className="exv-node-actions";
+   const drill=()=>{activePane=pane;if(level)paneTrails[pane].push({key:level,value:item.value});render();};
+   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;render(target);};
+   if(level){actions.append(button("ABRIR ↗",drill,"exv-node-action"));actions.append(button("PROYECTOS "+projects,()=>jump("project"),"exv-node-action"));actions.append(button("PROCESOS "+processes,()=>jump("process"),"exv-node-action"));}
+   card.append(name,values,summary,bar,actions);root.append(card);
+  }
+  $("ex-pane-"+pane).classList.toggle("is-active",activePane===pane);
+ }
+}
 let override=null;
-function render(requested){if(requested)override=requested;syncFilters();const rs=scoped(),c=cut(),v=sum(rs,c),level=override||next();$("ex-root-budget").textContent=money(sum(records,c).budget);
+function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=records.filter(r=>currentPath.every(p=>r[p.key]===p.value)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];$("ex-root-budget").textContent=money(sum(records,c).budget);
 $("ex-budget").textContent=money(v.budget);$("ex-committed").textContent=money(v.committed);$("ex-accrued").textContent=money(v.accrued);$("ex-advance").textContent=money(v.accrued+v.advance);$("ex-rate").textContent=percent(v).toFixed(1)+"%";
-$("ex-branch-label").textContent=branch==="source"?"RAMA FINANCIAMIENTO · "+(level?names[level]:"DETALLE"):branch==="area"?"RAMA ÁREAS · "+(level?names[level]:"DETALLE"):"SELECCIONA UNA RAMA PARA EXPLORAR";
-$("ex-branch-source").classList.toggle("selected",branch==="source");$("ex-branch-area").classList.toggle("selected",branch==="area");
+renderPanes();
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...trail.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",()=>{branch=null;trail=[];override=null;render();},"exv-crumb"));if(branch)crumbs.append(button(branch==="source"?"FINANCIAMIENTO":"ÁREAS",()=>{trail=[];override=null;render();},"exv-crumb"));trail.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>{trail=trail.slice(0,i+1);override=null;render();},"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
 const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>{override=null;enter(level,g.value);},"exv-link"));tr.append(td);body.append(tr);}
-renderChart(rs);$("ex-back").disabled=!trail.length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
+renderChart(rs);$("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
-$("ex-branch-source").addEventListener("click",()=>{override=null;selectBranch("source");});$("ex-branch-area").addEventListener("click",()=>{override=null;selectBranch("area");});$("ex-switch-branch").addEventListener("click",()=>{override=null;branch=branch==="source"?"area":"source";trail=[];render();});
-$("ex-home").addEventListener("click",()=>{for(const id of ["ex-area","ex-source","ex-project"])$(id).value="all";branch=null;trail=[];override=null;render();});
-$("ex-back").addEventListener("click",()=>{if(override){override=null;}else trail.pop();render();});
+for(const pane of ["area","source"])$("ex-reset-"+pane).addEventListener("click",()=>{paneTrails[pane]=[];activePane=pane;override=null;render();});
+$("ex-home").addEventListener("click",()=>{paneTrails.area=[];paneTrails.source=[];activePane="area";override=null;render();});
+$("ex-back").addEventListener("click",()=>{if(override)override=null;else paneTrails[activePane].pop();render();});
 $("ex-cut").addEventListener("change",()=>render());
-for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",()=>{trail=[];override=null;render();});
+for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",()=>render());
 render();
 })();
