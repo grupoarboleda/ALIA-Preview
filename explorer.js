@@ -56,6 +56,68 @@ function goBack(pane){
  override=null;render();
 }
 function goHome(){paneTrails.area=[];paneTrails.source=[];activePane="area";override=null;render();}
+
+// Budget-weighted project map and searchable ranking. Each row is a clickable drill target.
+const projectControls={area:{query:"",sort:"budget",limit:10},source:{query:"",sort:"budget",limit:10}};
+function projectExplorer(pane,root,items,filtered){
+ const control=projectControls[pane],outer=document.createElement("section");outer.className="exv-project-explorer";
+ const tools=document.createElement("div");tools.className="exv-project-toolbar";
+ const heading=document.createElement("strong");heading.textContent="MAPA DE CONCENTRACIÓN · "+items.length+" PROYECTOS";
+ const search=document.createElement("input");search.type="search";search.placeholder="Buscar proyecto…";search.setAttribute("aria-label","Buscar proyecto");search.value=control.query;
+ const sort=document.createElement("select");sort.setAttribute("aria-label","Ordenar proyectos");
+ for(const [key,label] of [["budget","Mayor codificado"],["accrued","Mayor devengado"],["rate","Mayor % devengado"],["risk","Menor % devengado"]]){const option=document.createElement("option");option.value=key;option.textContent=label;sort.append(option);}sort.value=control.sort;
+ const limit=document.createElement("select");limit.setAttribute("aria-label","Cantidad de proyectos");
+ for(const [key,label] of [[10,"Top 10"],[20,"Top 20"],[0,"Todos"]]){const option=document.createElement("option");option.value=String(key);option.textContent=label;limit.append(option);}limit.value=String(control.limit);
+ tools.append(heading,search,sort,limit);
+ const map=document.createElement("div");map.className="exv-project-map";map.setAttribute("aria-label","Mapa de proyectos proporcional al presupuesto codificado");
+ const list=document.createElement("div");list.className="exv-project-ranking";
+ const total=sum(filtered,cut()).budget;
+ const view=()=>{
+  map.replaceChildren();list.replaceChildren();
+  const found=items.filter(g=>g.value.toLocaleLowerCase("es").includes(control.query.toLocaleLowerCase("es")));
+  const sorted=[...found].sort((a,b)=>{
+   const x=sum(a.rows,cut()),y=sum(b.rows,cut());
+   return control.sort==="rate"?percent(y)-percent(x):control.sort==="risk"?percent(x)-percent(y):y[control.sort]-x[control.sort];
+  });
+  const shown=control.limit?sorted.slice(0,control.limit):sorted;
+  const visibleTotal=shown.reduce((n,g)=>n+sum(g.rows,cut()).budget,0);
+  const header=document.createElement("p");header.className="exv-project-caption";
+  header.textContent=shown.length+" de "+items.length+" proyectos · "+(total?((visibleTotal/total)*100).toFixed(1):"0.0")+"% del codificado de esta selección";
+  map.append(header);
+  // Horizontal proportional strips are easier to read than dozens of tiny cards.
+  const strips=document.createElement("div");strips.className="exv-project-strips";
+  const mapItems=[...shown].sort((a,b)=>sum(b.rows,cut()).budget-sum(a.rows,cut()).budget);
+  for(const g of mapItems){
+   const v=sum(g.rows,cut()),share=visibleTotal?100*v.budget/visibleTotal:0;
+   const rect=button(g.value,()=>drillPane(pane,"project",g.value),"exv-project-rect");
+   rect.style.flexGrow=String(Math.max(0.1,v.budget));rect.style.background=percent(v)<35?"#654c52":percent(v)<60?"#17556b":"#166a69";
+   rect.title=g.value+" · Codificado "+money(v.budget)+" · Devengado "+money(v.accrued)+" · "+percent(v).toFixed(1)+"%";
+   rect.setAttribute("aria-label",rect.title);
+   if(share>=8)rect.textContent=g.value+" · "+share.toFixed(1)+"%";
+   else rect.textContent=share.toFixed(0)+"%";
+   strips.append(rect);
+  }
+  map.append(strips);
+  if(!shown.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="No hay proyectos con ese nombre.";map.append(empty);}
+  const listTitle=document.createElement("strong");listTitle.textContent="RANKING · HAZ CLIC PARA VER PROCESOS";list.append(listTitle);
+  for(const [i,g] of shown.entries()){
+   const v=sum(g.rows,cut()),share=total?100*v.budget/total:0;
+   const row=document.createElement("button");row.type="button";row.className="exv-project-row";
+   row.addEventListener("click",()=>drillPane(pane,"project",g.value));
+   row.setAttribute("aria-label","Abrir "+g.value);
+   const rank=document.createElement("span");rank.textContent=String(i+1).padStart(2,"0");
+   const title=document.createElement("span");title.className="exv-project-row-name";title.textContent=g.value;
+   const amount=document.createElement("span");amount.textContent=money(v.budget);
+   const rate=document.createElement("span");rate.textContent=percent(v).toFixed(1)+"% dev.";
+   const bar=document.createElement("span");bar.className="exv-project-row-bar";const fill=document.createElement("span");fill.style.width=share+"%";bar.append(fill);
+   row.append(rank,title,amount,rate,bar);list.append(row);
+  }
+ };
+ search.addEventListener("input",()=>{control.query=search.value;view();});
+ sort.addEventListener("change",()=>{control.sort=sort.value;view();});
+ limit.addEventListener("change",()=>{control.limit=Number(limit.value);view();});
+ outer.append(tools,map,list);root.append(outer);view();
+}
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area","source"]){
@@ -73,6 +135,7 @@ function renderPanes(){
   else if(focus.length){const indicator=document.createElement("span");indicator.className="exv-cross-context";indicator.textContent="FILTRADO POR "+focus.map(p=>p.value).join(" / ");crumb.append(indicator);}
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
+  if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
   for(const item of items){
    const v=sum(item.rows,cut()),p=percent(v);
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
