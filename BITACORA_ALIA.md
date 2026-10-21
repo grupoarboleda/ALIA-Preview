@@ -84,3 +84,9 @@
 - Cada fila presenta código, saldo, etapa y reportes mensuales consecutivos (procesos), o devengado porcentual e intervalos sin incremento (contratos). Orden económico descendente conservado.
 - Gráfica individual incluye aviso `ATENCIÓN GERENCIAL` con orientación de revisión. Todos los estados y avances temporales siguen siendo **DEMO**; no interpretar como datos reales.
 - Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `06a8200`, `bce466c`, `9d0f0d0`. Validación visual local pendiente.
+
+### 2026-10-21 — Mejora visual de curva de procesos
+- Por solicitud y captura de pantalla: sustituir sombreado mensual fragmentado por **bandas continuas agrupadas por etapa**; etiquetar etapa y rango de meses, contar reportes mensuales consecutivos.
+- Mostrar tarjetas de POR PUBLICAR, PUBLICADO, ADJUDICADO y CONTRATADO con períodos y estado actual/superado/pendiente; señalar CORTE y atenuar meses futuros. No dibujar avance de proceso después del corte.
+- Mantener controles para activar/desactivar bandas y curva, y aviso de atención gerencial. Seguimiento temporal sigue siendo **DEMO**, no evidencia real de estancamiento.
+- Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `3035b29`, `4672a78`, `ad3c073`. Pendiente validación visual en ALIA Local.
