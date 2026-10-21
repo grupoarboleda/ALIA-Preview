@@ -298,21 +298,24 @@ function renderTemporal(rs,cutMonth){
   const seed=hash([r.source,r.area,r.project,r.process].join("|"));
   const sep=metricValue(sum([r],9));
   if(m<=9){
-   // Positive, process-specific monthly weights, normalized to the September
-   // value. Distinct distributions preserve the exact total at September.
+   // Strongly differentiated, positive illustrative monthly profiles:
+   // funding sources have distinct disbursement calendars and processes
+   // introduce secondary peaks. All profiles reconcile to September.
+   const primary={BID:3.0,CAF:6.8,"Recursos propios":8.2}[r.source]||5.2;
+   const center=Math.max(1,Math.min(9,primary+((seed>>>5)%7-3)*0.25));
+   const width=1.25+((seed>>>12)%5)*0.22;
+   const secondary=1.5+((seed>>>19)%7);
    const weights=Array.from({length:9},(_,i)=>{
-    const seasonal=0.75+0.5*Math.sin((i+1)*1.65+(seed%19)*0.32);
-    const timing=0.55+((seed>>>4)%11)/10;
-    const trend=0.6+(i/8)*timing;
-    return Math.max(0.1,seasonal*trend);
+    const month=i+1;
+    const main=Math.exp(-0.5*Math.pow((month-center)/width,2));
+    const extra=Math.exp(-0.5*Math.pow((month-secondary)/1.05,2));
+    return 0.035+main*1.8+extra*(0.2+((seed>>>23)%6)*0.07);
    });
    const total=weights.reduce((x,y)=>x+y,0);
    return sep*weights.slice(0,m).reduce((x,y)=>x+y,0)/total;
   }
   const v=metricValue(sum([r],m));
-  // Demonstrative forecast divergence: funding and process mix affect the
-  // projected slope; at the selected cut the curve matches the KPI exactly.
-  const sensitivity=0.7+((seed>>>8)%13)/20;
+  const sensitivity=0.65+((seed>>>8)%16)/20;
   return sep+(v-sep)*sensitivity;
  };
  const raw=months.map((_,i)=>rs.reduce((total,r)=>total+processValue(r,i+1),0));
@@ -347,7 +350,7 @@ function renderTemporal(rs,cutMonth){
  host.append(svgRoot);
  const legend=document.createElement("div");legend.className="exv-temporal-legend";legend.innerHTML='<span><i class="exv-temporal-real"></i>HISTÓRICO SIMULADO</span><span><i class="exv-temporal-future"></i>PROYECCIÓN DEMO</span>';host.append(legend);
  const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>VALOR AL CORTE</small><strong>"+money(baseline)+"</strong>";const right=document.createElement("div");right.innerHTML="<small>ESTIMACIÓN DICIEMBRE</small><strong>"+money(values[11])+"</strong>";info.append(left,right);host.append(info);
- const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Perfiles mensuales sintéticos diferenciados por proceso y fuente; la curva coincide con el valor al corte. La proyección no representa datos oficiales ni un pronóstico estadístico validado.";host.append(note);
+ const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados.";host.append(note);
 }
 
 function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
