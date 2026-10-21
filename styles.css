@@ -605,3 +605,6 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-financial-summary>.exv-summary-projected strong{color:#f0bd70}
 #explorer .exv-financial-summary>.exv-summary-variance strong{color:#e5f8fa}
 @media(max-width:650px){#explorer .exv-contract-variance.exv-financial-summary{grid-template-columns:1fr}#explorer .exv-temporal-info.exv-financial-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Contract physical-progress KPI matches the blue physical progress curve. */
+#explorer .exv-financial-summary>.exv-summary-physical strong{color:#74a9ff}
