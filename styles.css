@@ -608,3 +608,6 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 /* Contract physical-progress KPI matches the blue physical progress curve. */
 #explorer .exv-financial-summary>.exv-summary-physical strong{color:#74a9ff}
+
+/* Area drill-down: managerial balances occupy full width above project cards. */
+#explorer #ex-tree-area>.exv-area-management{grid-column:1/-1;width:100%;box-sizing:border-box;margin-bottom:12px}
