@@ -72,3 +72,9 @@
 - Desglose Top 5 se etiqueta por procesos o contratos según el bloque. Recuento distinto por código de proceso; no por filas. Demo usa contrato diferente por proceso; valores y relaciones siguen siendo sintéticos.
 - Commits: `91e33ee`, `f985d85`, `017f6d0`; archivos: `explorer.js`, `styles.css`, `index.html`.
 - Estado: aplicado en `develop`, pendiente validación visual local. Con datos reales debe comprobarse la correspondencia proceso–contrato y el manejo de compromisos parciales.
+
+### 2026-10-21 — Seguimiento temporal por reportes mensuales
+- Aprobado: no calcular días. La permanencia en una etapa se mide contando reportes mensuales consecutivos con el mismo estado, incluyendo POR PUBLICAR desde asignación presupuestaria.
+- Interacción: desde el ranking de procesos/contratos, `VER EVOLUCIÓN` activa la Rama 02. Proceso: bandas de etapas y avance de gestión; contrato: curvas devengado, avance físico y compromiso. Las bandas y curvas se pueden activar/desactivar.
+- Los estados, meses y porcentajes de la vista nueva son DEMO sintéticos, **no** lecturas de reportes reales. Se requiere conectar snapshots mensuales reales por código de proceso/contrato para validar estancamientos.
+- Archivos: `explorer.js`, `index.html`. Commit principal `bb55941`. Validación visual pendiente.
