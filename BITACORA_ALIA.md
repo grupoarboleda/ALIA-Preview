@@ -154,3 +154,9 @@
 - Se dejó de invocar el explorador antiguo de proyectos en el nivel proyecto, retirando de la interfaz «Mayor oportunidad de seguimiento», simulador de brecha TOP 3, «Proyectos con mayor impacto potencial», treemap y «Prioridad de seguimiento».
 - Se preservó la navegación estándar por tarjetas de proyectos y el panel nuevo de Inteligencia Temporal / seguimiento de contratos y procesos.
 - Archivos: index.html (`5cfc962`), explorer.js (`47872f0`). No se modificaron las fuentes de datos. Validación visual local pendiente; sin publicación pública.
+
+### 2026-10-21 — Reparación: bloques gerenciales por área restaurados
+- Se detectó una regresión introducida al retirar el explorador antiguo de proyectos: desaparecieron también los dos bloques operativos de cada área.
+- Se restituyó `buildManagementInsight(filtered, 'LECTURA GERENCIAL · ÁREA')` cuando Rama 01 está en nivel proyecto después de seleccionar un área. Vuelven SALDO SIN COMPROMETER (procesos) y SALDO SIN DEVENGAR (contratos), con rankings, selección y gráfica temporal de seguimiento.
+- Se conserva el panel GLOBAL independiente, las tarjetas de proyectos y la eliminación del simulador/treemap/ranking antiguos. El bloque gerencial se dispone a ancho completo encima de tarjetas.
+- Archivos: explorer.js (`bb53f5b`), styles.css (`119c923`), index.html (`c1930db`). Validación visual local pendiente; sin publicación pública.
