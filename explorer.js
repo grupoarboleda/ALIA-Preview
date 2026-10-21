@@ -282,15 +282,18 @@ function renderTemporal(rs,cutMonth){
  const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador financiero");
  for(const [key,label] of [["accrued","% Devengado"],["committed","% Comprometido"],["advance","% Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
  picker.value=host.dataset.metric||"accrued";picker.addEventListener("change",()=>{host.dataset.metric=picker.value;renderTemporal(rs,cutMonth);});
- const unitPicker=document.createElement("div");unitPicker.className="exv-temporal-unit-toggle";unitPicker.setAttribute("role","group");unitPicker.setAttribute("aria-label","Unidad de la gráfica");
+ const unitPicker=document.createElement("div");unitPicker.className="exv-temporal-unit-toggle";unitPicker.setAttribute("role","group");unitPicker.setAttribute("aria-label","Seleccionar porcentaje o dólares");
  const activeUnit=host.dataset.unit||"percent";
  for(const [key,label] of [["percent","%"],["usd","USD"]]){
   const choice=document.createElement("button");choice.type="button";choice.className="exv-temporal-unit-choice";choice.textContent=label;
-  choice.setAttribute("aria-pressed",String(activeUnit===key));choice.title=key==="percent"?"Porcentaje del codificado":"Dólares acumulados";
-  choice.addEventListener("click",()=>{if(host.dataset.unit===key)return;host.dataset.unit=key;renderTemporal(rs,cutMonth);});
+  const selected=activeUnit===key;choice.setAttribute("aria-pressed",String(selected));
+  choice.style.cssText="display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;min-width:60px;min-height:36px;padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:800;font-size:13px;border:1px solid "+(selected?"#64ead5":"#45738a")+";background:"+(selected?"#1c6973":"#102c3c")+";color:"+(selected?"#ffffff":"#b7d7e4")+";";
+  choice.addEventListener("click",()=>{host.dataset.unit=key;renderTemporal(rs,cutMonth);});
   unitPicker.append(choice);
  }
- const controls=document.createElement("div");controls.className="exv-temporal-controls";controls.append(picker,unitPicker);
+ const controls=document.createElement("div");controls.className="exv-temporal-controls";controls.style.cssText="display:flex!important;visibility:visible!important;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;";
+ unitPicker.style.cssText="display:inline-flex!important;visibility:visible!important;gap:5px;padding:3px;border:1px solid #3c7185;border-radius:9px;background:#081d2a;";
+ controls.append(picker,unitPicker);
  const context=document.createElement("div");context.className="exv-temporal-context";
  const tags=[...paneTrails[activePane].map(p=>p.value)];
  if(selectedFunding)tags.push(selectedFunding);
