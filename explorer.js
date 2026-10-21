@@ -272,7 +272,7 @@ function renderPanes(){
   const filtered=fundingScope(filterBy(records,focus));
   const root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
   root.replaceChildren();crumb.replaceChildren();
-  const priorGlobal=root.parentElement.querySelector(".exv-unit-management");if(priorGlobal)priorGlobal.remove();
+  root.parentElement.querySelectorAll(".exv-unit-management,.exv-unit-management-trigger").forEach(el=>el.remove());
   const back=$("ex-back-"+pane);
   if(back)back.disabled=!isFocused||!own.length;
   const rootLabel=pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO";
@@ -284,12 +284,27 @@ function renderPanes(){
   const treemap=pane==="area"&&level==="area"&&items.length>1;
   root.classList.toggle("exv-area-treemap",treemap);
   if(pane==="area"&&level==="area"&&isFocused){
-   const globalPanel=buildManagementInsight(filtered,"CONTROL GERENCIAL · TODA LA UNIDAD").insight;
-   globalPanel.classList.add("exv-unit-management");
-   const heading=document.createElement("p");heading.className="exv-unit-management-caption";
-   heading.textContent="TODAS LAS ÁREAS · Selecciona un saldo para ver los procesos o contratos prioritarios de la unidad.";
-   globalPanel.insertBefore(heading,globalPanel.children[1]);
-   root.parentElement.insertBefore(globalPanel,root);
+   const wrapper=root.parentElement;
+   const trigger=button("",()=>{
+    unitManagementOpen=!unitManagementOpen;
+    trigger.setAttribute("aria-expanded",String(unitManagementOpen));
+    trigger.querySelector(".exv-unit-trigger-arrow").textContent=unitManagementOpen?"▴":"▾";
+    panel.hidden=!unitManagementOpen;
+   },"exv-unit-management-trigger");
+   trigger.setAttribute("aria-expanded",String(unitManagementOpen));
+   trigger.setAttribute("aria-controls","exv-unit-global-detail");
+   const left=document.createElement("span");left.className="exv-unit-trigger-copy";
+   const name=document.createElement("strong");name.textContent="◉ GLOBAL · TODA LA UNIDAD";
+   const subtitle=document.createElement("small");subtitle.textContent="Saldos pendientes de procesos y contratos · Todas las áreas";
+   left.append(name,subtitle);
+   const arrow=document.createElement("span");arrow.className="exv-unit-trigger-arrow";arrow.textContent=unitManagementOpen?"▴":"▾";
+   trigger.append(left,arrow);
+   const panel=buildManagementInsight(filtered,"LECTURA GERENCIAL · TODA LA UNIDAD").insight;
+   panel.id="exv-unit-global-detail";
+   panel.classList.add("exv-unit-management");
+   panel.hidden=!unitManagementOpen;
+   wrapper.insertBefore(trigger,root);
+   wrapper.insertBefore(panel,root);
   }
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
@@ -327,6 +342,7 @@ function renderPanes(){
 }
 
 let selectedManagement=null;
+let unitManagementOpen=false;
 function renderTemporal(rs,cutMonth){
  if(selectedManagement){renderManagementTemporal(rs,cutMonth);return;}
  const host=$("ex-pane-source");if(!host)return;
