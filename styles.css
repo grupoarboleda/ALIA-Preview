@@ -215,3 +215,23 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>strong{margin-top:2px!important}
 #explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>.exv-kpi-meta{margin-top:auto!important}
 @media(max-width:520px){#explorer .exv-structure>.exv-kpis-compact .exv-kpi-card>.exv-kpi-icon{width:36px!important;height:36px!important;max-width:36px!important;max-height:36px!important}}
+
+/* Project exploration replaces repetitive cards with weighted map + ranking */
+.exv-project-explorer{width:100%;min-width:0;display:grid;gap:12px}
+.exv-project-toolbar{display:grid;grid-template-columns:1fr minmax(120px,1fr) minmax(115px,.7fr) 90px;gap:7px;align-items:center}
+.exv-project-toolbar>strong{font:700 11px/1.5 Consolas,monospace;color:#a9ebed}
+.exv-project-toolbar input,.exv-project-toolbar select{min-width:0;width:100%;box-sizing:border-box;background:#0b2a3d;border:1px solid #3a758a;border-radius:2px;padding:9px;color:#d8f7fa;font:11px Consolas,monospace}
+.exv-project-map{border:1px solid #397c90;background:#081f30;padding:10px;min-width:0}
+.exv-project-caption{margin:0 0 9px;font:10px/1.5 Consolas,monospace;color:#8fc6d4}
+.exv-project-strips{display:flex;min-height:140px;gap:3px;overflow:hidden}
+.exv-project-rect{appearance:none;border:1px solid #438f9a;min-width:12px;flex-basis:0;min-height:140px;padding:9px;color:#f0ffff;text-align:left;font:700 10px/1.4 Consolas,monospace;overflow:hidden;overflow-wrap:anywhere;cursor:pointer;transition:filter .2s}
+.exv-project-rect:hover,.exv-project-rect:focus-visible{filter:brightness(1.35);outline:2px solid #a5f8ec;outline-offset:-2px}
+.exv-project-ranking{display:grid;gap:4px;min-width:0;max-height:430px;overflow-y:auto}
+.exv-project-ranking>strong{font:700 10px Consolas,monospace;color:#8fd4e1;padding:7px 0}
+.exv-project-row{display:grid;grid-template-columns:26px minmax(100px,1fr) 100px 77px;gap:6px;align-items:center;position:relative;text-align:left;min-width:0;padding:11px 7px 14px;background:#0c3146;border:1px solid #285c72;color:#d7f4f9;font:11px Consolas,monospace;cursor:pointer}
+.exv-project-row:hover,.exv-project-row:focus-visible{background:#15516a;border-color:#80dfeb;outline-offset:1px}
+.exv-project-row-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exv-project-row-bar{position:absolute;left:7px;right:7px;bottom:4px;height:3px;background:#173d50}
+.exv-project-row-bar>span{display:block;height:100%;background:#55cdd3}
+@media(max-width:1280px){.exv-project-toolbar{grid-template-columns:1fr 1fr}.exv-project-toolbar>strong{grid-column:1/-1}}
+@media(max-width:600px){.exv-project-row{grid-template-columns:20px minmax(60px,1fr) 82px 58px;font-size:9px}.exv-project-toolbar{grid-template-columns:1fr 1fr}.exv-project-strips,.exv-project-rect{min-height:115px}}
