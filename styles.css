@@ -585,3 +585,12 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-contract-variance strong{font:700 20px Consolas,monospace;color:#e5f8fa}
 @media(max-width:600px){#explorer .exv-contract-variance{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){#explorer .exv-temporal-svg .exv-trend-animated,#explorer .exv-temporal-svg .exv-trend-point{animation:none!important}}
+
+/* Clearly separated contract series legend */
+#explorer .exv-contract-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin:14px 0 12px;color:#b8d9e5;font:700 10px/1.5 Consolas,monospace}
+#explorer .exv-contract-legend-entry{display:inline-flex;align-items:center;gap:8px;white-space:normal}
+#explorer .exv-contract-legend-entry i{display:inline-block;width:25px;min-width:25px;height:0}
+#explorer .exv-contract-legend-entry span{display:inline}
+#explorer .exv-temporal-svg .exv-trend-point{animation-name:exv-trend-point-appear;animation-timing-function:step-end;animation-fill-mode:both}
+@keyframes exv-trend-point-appear{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#explorer .exv-temporal-svg .exv-trend-point{animation:none!important}}
