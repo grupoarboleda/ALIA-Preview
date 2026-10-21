@@ -313,7 +313,15 @@ function renderPanes(){
   }
   if(!(pane==="area"&&level==="area"&&isFocused))root.hidden=false;
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
-  // Project level uses standard drill cards; legacy scenario, ranking and project map are retired.
+  // Keep the managerial balances at area drill-down. Only the obsolete
+  // project impact map, scenario slider and ranking were retired.
+  if(pane==="area"&&level==="project"&&isFocused&&filtered.length){
+   const areaName=path.find(p=>p.key==="area")?.value||"ÁREA";
+   const management=buildManagementInsight(filtered,"LECTURA GERENCIAL · "+areaName.toUpperCase()).insight;
+   management.classList.add("exv-area-management");
+   root.append(management);
+  }
+  // Standard project cards remain available below the restored managerial balances.
   for(const [index,item] of items.entries()){
    const v=sum(item.rows,cut()),p=percent(v);
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
