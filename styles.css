@@ -572,3 +572,16 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 /* Hide the entire area treemap while the unit-wide managerial detail is expanded. */
 #explorer .exv-area-treemap[hidden],#explorer #ex-tree-area[hidden]{display:none!important}
+
+/* Automatic one-time drawing on opening a process or contract; no manual next-month button. */
+#explorer .exv-temporal-svg .exv-trend-animated{animation:exv-trend-reveal 3s ease-in-out both}
+#explorer .exv-temporal-svg .exv-trend-point{animation:exv-trend-point-appear 2.8s ease-in-out both}
+#explorer .exv-temporal-svg .exv-trend-reference{animation-duration:1.3s}
+@keyframes exv-trend-reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes exv-trend-point-appear{from{opacity:0}to{opacity:1}}
+#explorer .exv-contract-variance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+#explorer .exv-contract-variance>div{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #345c70;border-radius:6px;background:#0e3043}
+#explorer .exv-contract-variance small{font:700 10px Consolas,monospace;color:#9acbd5}
+#explorer .exv-contract-variance strong{font:700 20px Consolas,monospace;color:#e5f8fa}
+@media(max-width:600px){#explorer .exv-contract-variance{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#explorer .exv-temporal-svg .exv-trend-animated,#explorer .exv-temporal-svg .exv-trend-point{animation:none!important}}
