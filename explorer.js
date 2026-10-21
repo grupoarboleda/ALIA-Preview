@@ -321,7 +321,13 @@ function renderPanes(){
    management.classList.add("exv-area-management");
    root.append(management);
   }
-  // Standard project cards remain available below the restored managerial balances.
+  // At area selection, the management balances are the only actionable cards.
+  // Processes and contracts are selected from their rankings, not project tiles.
+  if(pane==="area"&&level==="project"&&isFocused){
+   $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
+   continue;
+  }
+  // Standard drill cards remain available at other navigation levels.
   for(const [index,item] of items.entries()){
    const v=sum(item.rows,cut()),p=percent(v);
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
