@@ -95,7 +95,7 @@ function projectExplorer(pane,root,items,filtered){
  const balanceStats=type=>{
   const eligible=balanceRows.filter(r=>r[type]>0);
   return {rows:eligible,amount:eligible.reduce((v,r)=>v+r[type],0),
-   projects:new Set(eligible.map(r=>r.project)).size,
+   projects:new Set(eligible.map(r=>r.contract||r.process)).size,
    processes:new Set(eligible.map(r=>r.project+"\u0001"+r.process)).size};
  };
 
@@ -107,11 +107,11 @@ function projectExplorer(pane,root,items,filtered){
  const detailTable=document.createElement("div");detailTable.className="exv-balance-table";
  detail.append(detailHead,detailTable);
  function showBalance(type,label){
-  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 PROYECTOS PRIORITARIOS";detailTable.replaceChildren();
+  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 CONTRATOS / PROCESOS";detailTable.replaceChildren();
   insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
   const entries=balanceStats(type).rows;
   const byProject=new Map();
-  for(const r of entries){if(!byProject.has(r.project))byProject.set(r.project,[]);byProject.get(r.project).push(r);}
+  for(const r of entries){const entity=r.contract||r.process;if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
   const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
   note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+" proyectos · "+entries.length+" registros con saldo. Un proyecto puede figurar en ambos bloques.";
@@ -151,7 +151,7 @@ function projectExplorer(pane,root,items,filtered){
   const small=document.createElement("small");small.textContent=label+" ↗";
   const strong=document.createElement("strong");strong.textContent=money(stats.amount);
   const counts=document.createElement("span");counts.className="exv-balance-counts";
-  counts.textContent=stats.projects+" PROYECTO"+(stats.projects===1?"":"S")+" · "+stats.processes+" PROCESO"+(stats.processes===1?"":"S");
+  counts.textContent=stats.projects+" CONTRATO/PROCESO"+(stats.projects===1?"":"S")+" · "+stats.processes+" PROCESO"+(stats.processes===1?"":"S");
   const formula=document.createElement("span");formula.className="exv-balance-formula";formula.textContent=description;
   card.append(small,strong,counts,formula);
   card.addEventListener("click",()=>showBalance(type,label));insightMetrics.append(card);
