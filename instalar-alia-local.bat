@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "DEST=%USERPROFILE%\ALIA-Local"
+set "DEST=C:\Users\noemi\Documents\2. GRUPO ARBOLEDA\7. ALIA CORP"
 where git >nul 2>nul
 if errorlevel 1 (
  echo Git no esta instalado. Instala Git for Windows desde https://git-scm.com/download/win
