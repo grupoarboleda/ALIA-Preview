@@ -448,3 +448,34 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
  #explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important}
  #explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values b{font-size:10px!important}
 }
+
+/* Treemap visual balance v3: compact canvas and vertically distributed card content. */
+#explorer #ex-tree-area.exv-area-treemap{height:420px!important;min-height:420px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node{
+  padding:clamp(12px,1.2vw,18px)!important;
+  gap:0!important;
+  justify-content:flex-start!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node>strong{
+  margin-bottom:12px!important;font-size:clamp(15px,1.2vw,18px)!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-values{margin-bottom:12px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-foot{
+  margin-top:auto!important;padding-top:10px!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact{
+  padding:10px 14px!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact>strong{
+  margin-bottom:7px!important;font-size:14px!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values{
+  margin-bottom:6px!important;gap:8px!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values small{font-size:8px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values b{font-size:13px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-summary{margin-bottom:5px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-foot{padding-top:6px!important}
+@media(max-width:720px){
+ #explorer #ex-tree-area.exv-area-treemap{height:480px!important;min-height:480px!important}
+}
