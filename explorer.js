@@ -12,7 +12,7 @@ const records=[
 ["Comercial","Recursos propios","Medición inteligente","PROC-006",370000,310000,190000,11000],
 ["Distribución","CAF","Rehabilitación de alimentadores","PROC-007",800000,640000,390000,34000],
 ["Distribución","Recursos propios","Rehabilitación de alimentadores","PROC-008",650000,490000,360000,18000]
-].map(([area,source,project,process,budget,committed,accrued,advance])=>({area,source,project,process,budget,committed,accrued,advance}));
+].map(([area,source,project,process,budget,committed,accrued,advance])=>({area,source,project,process,contract:({"PROC-001":"CT-DEMO-01","PROC-007":"CT-DEMO-01"}[process]||null),budget,committed,accrued,advance}));
 const factors={9:[1,1],10:[1.02,1.12],11:[1.04,1.22],12:[1.055,1.32]};
 const names={source:"Fuente de financiamiento",area:"Área",project:"Proyecto",process:"Proceso"};
 let branch=null,trail=[];
