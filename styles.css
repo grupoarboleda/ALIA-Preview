@@ -252,3 +252,18 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-project-gap{color:#f5c49b!important;text-align:right!important}
 @media(max-width:1200px){#explorer .exv-project-toolbar{grid-template-columns:1fr 1fr!important}#explorer .exv-project-toolbar>strong{grid-column:1/-1}#explorer .exv-project-row{grid-template-columns:24px minmax(75px,1fr) 95px 68px!important}#explorer .exv-project-gap{grid-column:2/-1;text-align:left!important}}
 @media(max-width:550px){#explorer .exv-project-row{grid-template-columns:20px minmax(65px,1fr) 78px!important}#explorer .exv-project-row>span:nth-child(4){grid-column:2}#explorer .exv-project-gap{grid-column:3!important;font-size:9px!important}}
+
+/* Executive decision intelligence: compact, contextual and clearly hypothetical */
+#explorer .exv-management-insight{display:grid;gap:11px;padding:16px;border:1px solid #398a91;background:linear-gradient(135deg,#0d3042,#0b2536);min-width:0}
+#explorer .exv-management-insight h3{margin:0;color:#8cebd7;font:700 12px/1.5 Consolas,monospace;letter-spacing:.5px}
+#explorer .exv-management-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#explorer .exv-management-metrics>div{display:grid;gap:6px;min-width:0;padding:10px;background:#102f43;border:1px solid #285b70}
+#explorer .exv-management-metrics small{font:10px/1.4 Consolas,monospace;color:#95c7d1}
+#explorer .exv-management-metrics strong{font:700 clamp(13px,1.3vw,19px)/1.3 Consolas,monospace;color:#efffff;overflow-wrap:anywhere}
+#explorer .exv-management-advice{margin:0;color:#c4e9ee;font:11px/1.7 Consolas,monospace}
+#explorer .exv-management-scenario{display:grid;gap:8px;border-top:1px solid #2d6276;padding-top:12px}
+#explorer .exv-management-scenario label{font:700 10px/1.5 Consolas,monospace;color:#93dfe0}
+#explorer .exv-management-scenario input[type=range]{width:100%;height:18px;accent-color:#6de7c5;cursor:pointer}
+#explorer .exv-management-result{font:700 11px/1.6 Consolas,monospace;color:#90f1d3}
+#explorer .exv-management-disclaimer{font:10px/1.5 Consolas,monospace;color:#92adbb}
+@media(max-width:550px){#explorer .exv-management-metrics{grid-template-columns:1fr}}
