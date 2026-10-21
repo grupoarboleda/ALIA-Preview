@@ -143,3 +143,8 @@
 - Se conserva el formato estándar de la gráfica temporal, selectores de indicador y %/USD, línea CORTE y tarjetas VALOR AL CORTE y PROYECCIÓN DICIEMBRE. El contexto identifica explícitamente TOTAL UNIDAD ESMERALDAS.
 - Al cerrar GLOBAL se restaura la gráfica del contexto anterior; el panel de áreas vuelve a mostrarse. Se mantiene la capacidad de seleccionar un proceso o contrato en los bloques globales.
 - Archivos: explorer.js (e0be73c), index.html (caché actualizado). Datos DEMO; pendiente validación visual; sin despliegue público.
+
+### 2026-10-21 — Avance físico reemplaza desviación vs plan en contratos
+- Solicitado: sustituir tercera tarjeta DESVIACIÓN VS PLAN por AVANCE FÍSICO al mes de reporte.
+- Implementado: tercera tarjeta AVANCE FÍSICO · MES muestra `physical[current]` en %, independientemente del selector USD/%; color azul correspondiente a la curva física. Sin cambios en las dos tarjetas financieras ni en las curvas.
+- Datos físicos siguen simulados (DEMO) hasta conectar registros reales. Archivos: explorer.js (`885166f`), styles.css (`c537a1c`), index.html (`55f2a6c`). Validación visual pendiente. Sin publicación pública.
