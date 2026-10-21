@@ -532,3 +532,11 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-balance-info:hover,#explorer .exv-balance-info:focus-visible{color:#fff;border-color:#6ee6d4;outline-offset:2px}
 #explorer .exv-balance-explanation{display:block;margin-top:5px;padding:10px 12px;padding-right:30px;background:#0b2232;border:1px solid #416477;border-radius:8px;font-size:12px;line-height:1.55;color:#d3e9f1}
 #explorer .exv-balance-explanation[hidden]{display:none}
+
+/* Direct management selection, replacing project-based accordion drilldown */
+#explorer .exv-balance-ranking{display:flex;flex-direction:column;gap:7px}
+#explorer .exv-management-item{display:flex;flex-direction:column;gap:8px;width:100%;padding:13px 15px;text-align:left;border:1px solid #34617a;border-radius:8px;background:#0e3043;color:#d6f5fc;cursor:pointer}
+#explorer .exv-management-item:hover,#explorer .exv-management-item[aria-pressed="true"]{border-color:#67e9d5;background:#184a5e}
+#explorer .exv-management-item-top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
+#explorer .exv-management-item-status{font-size:12px;color:#9bd7dd}
+#explorer .exv-management-attention{padding:12px 14px;border-left:3px solid #efc278;background:#123549;color:#d5eaf2;font-size:12px;line-height:1.5}
