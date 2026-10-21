@@ -191,13 +191,13 @@ function renderFundingComposition(rows){
   const progress=document.createElement("div");progress.className="exv-source-execution";
   const fill=document.createElement("div");fill.className="exv-source-execution-fill";fill.style.width=Math.max(0,Math.min(100,execution))+"%";
   progress.append(fill);part.append(progress);
-  const rate=document.createElement("span");rate.className="exv-source-execution-rate";rate.textContent=execution.toFixed(1)+"% dev.";part.append(rate);
+  const rate=document.createElement("span");rate.className="exv-source-execution-rate";rate.textContent="DEVENGADO "+execution.toFixed(1)+"%";part.append(rate);
   part.title+=" · DEVENGADO "+money(figures.accrued)+" · EJECUCIÓN "+execution.toFixed(1)+"%";part.setAttribute("aria-label",part.title);
   track.append(part);
   const item=document.createElement("div");item.className="exv-source-legend-item";
   const dot=document.createElement("i");dot.style.background=color;
   const label=document.createElement("span");label.textContent=g.value;
-  const amount=document.createElement("strong");amount.textContent=money(budget)+" · "+share.toFixed(1)+"%";
+  const amount=document.createElement("strong");amount.textContent=money(budget)+" · "+share.toFixed(1)+"% DEL TOTAL · EJEC. "+execution.toFixed(1)+"%";
   item.append(dot,label,amount);legend.append(item);
  }
  if(!grouped.length||!total){const empty=document.createElement("span");empty.textContent="SIN PRESUPUESTO PARA ESTA SELECCIÓN";track.append(empty);}
