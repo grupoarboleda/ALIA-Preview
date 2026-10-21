@@ -70,21 +70,11 @@ function goHome(){
 
 // Budget-weighted project map and searchable ranking. Each row is a clickable drill target.
 const projectControls={area:{query:"",sort:"gap",limit:10},source:{query:"",sort:"gap",limit:10}};
-function projectExplorer(pane,root,items,filtered){
- const control=projectControls[pane],outer=document.createElement("section");outer.className="exv-project-explorer";
- const tools=document.createElement("div");tools.className="exv-project-toolbar";
- const heading=document.createElement("strong");heading.textContent="PROYECTOS CON MAYOR IMPACTO POTENCIAL · "+items.length;
- const search=document.createElement("input");search.type="search";search.placeholder="Buscar proyecto…";search.setAttribute("aria-label","Buscar proyecto");search.value=control.query;
- const sort=document.createElement("select");sort.setAttribute("aria-label","Ordenar proyectos");
- for(const [key,label] of [["gap","Mayor brecha de ejecución"],["budget","Mayor codificado"],["accrued","Mayor devengado"],["rate","Mayor % devengado"],["risk","Menor % devengado"]]){const option=document.createElement("option");option.value=key;option.textContent=label;sort.append(option);}sort.value=control.sort;
- const limit=document.createElement("select");limit.setAttribute("aria-label","Cantidad de proyectos");
- for(const [key,label] of [[10,"Top 10"],[20,"Top 20"],[0,"Todos"]]){const option=document.createElement("option");option.value=String(key);option.textContent=label;limit.append(option);}limit.value=String(control.limit);
- tools.append(heading,search,sort,limit);
- const map=document.createElement("div");map.className="exv-project-map";map.setAttribute("aria-label","Mapa de proyectos proporcional al presupuesto codificado");
+function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?"){
  const insight=document.createElement("section");insight.className="exv-management-insight";insight.setAttribute("aria-label","Análisis de prioridad gerencial");
- const baseline=sum(filtered,cut()),gaps=items.map(g=>({name:g.value,...sum(g.rows,cut())})).map(g=>({...g,gap:Math.max(0,g.budget-g.accrued)})).sort((a,b)=>b.gap-a.gap);
+ const baseline=sum(filtered,cut()),gaps=groups(filtered,"project").map(g=>({name:g.value,...sum(g.rows,cut())})).map(g=>({...g,gap:Math.max(0,g.budget-g.accrued)})).sort((a,b)=>b.gap-a.gap);
  const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
- const insightTitle=document.createElement("h3");insightTitle.textContent="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?";
+ const insightTitle=document.createElement("h3");insightTitle.textContent=heading;
  const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
  // Independent budget gaps; a project/process can belong to both categories.
  const balanceRows=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};});
@@ -95,7 +85,7 @@ function projectExplorer(pane,root,items,filtered){
  const balanceStats=type=>{
   const eligible=balanceRows.filter(r=>r[type]>0);
   return {rows:eligible,amount:eligible.reduce((v,r)=>v+r[type],0),
-   projects:new Set(eligible.map(r=>r.process)).size,
+   projects:new Set(eligible.map(r=>type==="uncommitted"?r.process:(r.contract||r.process))).size,
    processes:new Set(eligible.map(r=>r.process)).size};
  };
 
@@ -166,6 +156,20 @@ function projectExplorer(pane,root,items,filtered){
   card.addEventListener("click",()=>showBalance(type,label));insightMetrics.append(card);
  }
  insight.append(insightTitle,insightMetrics,detail);
+ return {insight,baseline,gaps,totalGap,top3,topGap};
+}
+function projectExplorer(pane,root,items,filtered){
+ const control=projectControls[pane],outer=document.createElement("section");outer.className="exv-project-explorer";
+ const tools=document.createElement("div");tools.className="exv-project-toolbar";
+ const heading=document.createElement("strong");heading.textContent="PROYECTOS CON MAYOR IMPACTO POTENCIAL · "+items.length;
+ const search=document.createElement("input");search.type="search";search.placeholder="Buscar proyecto…";search.setAttribute("aria-label","Buscar proyecto");search.value=control.query;
+ const sort=document.createElement("select");sort.setAttribute("aria-label","Ordenar proyectos");
+ for(const [key,label] of [["gap","Mayor brecha de ejecución"],["budget","Mayor codificado"],["accrued","Mayor devengado"],["rate","Mayor % devengado"],["risk","Menor % devengado"]]){const option=document.createElement("option");option.value=key;option.textContent=label;sort.append(option);}sort.value=control.sort;
+ const limit=document.createElement("select");limit.setAttribute("aria-label","Cantidad de proyectos");
+ for(const [key,label] of [[10,"Top 10"],[20,"Top 20"],[0,"Todos"]]){const option=document.createElement("option");option.value=String(key);option.textContent=label;limit.append(option);}limit.value=String(control.limit);
+ tools.append(heading,search,sort,limit);
+ const map=document.createElement("div");map.className="exv-project-map";map.setAttribute("aria-label","Mapa de proyectos proporcional al presupuesto codificado");
+ const {insight,baseline,gaps,totalGap,top3,topGap}=buildManagementInsight(filtered);
 
  const advice=document.createElement("p");advice.className="exv-management-advice";
  advice.textContent=top3.length&&topGap>0?"Mayor oportunidad de seguimiento: "+top3.map(g=>g.name).join(" · ")+". Concentran "+(100*topGap/totalGap).toFixed(1)+"% del saldo por devengar. Analizar por separado el saldo por comprometer y los compromisos pendientes de devengar.":"Sin brechas positivas de ejecución en la selección actual.";
@@ -278,6 +282,14 @@ function renderPanes(){
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
   const treemap=pane==="area"&&level==="area"&&items.length>1;
   root.classList.toggle("exv-area-treemap",treemap);
+  if(pane==="area"&&level==="area"&&isFocused){
+   const globalPanel=buildManagementInsight(filtered,"CONTROL GERENCIAL · TODA LA UNIDAD").insight;
+   globalPanel.classList.add("exv-unit-management");
+   const heading=document.createElement("p");heading.className="exv-unit-management-caption";
+   heading.textContent="TODAS LAS ÁREAS · Selecciona un saldo para ver los procesos o contratos prioritarios de la unidad.";
+   globalPanel.insertBefore(heading,globalPanel.children[1]);
+   root.append(globalPanel);
+  }
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
   for(const [index,item] of items.entries()){
