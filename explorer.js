@@ -611,8 +611,8 @@ function renderManagementTemporal(rs,cutMonth){
    const current=Math.max(0,Math.min(11,cutMonth-1));
    const forecastDecember=Math.min(100,Math.max(0,metricActual[current]+metricPlan[11]-metricPlan[current]));
    const fmt=v=>unitChoice==="usd"?money(commit*v/100):v+"%";
-   for(const [label,value] of [["VALOR AL CORTE",fmt(metricActual[current])],["PROYECCIÓN DICIEMBRE",fmt(forecastDecember)],["DESVIACIÓN VS PLAN · "+months[current],unitChoice==="usd"?money(commit*(metricActual[current]-metricPlan[current])/100):(metricActual[current]-metricPlan[current])+" pp"]]){
-    const box=document.createElement("div");box.className="exv-summary-card "+(label==="VALOR AL CORTE"?"exv-summary-real":label==="PROYECCIÓN DICIEMBRE"?"exv-summary-projected":"exv-summary-variance");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
+   for(const [label,value] of [["VALOR AL CORTE",fmt(metricActual[current])],["PROYECCIÓN DICIEMBRE",fmt(forecastDecember)],["AVANCE FÍSICO · "+months[current],physical[current].toFixed(1)+"%"]]){
+    const box=document.createElement("div");box.className="exv-summary-card "+(label==="VALOR AL CORTE"?"exv-summary-real":label==="PROYECCIÓN DICIEMBRE"?"exv-summary-projected":"exv-summary-physical");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
    }
    chart.append(kpis);
   }
