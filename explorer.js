@@ -290,6 +290,7 @@ function renderPanes(){
     trigger.setAttribute("aria-expanded",String(unitManagementOpen));
     trigger.querySelector(".exv-unit-trigger-arrow").textContent=unitManagementOpen?"▴":"▾";
     panel.hidden=!unitManagementOpen;
+    root.hidden=unitManagementOpen;
    },"exv-unit-management-trigger");
    trigger.setAttribute("aria-expanded",String(unitManagementOpen));
    trigger.setAttribute("aria-controls","exv-unit-global-detail");
@@ -303,9 +304,11 @@ function renderPanes(){
    panel.id="exv-unit-global-detail";
    panel.classList.add("exv-unit-management");
    panel.hidden=!unitManagementOpen;
+   root.hidden=unitManagementOpen;
    wrapper.insertBefore(trigger,root);
    wrapper.insertBefore(panel,root);
   }
+  if(!(pane==="area"&&level==="area"&&isFocused))root.hidden=false;
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
   for(const [index,item] of items.entries()){
