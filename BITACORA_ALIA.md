@@ -97,3 +97,8 @@
 - Se reutiliza `buildManagementInsight` para conservar las mismas reglas y experiencia en nivel Unidad y nivel Área. Se respetan filtros de área, fuente, proyecto y corte; los importes se agregan por asignaciones y los códigos se cuentan una vez.
 - Archivos: `explorer.js`, `styles.css`, `index.html`. Commits: `37779f2`, `e989c50`, `d2ce616`, `2ad0c50`.
 - Estado: código guardado en `develop`, validación visual local pendiente; datos y evolución siguen siendo DEMO. No se realizó despliegue público.
+
+### 2026-10-21 — Barra GLOBAL desplegable en nivel Empresa
+- El usuario rechazó dos tarjetas globales permanentemente visibles sobre el mosaico de áreas. Nuevo diseño: **una sola barra horizontal `GLOBAL · TODA LA UNIDAD`**, cerrada inicialmente; clic despliega/oculta los dos indicadores y rankings existentes de procesos y contratos.
+- El mosaico de áreas permanece visible y sin modificaciones de jerarquía. La apertura persiste en rerenderizados del mismo nivel. Datos y curvas siguen siendo DEMO.
+- Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `30f9ec5`, `af348f4`, `ac75117`. Pendiente validación visual local; sin despliegue público.
