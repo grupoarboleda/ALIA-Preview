@@ -479,3 +479,27 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 @media(max-width:720px){
  #explorer #ex-tree-area.exv-area-treemap{height:480px!important;min-height:480px!important}
 }
+
+/* Temporal intelligence module — demo history and forecast, synced with explorer scope */
+#explorer #ex-pane-source.exv-temporal-pane{
+ display:flex!important;flex-direction:column!important;min-height:420px!important;
+ padding:20px!important;background:linear-gradient(145deg,#0b2639,#071928)!important;
+ border:1px solid #2d7086!important;gap:12px!important;
+}
+#explorer .exv-temporal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#explorer .exv-temporal-eyebrow{display:block;color:#7dc8d8;font:700 10px Consolas,monospace;letter-spacing:.08em}
+#explorer .exv-temporal-head h3{margin:10px 0 5px;color:#e4faff;font:800 17px/1.2 system-ui,sans-serif}
+#explorer .exv-temporal-head p{margin:0;color:#8eb7c9;font:12px system-ui,sans-serif}
+#explorer .exv-temporal-picker{background:#102f43;color:#e2fbff;border:1px solid #38748a;padding:9px 10px;font:700 11px Consolas,monospace;max-width:100%}
+#explorer .exv-temporal-svg{display:block;width:100%;height:auto;max-height:320px;overflow:visible}
+#explorer .exv-temporal-legend{display:flex;flex-wrap:wrap;gap:16px;color:#a9d0df;font:700 10px Consolas,monospace}
+#explorer .exv-temporal-legend span{display:inline-flex;align-items:center;gap:7px}
+#explorer .exv-temporal-legend i{display:inline-block;width:23px;border-top:3px solid #62ebd1}
+#explorer .exv-temporal-legend .exv-temporal-future{border-color:#f0bd70;border-top-style:dashed}
+#explorer .exv-temporal-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid #24536a;padding-top:12px}
+#explorer .exv-temporal-info>div{min-width:0;display:flex;flex-direction:column;gap:7px}
+#explorer .exv-temporal-info small{font:700 9px Consolas,monospace;color:#89bdcb}
+#explorer .exv-temporal-info strong{font:700 clamp(15px,1.5vw,22px) Consolas,monospace;color:#d8f8ff;overflow-wrap:anywhere}
+#explorer .exv-temporal-info>div:last-child strong{color:#f0c88c}
+#explorer .exv-temporal-note{margin:0;color:#88b4c6;font:10px/1.5 system-ui,sans-serif}
+@media(max-width:680px){#explorer #ex-pane-source.exv-temporal-pane{padding:13px!important}.exv-temporal-head{flex-direction:column}}
