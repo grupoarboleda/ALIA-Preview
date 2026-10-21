@@ -75,11 +75,11 @@ function projectExplorer(pane,root,items,filtered){
  const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
  const insightTitle=document.createElement("h3");insightTitle.textContent="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?";
  const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
- for(const [label,value] of [["BRECHA TOTAL",money(totalGap)],["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%"],["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%"]]){
+ for(const [label,value] of [["SALDO POR DEVENGAR",money(totalGap)],["POR COMPROMETER",money(Math.max(0,baseline.budget-baseline.committed))],["COMPROMETIDO POR DEVENGAR",money(Math.max(0,baseline.committed-baseline.accrued))],["DEVENGADO / COMPROMETIDO",baseline.committed?(100*baseline.accrued/baseline.committed).toFixed(1)+"%":"N/D"],["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%"],["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%"]]){
   const card=document.createElement("div"),small=document.createElement("small"),strong=document.createElement("strong");small.textContent=label;strong.textContent=value;card.append(small,strong);insightMetrics.append(card);
  }
  const advice=document.createElement("p");advice.className="exv-management-advice";
- advice.textContent=top3.length&&topGap>0?"Mayor oportunidad de seguimiento: "+top3.map(g=>g.name).join(" · ")+". Concentran "+(100*topGap/totalGap).toFixed(1)+"% de la brecha presupuestaria.":"Sin brechas positivas de ejecución en la selección actual.";
+ advice.textContent=top3.length&&topGap>0?"Mayor oportunidad de seguimiento: "+top3.map(g=>g.name).join(" · ")+". Concentran "+(100*topGap/totalGap).toFixed(1)+"% del saldo por devengar. Analizar por separado el saldo por comprometer y los compromisos pendientes de devengar.":"Sin brechas positivas de ejecución en la selección actual.";
  const scenario=document.createElement("div");scenario.className="exv-management-scenario";
  const scenarioLabel=document.createElement("label");scenarioLabel.textContent="SIMULACIÓN · ¿QUÉ PASARÍA SI SE DEVENGA PARTE DE LA BRECHA TOP 3?";
  const scenarioSlider=document.createElement("input");scenarioSlider.type="range";scenarioSlider.min="0";scenarioSlider.max="100";scenarioSlider.step="10";scenarioSlider.value="25";scenarioSlider.setAttribute("aria-label","Porcentaje de la brecha de los tres proyectos prioritarios que se podría devengar");
