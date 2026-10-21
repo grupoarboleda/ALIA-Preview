@@ -179,14 +179,11 @@ function renderFundingComposition(rows){
  const track=$("ex-source-composition"),legend=$("ex-source-composition-legend"),totalNode=$("ex-composition-total");
  track.replaceChildren();legend.replaceChildren();
  const grouped=groups(rows,"source"),total=sum(rows,cut()).budget;
- totalNode.textContent="TOTAL "+money(total)+" · SIMULACIÓN VISUAL DE EJECUCIÓN";
+ totalNode.textContent="TOTAL "+money(total)+"";
  for(const [i,g] of grouped.entries()){
   const figures=sum(g.rows,cut()),budget=figures.budget,share=total?100*budget/total:0;
   if(share<=0)continue;
-  const name=g.value.toLocaleLowerCase("es");
-  const actual=budget?100*figures.accrued/budget:0;
-  // Contraste visual temporal solicitado: no modifica la matriz ni los indicadores reales.
-  const execution=name.includes("propio")?82:name.includes("bid")?24:actual;
+  const execution=budget?100*figures.accrued/budget:0;
   const color=fundingColors[i%fundingColors.length];
   const part=document.createElement("div");part.className="exv-source-segment";
   part.style.width=share+"%";part.style.background=color;
@@ -200,7 +197,7 @@ function renderFundingComposition(rows){
   const fill=document.createElement("div");fill.className="exv-source-execution-fill";
   fill.style.width=Math.max(0,Math.min(100,execution))+"%";
   progress.append(fill);part.append(progress);
-  part.title=g.value+" · CODIFICADO "+money(budget)+" · PARTICIPACIÓN "+share.toFixed(1)+"% · DEVENGADO DEMOSTRATIVO "+execution.toFixed(1)+"%";
+  part.title=g.value+" · CODIFICADO "+money(budget)+" · PARTICIPACIÓN "+share.toFixed(1)+"% · DEVENGADO "+execution.toFixed(1)+"%";
   part.setAttribute("role","img");part.setAttribute("aria-label",part.title);
   track.append(part);
   const item=document.createElement("div");item.className="exv-source-legend-item";
