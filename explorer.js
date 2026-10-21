@@ -246,6 +246,7 @@ function renderPanes(){
       card.style.left=left+"%";card.style.top=100*before/rest+"%";card.style.width=(100-left)+"%";card.style.height=height+"%";}
     }
    }
+   if(treemap && card.style.height && parseFloat(card.style.height)<34)card.classList.add("exv-node-compact");
    const name=document.createElement("strong");name.textContent=item.value;
    const values=document.createElement("span");values.className="exv-node-values";
    for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){
