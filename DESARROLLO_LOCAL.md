@@ -1,21 +1,15 @@
-# ALIA — desarrollo local (Windows)
+# ALIA Local — sincronización automática
 
-La rama **develop** es el ambiente de trabajo. La rama **main** es la versión publicada en GitHub Pages. No se deben subir matrices reales, datos confidenciales ni credenciales al repositorio público.
+## Instalación única en Windows
 
-## Inicio rápido
+1. Descarga el archivo `instalar-alia-local.bat` desde la rama develop de GitHub (botón **Download raw file**).
+2. Ejecútalo una sola vez. Requiere Git for Windows y Python instalados. Si GitHub solicita autenticación, autoriza el acceso al repositorio.
+3. El instalador clona la rama `develop` en `%USERPROFILE%\\ALIA-Local` y abre ALIA en http://localhost:5500/.
+4. Para volver a trabajar, ejecuta `%USERPROFILE%\\ALIA-Local\\iniciar-alia-local.bat`.
+5. Con el servidor abierto, presiona **Ctrl+F5** en el navegador. El servidor ejecuta `git pull --ff-only origin develop` antes de servir la página.
 
-1. Descarga el ZIP de la rama develop: https://github.com/grupoarboleda/ALIA-Preview/archive/refs/heads/develop.zip
-2. Extrae el ZIP en una carpeta de tu computadora.
-3. Haz doble clic en `iniciar-alia-local.bat`. Necesitas Python instalado y disponible mediante `py` o `python`.
-4. Abre **http://localhost:5500/** si el navegador no se abre automáticamente.
-5. Para ver cambios en archivos locales, actualiza el navegador con Ctrl+F5. Para detener el servidor, cierra la ventana de la consola.
+El estado de sincronización puede consultarse en http://localhost:5500/__alia_status y en la consola del servidor.
 
-### Cómo recibir cambios nuevos
+**Limitaciones:** necesita conexión a GitHub, Git y permisos para acceder al repositorio. Si se editan archivos locales y Git detecta conflictos, no se sobrescriben; la sincronización informa del error. La actualización automática solo consulta la rama `develop`, no publica cambios en `main`. El servidor escucha únicamente en `127.0.0.1` y no expone archivos a la red local. No guardar matrices sensibles en este repositorio público.
 
-Si descargaste el ZIP, vuelve a descargar la rama develop y sustituye los archivos de tu carpeta. Para evitar repetir descargas, puedes clonar el repositorio una sola vez con Git y luego ejecutar `git pull origin develop` desde esa carpeta.
-
-### Publicación
-
-Solo fusionaremos `develop` en `main` cuando la versión haya sido probada y aprobada. La página pública permanece en https://grupoarboleda.github.io/ALIA-Preview/.
-
-**Importante:** localhost solo es accesible desde el equipo donde se ejecuta el servidor. El asistente puede actualizar GitHub, pero no modificar directamente los archivos de tu PC ni abrir tu servidor local.
+El servidor no se ejecuta en la computadora hasta que completes la instalación única.
