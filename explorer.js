@@ -35,8 +35,28 @@ function scoped(){return subset().filter(r=>trail.every(p=>r[p.key]===p.value));
 function selectGroup(key,value){trail.push({key,value});view=trail.length>=pathLevels().length?"process":viewKey();render();}
 function makeGroups(data,key){if(!key)return [{name:"CNEL EP · Unidad Esmeraldas",data}];return [...new Set(data.map(r=>r[key]))].map(name=>({name,data:data.filter(r=>r[key]===name)})).sort((a,b)=>sums(b.data,9).budget-sums(a.data,9).budget);}
 function breadcrumbs(){const el=$("ex-breadcrumb");el.replaceChildren();el.append(button("◉ EMPRESA",()=>{trail=[];view="total";render();},"exv-crumb"));for(const [i,p] of trail.entries()){el.append(button("› "+p.value,()=>{trail=trail.slice(0,i+1);view=viewKey();render();},"exv-crumb"));}}
-function treemap(data,key,cut){const el=$("ex-map");el.replaceChildren();const groups=makeGroups(data,key),total=Math.max(sums(data,cut).budget,1);
-for(const [i,g] of groups.entries()){const a=sums(g.data,cut),percent=rate(a);const tile=button("",()=>{if(key)selectGroup(key,g.name);else{view=viewKey();render();}},"exv-tile");tile.style.flexGrow=String(Math.max(1,100*a.budget/total));tile.style.flexBasis=groups.length===1?"100%":groups.length>6?"21%":"30%";tile.style.background=["linear-gradient(135deg,#155b72,#0a283a)","linear-gradient(135deg,#174c70,#0b243a)","linear-gradient(135deg,#17666b,#0a2b38)"][i%3];const name=document.createElement("b");name.textContent=g.name;const amount=document.createElement("strong");amount.textContent=fmt(a.budget);const small=document.createElement("small");small.textContent=percent.toFixed(1)+"% DEVENGADO";tile.append(name,amount,small);el.append(tile);}
+function treemap(data,key,cut){
+ const el=$("ex-map");el.replaceChildren();
+ const groups=makeGroups(data,key),total=Math.max(sums(data,cut).budget,1);
+ const compact=n=>new Intl.NumberFormat("es-EC",{notation:"compact",maximumFractionDigits:2}).format(n);
+ const metric=(label,value)=>{const box=document.createElement("span");box.className="exv-metric";const t=document.createElement("span");t.textContent=label;const v=document.createElement("b");v.textContent=value;box.append(t,v);return box;};
+ for(const [i,g] of groups.entries()){
+  const a=sums(g.data,cut),percent=rate(a),projects=new Set(g.data.map(r=>r.project)).size,processes=new Set(g.data.map(r=>r.process)).size;
+  const tile=button("",()=>{if(key)selectGroup(key,g.name);else{view=viewKey();render();}},"exv-tile exv-tile-rich");
+  tile.style.flexGrow=String(Math.max(1,100*a.budget/total));
+  tile.style.flexBasis=groups.length===1?"100%":groups.length>6?"21%":"30%";
+  tile.style.background=["linear-gradient(145deg,#104e65,#0b293a)","linear-gradient(145deg,#143f63,#0b243a)","linear-gradient(145deg,#13565b,#0b2938)"][i%3];
+  tile.title=g.name+"\nCodificado: "+fmt(a.budget)+"\nDevengado: "+fmt(a.accrued)+"\n% devengado: "+percent.toFixed(1)+"%\nProyectos: "+projects+"\nProcesos: "+processes;
+  const heading=document.createElement("span");heading.className="exv-tile-heading";heading.textContent=g.name;
+  const amounts=document.createElement("span");amounts.className="exv-tile-amounts";
+  amounts.append(metric("CODIFICADO",fmt(a.budget)),metric("DEVENGADO",fmt(a.accrued)));
+  const rateLine=document.createElement("span");rateLine.className="exv-tile-rate";const rateLabel=document.createElement("span");rateLabel.textContent="% DEVENGADO";const rateValue=document.createElement("strong");rateValue.textContent=percent.toFixed(1)+"%";rateLine.append(rateLabel,rateValue);
+  const track=document.createElement("span");track.className="exv-tile-track";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,percent))+"%";track.append(fill);
+  const counts=document.createElement("span");counts.className="exv-tile-counts";
+  counts.append(metric("PROYECTOS",String(projects)),metric("PROCESOS",String(processes)));
+  const footer=document.createElement("span");footer.className="exv-tile-footer";footer.textContent=key==="process"?"DETALLE DEL PROCESO":"EXPLORAR SIGUIENTE NIVEL ↗";
+  tile.append(heading,amounts,rateLine,track,counts,footer);el.append(tile);
+ }
 }
 function sankey(data,cut){const el=$("ex-sankey");el.replaceChildren();const order=pathLevels();const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 960 380");svg.setAttribute("role","img");svg.setAttribute("aria-label","Flujo de presupuesto codificado desde fuente y área hasta proyecto y proceso");el.append(svg);
 const layers=order.map(key=>makeGroups(data,key).slice(0,12).map(g=>({...g,key,value:sums(g.data,cut).budget})));const total=Math.max(sums(data,cut).budget,1),positions=[];
