@@ -37,7 +37,13 @@ const counts=document.createElement("div");counts.className="exv-tile-counts";co
 const explore=button(key?"EXPLORAR SIGUIENTE NIVEL ↗":"SELECCIONA UNA RAMA ARRIBA ↗",()=>enter(key,g.value),"exv-explore-link");el.append(heading,amounts,r,track,counts,explore);return el;}
 
 const paneTrails={area:[],source:[]};let activePane="area";let selectedFunding=null;
-const fundingScope=rows=>selectedFunding?rows.filter(r=>r.source===selectedFunding):rows;
+const fundingScope=rows=>rows.filter(r=>
+ (!selectedFunding||r.source===selectedFunding)&&
+ (["area","source","project"].every(key=>{
+  const el=$({area:"ex-area",source:"ex-source",project:"ex-project"}[key]);
+  return !el||el.value==="all"||r[key]===el.value;
+ }))
+);
 const paneOrder={area:["area","project","process"],source:["source","area","project","process"]};
 const filterBy=(rows,conditions)=>rows.filter(r=>conditions.every(p=>r[p.key]===p.value));
 const focusPath=()=>paneTrails[activePane];
@@ -56,7 +62,11 @@ function goBack(pane){
  else paneTrails[pane].pop();
  override=null;render();
 }
-function goHome(){paneTrails.area=[];paneTrails.source=[];activePane="area";selectedFunding=null;override=null;render();}
+function goHome(){
+ paneTrails.area=[];paneTrails.source=[];activePane="area";selectedFunding=null;override=null;
+ for(const id of ["ex-area","ex-source","ex-project"])$(id).value="all";
+ render();
+}
 
 // Budget-weighted project map and searchable ranking. Each row is a clickable drill target.
 const projectControls={area:{query:"",sort:"gap",limit:10},source:{query:"",sort:"gap",limit:10}};
@@ -272,7 +282,12 @@ function renderTemporal(rs,cutMonth){
  const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador financiero");
  for(const [key,label] of [["accrued","Devengado"],["budget","Codificado"],["committed","Comprometido"],["advance","Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
  picker.value=host.dataset.metric||"accrued";picker.addEventListener("change",()=>{host.dataset.metric=picker.value;renderTemporal(rs,cutMonth);});
- head.append(title,picker);host.append(head);
+ const context=document.createElement("div");context.className="exv-temporal-context";
+ const tags=[...paneTrails[activePane].map(p=>p.value)];
+ if(selectedFunding)tags.push(selectedFunding);
+ for(const [key,id] of [["area","ex-area"],["source","ex-source"],["project","ex-project"]]){const el=$(id);if(el&&el.value!=="all"&&!tags.includes(el.value))tags.push(el.value);}
+ context.textContent=tags.length?"SELECCIÓN: "+tags.join(" / "):"VISTA GLOBAL · TODAS LAS ÁREAS Y FUENTES";
+ head.append(title,picker);host.append(head,context);
  const metric=picker.value,months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
  const actual=sum(rs,cutMonth),prior=sum(rs,9),current=actual[metric==="advance"?"accrued":metric]+(metric==="advance"?actual.advance:0);
  const sep=prior[metric==="advance"?"accrued":metric]+(metric==="advance"?prior.advance:0);
@@ -325,7 +340,7 @@ $("ex-committed-rate").textContent=committedRate.toFixed(1)+"%";
 $("ex-rate").textContent=accruedRate.toFixed(1)+"%";
 $("ex-advance-rate").textContent=advanceRate.toFixed(1)+"%";
 for(const [id,rate] of [["ex-committed-progress",committedRate],["ex-accrued-progress",accruedRate],["ex-advance-progress",advanceRate]])$(id).style.width=Math.max(0,Math.min(100,rate))+"%";
-renderFundingComposition(filterBy(records,currentPath));renderPanes();renderTemporal(rs,c);
+renderFundingComposition(filterBy(records,currentPath).filter(r=>["area","project"].every(key=>{const el=$(key==="area"?"ex-area":"ex-project");return el.value==="all"||r[key]===el.value;})));renderPanes();renderTemporal(rs,c);
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",goHome,"exv-crumb"));if(selectedFunding)crumbs.append(button("✕ FINANCIAMIENTO: "+selectedFunding,()=>{selectedFunding=null;render();},"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
