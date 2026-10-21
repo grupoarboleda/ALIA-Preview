@@ -60,8 +60,8 @@ function renderPanes(){
    const bar=document.createElement("div");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
    const summary=document.createElement("div");summary.className="exv-node-summary";summary.textContent=p.toFixed(1)+"% DEVENGADO";
    const actions=document.createElement("div");actions.className="exv-node-actions";
-   const drill=()=>{activePane=pane;if(level)paneTrails[pane].push({key:level,value:item.value});paneOverrides[pane]=null;render();};
-   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;paneOverrides[pane]=target;render(target);};
+   const drill=()=>{activePane=pane;if(level){paneTrails[pane].push({key:level,value:item.value});crossSelections[pane]={key:level,value:item.value};}paneOverrides[pane]=null;render();};
+   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;crossSelections[pane]=level?{key:level,value:item.value}:null;paneOverrides[pane]=target;render(target);};
    if(level){const sel=button(crossSelections[pane]&&crossSelections[pane].key===level&&crossSelections[pane].value===item.value?"✓ FILTRANDO":"◎ SELECCIONAR",()=>selectCross(pane,level,item.value),"exv-node-action exv-node-select");sel.setAttribute("aria-pressed",String(!!crossSelections[pane]&&crossSelections[pane].key===level&&crossSelections[pane].value===item.value));actions.append(sel);actions.append(button("ABRIR ↗",drill,"exv-node-action"));actions.append(button("PROYECTOS "+projects,()=>jump("project"),"exv-node-action"));actions.append(button("PROCESOS "+processes,()=>jump("process"),"exv-node-action"));}
    card.append(name,values,summary,bar,actions);root.append(card);
   }
