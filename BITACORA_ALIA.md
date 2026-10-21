@@ -131,3 +131,9 @@
 - Se aplicaron estilos explícitos de visibilidad a los dos botones y su contenedor, idénticos al selector de unidad en gráfica general.
 - Se añadió relleno turquesa semitransparente bajo devengado real hasta corte, con animación. Se retiró exclusivamente el párrafo descriptivo bajo la leyenda contractual; permanecen leyenda, tarjetas, curva física, línea CORTE y referencia comprometido.
 - Archivos: explorer.js (0335b6e), index.html (859d7c1). Validación visual pendiente; datos DEMO y sin despliegue público.
+
+### 2026-10-21 — Homologación de tarjetas de evolución (área y contrato)
+- Se combinaron los dos diseños aprobados: tarjetas con fondo y borde discretos para ambos paneles, y colores consistentes por naturaleza del dato.
+- En área y contrato, las etiquetas principales ahora son idénticas: VALOR AL CORTE (turquesa, histórico real/simulado) y PROYECCIÓN DICIEMBRE (naranja). En contratos se mantiene tercera tarjeta DESVIACIÓN VS PLAN (blanco neutro).
+- Los colores coinciden con las líneas verde/turquesa del histórico y naranja de la proyección; la estructura de las tarjetas y su tipografía son compartidas.
+- Archivos: explorer.js (b042a4f), styles.css (6dfe9f9), index.html (37122c3). Sin cambios en cálculos. Datos DEMO, validación visual pendiente, sin publicación pública.
