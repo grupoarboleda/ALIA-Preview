@@ -46,3 +46,11 @@ Subir XLSX → vista previa de hojas y fecha detectada → validación de column
 
 ## Estado de implementación
 Este documento es el contrato de datos inicial. El dashboard continúa con datos DEMO hasta implementar, probar y conectar un importador. Próximo hito: parser XLSX con pruebas contra octubre, conciliación de sumas por asignación, importación multiarchivo y selector REAL/DEMO. No afirmar que la importación está lista antes de verificar esos pasos.
+
+## Reglas originales recuperadas de la conversación (prioridad de diseño)
+- Una fila es una **porción financiera** por proyecto/fuente/proceso; conservarla y sumar montos elegibles. El mismo contrato puede relacionarse con varios proyectos, pero se cuenta una sola vez como contrato. No eliminar filas solo por repetir códigos.
+- La fila 12 del XLSX de octubre contiene índices de campos: C=2 (PAI), M=12 (fuente), P=15 (proceso), T=19 (área), AP=41 (contrato), SD=498 (codificado), SF=500 (comprometido), SG=501 (devengado), SI=503 (anticipo), SK=505 (devengado+anticipo). El índice Excel no coincide con la posición física si se interpreta de otro modo; siempre validar encabezados de la fila 11.
+- Los importes anuales de las columnas 498–505 son acumulados al corte. El valor del mes se calcula como diferencia entre cortes consecutivos **comparables**, no sumando reportes acumulados.
+- Monto contratado total y codificado del año pueden ser diferentes. Ejecución presupuestaria = devengado año N / codificado año N; seguimiento financiero de contrato y avance físico usan bases y cronogramas propios. Nunca mezclar denominadores.
+- Antes de consolidar, identificar si hay filas de detalle, totales, subtotales, repartos por fuente o repeticiones informativas. Un código repetido NO significa por sí mismo doble conteo financiero.
+- El parser `importador_matriz.py` es una primera herramienta **local de previsualización**: lee filas y columnas originales, extrae claves y valores, advierte fechas internas y devuelve JSON. No alimenta aún el dashboard ni sustituye las series DEMO. Las 9 matrices históricas se incorporarán después de la revisión de su fecha interna y estructura.
