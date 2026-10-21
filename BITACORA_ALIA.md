@@ -148,3 +148,9 @@
 - Solicitado: sustituir tercera tarjeta DESVIACIÓN VS PLAN por AVANCE FÍSICO al mes de reporte.
 - Implementado: tercera tarjeta AVANCE FÍSICO · MES muestra `physical[current]` en %, independientemente del selector USD/%; color azul correspondiente a la curva física. Sin cambios en las dos tarjetas financieras ni en las curvas.
 - Datos físicos siguen simulados (DEMO) hasta conectar registros reales. Archivos: explorer.js (`885166f`), styles.css (`c537a1c`), index.html (`55f2a6c`). Validación visual pendiente. Sin publicación pública.
+
+### 2026-10-21 — Retiro de secciones obsoletas del explorador
+- Por solicitud con capturas, se eliminó del HTML la sección antigua «02 // Telemetría financiera / Evolución por corte» con gráfico codificado vs devengado.
+- Se dejó de invocar el explorador antiguo de proyectos en el nivel proyecto, retirando de la interfaz «Mayor oportunidad de seguimiento», simulador de brecha TOP 3, «Proyectos con mayor impacto potencial», treemap y «Prioridad de seguimiento».
+- Se preservó la navegación estándar por tarjetas de proyectos y el panel nuevo de Inteligencia Temporal / seguimiento de contratos y procesos.
+- Archivos: index.html (`5cfc962`), explorer.js (`47872f0`). No se modificaron las fuentes de datos. Validación visual local pendiente; sin publicación pública.
