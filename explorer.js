@@ -291,6 +291,9 @@ function renderPanes(){
     trigger.querySelector(".exv-unit-trigger-arrow").textContent=unitManagementOpen?"▴":"▾";
     panel.hidden=!unitManagementOpen;
     root.hidden=unitManagementOpen;
+    // Global is an explicit unit-wide selection for the temporal chart too.
+    selectedManagement=null;
+    renderTemporal(unitManagementOpen?records:filtered,cut());
    },"exv-unit-management-trigger");
    trigger.setAttribute("aria-expanded",String(unitManagementOpen));
    trigger.setAttribute("aria-controls","exv-unit-global-detail");
@@ -372,7 +375,7 @@ function renderTemporal(rs,cutMonth){
  const tags=[...paneTrails[activePane].map(p=>p.value)];
  if(selectedFunding)tags.push(selectedFunding);
  for(const [key,id] of [["area","ex-area"],["source","ex-source"],["project","ex-project"]]){const el=$(id);if(el&&el.value!=="all"&&!tags.includes(el.value))tags.push(el.value);}
- context.textContent=tags.length?"SELECCIÓN: "+tags.join(" / "):"VISTA GLOBAL · TODAS LAS ÁREAS Y FUENTES";
+ context.textContent=unitManagementOpen&&paneTrails[activePane].length===0?"VISTA GLOBAL · TOTAL UNIDAD ESMERALDAS · TODAS LAS ÁREAS Y FUENTES":tags.length?"SELECCIÓN: "+tags.join(" / "):"VISTA GLOBAL · TODAS LAS ÁREAS Y FUENTES";
  head.append(title,controls);host.append(head,context);
  const metric=picker.value,months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
  // Each synthetic process gets its own cumulative monthly profile. A single
@@ -648,7 +651,7 @@ $("ex-committed-rate").textContent=committedRate.toFixed(1)+"%";
 $("ex-rate").textContent=accruedRate.toFixed(1)+"%";
 $("ex-advance-rate").textContent=advanceRate.toFixed(1)+"%";
 for(const [id,rate] of [["ex-committed-progress",committedRate],["ex-accrued-progress",accruedRate],["ex-advance-progress",advanceRate]])$(id).style.width=Math.max(0,Math.min(100,rate))+"%";
-renderFundingComposition(filterBy(records,currentPath).filter(r=>["area","project"].every(key=>{const el=$(key==="area"?"ex-area":"ex-project");return el.value==="all"||r[key]===el.value;})));renderPanes();renderTemporal(rs,c);
+renderFundingComposition(filterBy(records,currentPath).filter(r=>["area","project"].every(key=>{const el=$(key==="area"?"ex-area":"ex-project");return el.value==="all"||r[key]===el.value;})));renderPanes();renderTemporal(unitManagementOpen&&currentPath.length===0?records:rs,c);
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();{const rootCrumb=document.createElement("span");rootCrumb.className="exv-crumb";rootCrumb.textContent="◉ EMPRESA";crumbs.append(rootCrumb);}if(selectedFunding)crumbs.append(button("✕ FINANCIAMIENTO: "+selectedFunding,()=>{selectedFunding=null;render();},"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
