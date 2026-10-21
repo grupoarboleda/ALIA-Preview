@@ -165,3 +165,9 @@
 - Al entrar en un área, se muestran exclusivamente los dos bloques gerenciales SALDO SIN COMPROMETER (procesos) y SALDO SIN DEVENGAR (contratos), con rankings clicables que conducen a la gráfica temporal.
 - Se suprimen las tarjetas individuales de proyectos en ese nivel. Se mantienen las tarjetas de áreas en la vista raíz y el panel GLOBAL. No se alteran cálculos ni datos.
 - Código verificado en explorer.js rama develop; caché actualizada en index.html. Validación visual local pendiente; sin despliegue público.
+
+### 2026-10-21 — Arquitectura de datos reales MATRIZ CONSOLIDADA
+- Se revisó la matriz adjunta de corte 20 octubre 2026 y archivos rotulados septiembre. Octubre contiene encabezado en fila 11 y aproximadamente 398 registros de proceso; campos SD/SF/SG/SI/HS y claves P/AV/T/M. Los archivos llamados septiembre muestran fecha interna 19 octubre: incidencia de calidad de datos a resolver.
+- Se creó `ARQUITECTURA_DATOS_ALIA.md` con modelo de lotes, filas originales, asignaciones, procesos, contratos, proyectos, snapshots mensuales, conciliación y validación, distinción REAL/SIMULATED y diseño del futuro panel de importación.
+- Decisión: el contrato es unidad de gestión; contar contratos/procesos únicos, conservar asignaciones por proyecto y fuente sin doble conteo financiero. Enero-agosto simulados solo para pruebas, sin confundir con historia real.
+- Commit documento `3e1096a83`. Aún NO se implementa el importador ni se sustituyen los datos DEMO del dashboard; validación funcional pendiente. No se subieron matrices ni se hizo despliegue público.
