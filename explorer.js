@@ -439,7 +439,7 @@ function renderTemporal(rs,cutMonth){
  p.forEach(([xx,yy])=>add("circle",{cx:xx,cy:yy,r:3,fill:"#f0bd70"}));
  host.append(svgRoot);
  const legend=document.createElement("div");legend.className="exv-temporal-legend";legend.innerHTML='<span><i class="exv-temporal-real"></i>HISTÓRICO SIMULADO</span><span><i class="exv-temporal-future"></i>PROYECCIÓN DEMO</span>';host.append(legend);
- const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>VALOR AL CORTE</small><strong>"+(inPercent?baseline.toFixed(1)+"%":money(baseline))+"</strong>";const right=document.createElement("div");right.innerHTML="<small>PROYECCIÓN DICIEMBRE</small><strong>"+(inPercent?rates[11].toFixed(1)+"%":money(values[11]))+"</strong>";info.append(left,right);host.append(info);
+ const info=document.createElement("div");info.className="exv-temporal-info exv-financial-summary";const left=document.createElement("div");left.className="exv-summary-card exv-summary-real";left.innerHTML="<small>VALOR AL CORTE</small><strong>"+(inPercent?baseline.toFixed(1)+"%":money(baseline))+"</strong>";const right=document.createElement("div");right.className="exv-summary-card exv-summary-projected";right.innerHTML="<small>PROYECCIÓN DICIEMBRE</small><strong>"+(inPercent?rates[11].toFixed(1)+"%":money(values[11]))+"</strong>";info.append(left,right);host.append(info);
  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados. En modo %, el denominador es el codificado de la selección al corte y el eje vertical va de 0% a 100%; en modo USD se muestran montos acumulados.";host.append(note);
 }
 
@@ -604,12 +604,12 @@ function renderManagementTemporal(rs,cutMonth){
    chart.append(note);
   }
   if(contract){
-   const kpis=document.createElement("div");kpis.className="exv-contract-variance";
+   const kpis=document.createElement("div");kpis.className="exv-contract-variance exv-financial-summary";
    const current=Math.max(0,Math.min(11,cutMonth-1));
    const forecastDecember=Math.min(100,Math.max(0,metricActual[current]+metricPlan[11]-metricPlan[current]));
    const fmt=v=>unitChoice==="usd"?money(commit*v/100):v+"%";
-   for(const [label,value] of [["REAL · "+months[current],fmt(metricActual[current])],["PROYECCIÓN · DICIEMBRE",fmt(forecastDecember)],["DESVIACIÓN VS PLAN · "+months[current],unitChoice==="usd"?money(commit*(metricActual[current]-metricPlan[current])/100):(metricActual[current]-metricPlan[current])+" pp"]]){
-    const box=document.createElement("div");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
+   for(const [label,value] of [["VALOR AL CORTE",fmt(metricActual[current])],["PROYECCIÓN DICIEMBRE",fmt(forecastDecember)],["DESVIACIÓN VS PLAN · "+months[current],unitChoice==="usd"?money(commit*(metricActual[current]-metricPlan[current])/100):(metricActual[current]-metricPlan[current])+" pp"]]){
+    const box=document.createElement("div");box.className="exv-summary-card "+(label==="VALOR AL CORTE"?"exv-summary-real":label==="PROYECCIÓN DICIEMBRE"?"exv-summary-projected":"exv-summary-variance");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
    }
    chart.append(kpis);
   }
