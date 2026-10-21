@@ -90,3 +90,10 @@
 - Mostrar tarjetas de POR PUBLICAR, PUBLICADO, ADJUDICADO y CONTRATADO con períodos y estado actual/superado/pendiente; señalar CORTE y atenuar meses futuros. No dibujar avance de proceso después del corte.
 - Mantener controles para activar/desactivar bandas y curva, y aviso de atención gerencial. Seguimiento temporal sigue siendo **DEMO**, no evidencia real de estancamiento.
 - Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `3035b29`, `4672a78`, `ad3c073`. Pendiente validación visual en ALIA Local.
+
+### 2026-10-21 — Centro gerencial transversal de la unidad
+- Solicitado: mostrar saldos sin comprometer y sin devengar **en EMPRESA / ÁREAS**, sin entrar a cada área, manteniendo el mosaico original debajo.
+- Implementación: panel global antes del treemap con los dos saldos consolidados, recuento distinto de procesos y contratos, ayuda de fórmula y rankings Top 5 / Ver todos. Clic en proceso/contrato actualiza la Rama 02 con su seguimiento DEMO.
+- Se reutiliza `buildManagementInsight` para conservar las mismas reglas y experiencia en nivel Unidad y nivel Área. Se respetan filtros de área, fuente, proyecto y corte; los importes se agregan por asignaciones y los códigos se cuentan una vez.
+- Archivos: `explorer.js`, `styles.css`, `index.html`. Commits: `37779f2`, `e989c50`, `d2ce616`, `2ad0c50`.
+- Estado: código guardado en `develop`, validación visual local pendiente; datos y evolución siguen siendo DEMO. No se realizó despliegue público.
