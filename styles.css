@@ -540,3 +540,14 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-management-item-top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px}
 #explorer .exv-management-item-status{font-size:12px;color:#9bd7dd}
 #explorer .exv-management-attention{padding:12px 14px;border-left:3px solid #efc278;background:#123549;color:#d5eaf2;font-size:12px;line-height:1.5}
+
+/* Monthly procurement milestones: compact readable stage timeline */
+#explorer .exv-management-stage-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 14px}
+#explorer .exv-management-stage-card{display:flex;flex-direction:column;gap:6px;padding:11px 13px;border:1px solid #315669;background:#0e2b3c;border-radius:7px;min-width:0}
+#explorer .exv-management-stage-card[data-current="true"]{border-color:#6ce4d1;background:#164554;box-shadow:inset 3px 0 #6ce4d1}
+#explorer .exv-management-stage-card small{font:700 10px Consolas,monospace;color:#73dacc}
+#explorer .exv-management-stage-card strong{font:700 13px Consolas,monospace;color:#e2f7fb}
+#explorer .exv-management-stage-card span{font:11px system-ui,sans-serif;color:#a5c5d1}
+#explorer .exv-temporal-legend button[aria-pressed="false"]{opacity:.55}
+#explorer .exv-temporal-legend button[aria-pressed="true"]{border-color:#6ce4d1}
+@media(min-width:1150px){#explorer .exv-management-stage-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
