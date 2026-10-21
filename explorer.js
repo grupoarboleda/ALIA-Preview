@@ -86,14 +86,19 @@ function projectExplorer(pane,root,items,filtered){
  const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
  const insightTitle=document.createElement("h3");insightTitle.textContent="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?";
  const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
+ // Independent budget gaps; a project/process can belong to both categories.
+ const balanceRows=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};});
  const balances=[
- ["SALDO POR DEVENGAR",money(totalGap),"pending"],
- ["POR COMPROMETER",money(Math.max(0,baseline.budget-baseline.committed)),"uncommitted"],
- ["COMPROMETIDO POR DEVENGAR",money(Math.max(0,baseline.committed-baseline.accrued)),"committed"],
- ["DEVENGADO / COMPROMETIDO",baseline.committed?(100*baseline.accrued/baseline.committed).toFixed(1)+"%":"N/D",null],
- ["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%",null],
- ["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%",null]
+  {label:"SIN COMPROMETER",type:"uncommitted",description:"Codificado − Comprometido"},
+  {label:"COMPROMETIDO SIN DEVENGAR",type:"committed",description:"Comprometido − Devengado"}
  ];
+ const balanceStats=type=>{
+  const eligible=balanceRows.filter(r=>r[type]>0);
+  return {rows:eligible,amount:eligible.reduce((v,r)=>v+r[type],0),
+   projects:new Set(eligible.map(r=>r.project)).size,
+   processes:new Set(eligible.map(r=>r.project+"\u0001"+r.process)).size};
+ };
+
  const detail=document.createElement("section");detail.className="exv-balance-detail";detail.hidden=true;
  const detailHead=document.createElement("div");detailHead.className="exv-balance-detail-head";
  const detailTitle=document.createElement("strong");
@@ -102,28 +107,54 @@ function projectExplorer(pane,root,items,filtered){
  const detailTable=document.createElement("div");detailTable.className="exv-balance-table";
  detail.append(detailHead,detailTable);
  function showBalance(type,label){
-  detail.hidden=false;detailTitle.textContent=label+" · DESGLOSE POR PROYECTO Y PROCESO";detailTable.replaceChildren();
+  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 PROYECTOS PRIORITARIOS";detailTable.replaceChildren();
   insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
-  const entries=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,pending:Math.max(0,v.budget-v.accrued),uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};})
-   .filter(r=>r[type]>0).sort((a,b)=>b[type]-a[type]);
+  const entries=balanceStats(type).rows;
   const byProject=new Map();
   for(const r of entries){if(!byProject.has(r.project))byProject.set(r.project,[]);byProject.get(r.project).push(r);}
-  for(const [project,rows] of byProject){
-   const projectTotal=rows.reduce((v,r)=>v+r[type],0);
-   const group=document.createElement("details");group.className="exv-balance-project";group.open=byProject.size<=3;
-   const summary=document.createElement("summary");summary.textContent=project+" · "+money(projectTotal)+" · "+rows.length+" proceso(s)";group.append(summary);
-   for(const r of rows){const line=document.createElement("div");line.className="exv-balance-process";
-    const process=document.createElement("span");process.textContent=r.process+" · "+r.source;
-    const amount=document.createElement("strong");amount.textContent=money(r[type]);
-    line.append(process,amount);group.append(line);}
-   detailTable.append(group);
-  }
-  if(!entries.length){const empty=document.createElement("p");empty.textContent="No hay saldos positivos en esta selección.";detailTable.append(empty);}
+  const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
+  const note=document.createElement("p");note.className="exv-balance-ranking-note";
+  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+" proyectos · "+entries.length+" registros con saldo. Un proyecto puede figurar en ambos bloques.";
+  detailTable.append(note);
+  const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
+  let showAll=false;
+  const paint=()=>{
+   rankingRoot.replaceChildren();
+   const shown=showAll?ranking:ranking.slice(0,5);
+   for(const [i,{project,rows,total}] of shown.entries()){
+    const group=document.createElement("details");group.className="exv-balance-project";
+    const summary=document.createElement("summary");
+    summary.textContent=String(i+1).padStart(2,"0")+" · "+project+" · "+money(total)+" · "+new Set(rows.map(r=>r.process)).size+" proceso(s)";
+    group.append(summary);
+    const processGroups=new Map();
+    for(const r of rows){const key=r.process+"\u0001"+r.source;if(!processGroups.has(key))processGroups.set(key,{process:r.process,source:r.source,amount:0});processGroups.get(key).amount+=r[type];}
+    for(const p of [...processGroups.values()].sort((a,b)=>b.amount-a.amount)){
+     const line=document.createElement("div");line.className="exv-balance-process";
+     const process=document.createElement("span");process.textContent=p.process+" · "+p.source;
+     const amount=document.createElement("strong");amount.textContent=money(p.amount);
+     line.append(process,amount);group.append(line);
+    }
+    rankingRoot.append(group);
+   }
+   if(ranking.length>5){
+    const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+" PROYECTOS",()=>{showAll=!showAll;paint();},"exv-count-link");
+    rankingRoot.append(more);
+   }
+   if(!ranking.length){const empty=document.createElement("p");empty.textContent="No hay saldos positivos en esta selección.";rankingRoot.append(empty);}
+  };
+  paint();
  }
- for(const [label,value,type] of balances){
-  const card=document.createElement(type?"button":"div"),small=document.createElement("small"),strong=document.createElement("strong");
-  if(type){card.type="button";card.className="exv-balance-action";card.dataset.balance=type;card.setAttribute("aria-expanded","false");card.title="Ver proyectos y procesos que componen este saldo";card.addEventListener("click",()=>showBalance(type,label));}
-  small.textContent=label+(type?" ↗":"");strong.textContent=value;card.append(small,strong);insightMetrics.append(card);
+ for(const {label,type,description} of balances){
+  const stats=balanceStats(type);
+  const card=document.createElement("button");card.type="button";card.className="exv-balance-action exv-balance-priority";card.dataset.balance=type;
+  card.setAttribute("aria-expanded","false");card.title="Ver ranking de proyectos y procesos";
+  const small=document.createElement("small");small.textContent=label+" ↗";
+  const strong=document.createElement("strong");strong.textContent=money(stats.amount);
+  const counts=document.createElement("span");counts.className="exv-balance-counts";
+  counts.textContent=stats.projects+" PROYECTO"+(stats.projects===1?"":"S")+" · "+stats.processes+" PROCESO"+(stats.processes===1?"":"S");
+  const formula=document.createElement("span");formula.className="exv-balance-formula";formula.textContent=description;
+  card.append(small,strong,counts,formula);
+  card.addEventListener("click",()=>showBalance(type,label));insightMetrics.append(card);
  }
  insight.append(insightTitle,insightMetrics,detail);
 
