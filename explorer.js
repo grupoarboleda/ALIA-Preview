@@ -240,7 +240,7 @@ function renderPanes(){
     const weights=items.map(x=>Math.max(0,sum(x.rows,cut()).budget));
     const all=weights.reduce((a,b)=>a+b,0)||1;
     if(items.length===2){const left=100*weights[0]/all;card.style.left=(index===0?0:left)+"%";card.style.top="0%";card.style.width=(index===0?left:100-left)+"%";card.style.height="100%";}
-    else {const left=Math.min(70,Math.max(35,100*weights[0]/all));const rest=weights.slice(1).reduce((a,b)=>a+b,0)||1;
+    else {const left=100*weights[0]/all;const rest=weights.slice(1).reduce((a,b)=>a+b,0)||1;
      if(index===0){card.style.left="0%";card.style.top="0%";card.style.width=left+"%";card.style.height="100%";}
      else{const before=weights.slice(1,index).reduce((a,b)=>a+b,0),height=100*weights[index]/rest;
       card.style.left=left+"%";card.style.top=100*before/rest+"%";card.style.width=(100-left)+"%";card.style.height=height+"%";}
