@@ -114,7 +114,7 @@ function projectExplorer(pane,root,items,filtered){
   for(const r of entries){const entity=type==="uncommitted"?r.process:(r.contract||r.process);if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
   const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
-  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+(type==="uncommitted"?" procesos":" contratos")+" · "+entries.length+" asignaciones con saldo. Ordenado por monto pendiente.";
+  note.textContent=ranking.length+(type==="uncommitted"?" procesos":" contratos")+" con saldo · Prioridad por monto pendiente. Selecciona uno para ver su evolución.";
   detailTable.append(note);
   const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
   let showAll=false;
@@ -122,20 +122,22 @@ function projectExplorer(pane,root,items,filtered){
    rankingRoot.replaceChildren();
    const shown=showAll?ranking:ranking.slice(0,5);
    for(const [i,{project,rows,total}] of shown.entries()){
-    const group=document.createElement("details");group.className="exv-balance-project";
-    const summary=document.createElement("summary");
-    summary.textContent=String(i+1).padStart(2,"0")+" · "+project+" · "+money(total)+" · "+new Set(rows.map(r=>r.project)).size+" proyecto(s) vinculado(s)";
-    group.append(summary);
-    const view=button("↗ VER EVOLUCIÓN",()=>{selectedManagement={type,id:project};renderTemporal(fundingScope(filterBy(records,paneTrails[activePane])),cut());},"exv-count-link");group.append(view);
-    const processGroups=new Map();
-    for(const r of rows){const key=r.project+"\u0001"+r.process+"\u0001"+r.source;if(!processGroups.has(key))processGroups.set(key,{project:r.project,process:r.process,source:r.source,amount:0});processGroups.get(key).amount+=r[type];}
-    for(const p of [...processGroups.values()].sort((a,b)=>b.amount-a.amount)){
-     const line=document.createElement("div");line.className="exv-balance-process";
-     const process=document.createElement("span");process.textContent=p.project+" · "+p.process+" · "+p.source;
-     const amount=document.createElement("strong");amount.textContent=money(p.amount);
-     line.append(process,amount);group.append(line);
-    }
-    rankingRoot.append(group);
+    const current=managementDemoStatus(type,project,cut());
+    const item=button("",()=>{
+     selectedManagement={type,id:project};
+     renderTemporal(fundingScope(filterBy(records,paneTrails[activePane])),cut());
+     rankingRoot.querySelectorAll(".exv-management-item").forEach(b=>b.setAttribute("aria-pressed",String(b===item)));
+    },"exv-management-item");
+    item.setAttribute("aria-pressed",String(!!selectedManagement&&selectedManagement.type===type&&selectedManagement.id===project));
+    const top=document.createElement("span");top.className="exv-management-item-top";
+    const id=document.createElement("strong");id.textContent=String(i+1).padStart(2,"0")+" · "+project;
+    const amount=document.createElement("strong");amount.textContent=money(total);
+    top.append(id,amount);
+    const bottom=document.createElement("span");bottom.className="exv-management-item-status";
+    bottom.textContent=type==="uncommitted"
+     ?current.stage+" · "+current.months+" reporte(s) en esta etapa"
+     :"Devengado "+current.dev+"% · "+current.idle+" reporte(s) sin incremento";
+    item.append(top,bottom);rankingRoot.append(item);
    }
    if(ranking.length>5){
     const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+(type==="uncommitted"?" PROCESOS":" CONTRATOS"),()=>{showAll=!showAll;paint();},"exv-count-link");
@@ -409,6 +411,25 @@ function renderTemporal(rs,cutMonth){
  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados. En modo %, el denominador es el codificado de la selección al corte y el eje vertical va de 0% a 100%; en modo USD se muestran montos acumulados.";host.append(note);
 }
 
+function managementDemoStatus(type,id,cutMonth){
+ const seed=Number((id.match(/\d+/g)||["1"]).at(-1))||1;
+ const publication=1+seed%3,award=publication+1+seed%2,contracted=award+2;
+ const stages=Array.from({length:12},(_,i)=>i<publication?"POR PUBLICAR":i<award?"PUBLICADO":i<contracted?"ADJUDICADO":"CONTRATADO");
+ const dev=Array.from({length:12},(_,i)=>i<contracted?0:Math.min(100,Math.max(0,(i-contracted+1)*13-(i>contracted+2?13:0))));
+ const index=Math.max(0,Math.min(11,cutMonth-1)),stage=stages[index];
+ let months=0,idle=0;
+ for(let i=index;i>=0&&stages[i]===stage;i--)months++;
+ for(let i=index;i>0&&dev[i]===dev[i-1];i--)idle++;
+ return {stage,months,dev:dev[index],idle};
+}
+function idleMessage(dev,cutMonth){
+ let n=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)n++;
+ return "ATENCIÓN GERENCIAL · "+(n?"Sin incremento del devengado en "+n+" intervalo(s) mensual(es); revisar avance y documentación.":"Se registra avance del devengado en el último intervalo.");
+}
+function stageMessage(stages,cutMonth){
+ const i=Math.max(0,cutMonth-1),stage=stages[i];let n=0;for(let j=i;j>=0&&stages[j]===stage;j--)n++;
+ return "ATENCIÓN GERENCIAL · "+stage+" durante "+n+" reporte(s) consecutivo(s); revisar próximo hito.";
+}
 function renderManagementTemporal(rs,cutMonth){
  const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
  const choice=selectedManagement,type=choice.type,contract=type==="committed";
@@ -444,6 +465,7 @@ function renderManagementTemporal(rs,cutMonth){
   if(contract){const last=dev.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos al corte · "+last+"% devengado ilustrativo · "+idle+" meses consecutivos sin incremento mensual. Avance físico simulado, no registrado en matriz.";}
   else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
   chart.append(note);
+  const action=document.createElement("p");action.className="exv-management-attention";action.textContent=contract?(idleMessage(dev,cutMonth)):(stageMessage(stages,cutMonth));chart.append(action);
  };
  for(const s of series){const b=button("✓ "+s.name,()=>{if(visible.has(s.name))visible.delete(s.name);else visible.add(s.name);b.setAttribute("aria-pressed",String(visible.has(s.name)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}
  if(!contract){for(const stage of visibleStages){const b=button("▧ "+stage,()=>{if(visibleStages.has(stage))visibleStages.delete(stage);else visibleStages.add(stage);b.setAttribute("aria-pressed",String(visibleStages.has(stage)));draw();},"exv-count-link");b.setAttribute("aria-pressed","true");toggles.append(b);}}
