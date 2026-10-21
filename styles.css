@@ -163,3 +163,6 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 /* One primary exploration surface: twin treemaps above, trend below */
 #explorer .exv-main{grid-template-columns:1fr}#explorer .exv-main>.exv-primary{display:none}#explorer .exv-trend{min-height:300px}#explorer .exv-trend svg{max-width:850px;margin:14px auto 0}
+
+/* Bidirectional cross-filter cues */
+.exv-node.cross-selected{border-color:#8cf7d7;box-shadow:inset 0 0 0 1px #8cf7d7,0 0 15px #3bf4bd25}.exv-node-select{background:#164f60;border-color:#70c8c8;color:#caffee}.exv-node-select[aria-pressed=true]{background:#1b6c60;color:#e2ffed;border-color:#8cf7d7}.exv-empty{padding:20px;border:1px dashed #50778a;color:#a4d6e2;font:12px/1.6 Consolas,monospace}
