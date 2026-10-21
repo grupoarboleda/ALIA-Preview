@@ -114,7 +114,7 @@ function projectExplorer(pane,root,items,filtered){
   for(const r of entries){const entity=r.contract||r.process;if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
   const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
-  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+" proyectos · "+entries.length+" registros con saldo. Un proyecto puede figurar en ambos bloques.";
+  note.textContent="Ordenado por mayor monto pendiente · "+ranking.length+" contratos/procesos · "+entries.length+" asignaciones con saldo. Un contrato puede estar vinculado a varios proyectos.";
   detailTable.append(note);
   const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
   let showAll=false;
@@ -124,20 +124,20 @@ function projectExplorer(pane,root,items,filtered){
    for(const [i,{project,rows,total}] of shown.entries()){
     const group=document.createElement("details");group.className="exv-balance-project";
     const summary=document.createElement("summary");
-    summary.textContent=String(i+1).padStart(2,"0")+" · "+project+" · "+money(total)+" · "+new Set(rows.map(r=>r.process)).size+" proceso(s)";
+    summary.textContent=String(i+1).padStart(2,"0")+" · "+project+" · "+money(total)+" · "+new Set(rows.map(r=>r.project)).size+" proyecto(s) vinculado(s)";
     group.append(summary);
     const processGroups=new Map();
-    for(const r of rows){const key=r.process+"\u0001"+r.source;if(!processGroups.has(key))processGroups.set(key,{process:r.process,source:r.source,amount:0});processGroups.get(key).amount+=r[type];}
+    for(const r of rows){const key=r.project+"\u0001"+r.process+"\u0001"+r.source;if(!processGroups.has(key))processGroups.set(key,{project:r.project,process:r.process,source:r.source,amount:0});processGroups.get(key).amount+=r[type];}
     for(const p of [...processGroups.values()].sort((a,b)=>b.amount-a.amount)){
      const line=document.createElement("div");line.className="exv-balance-process";
-     const process=document.createElement("span");process.textContent=p.process+" · "+p.source;
+     const process=document.createElement("span");process.textContent=p.project+" · "+p.process+" · "+p.source;
      const amount=document.createElement("strong");amount.textContent=money(p.amount);
      line.append(process,amount);group.append(line);
     }
     rankingRoot.append(group);
    }
    if(ranking.length>5){
-    const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+" PROYECTOS",()=>{showAll=!showAll;paint();},"exv-count-link");
+    const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+" CONTRATOS / PROCESOS",()=>{showAll=!showAll;paint();},"exv-count-link");
     rankingRoot.append(more);
    }
    if(!ranking.length){const empty=document.createElement("p");empty.textContent="No hay saldos positivos en esta selección.";rankingRoot.append(empty);}
@@ -147,7 +147,7 @@ function projectExplorer(pane,root,items,filtered){
  for(const {label,type,description} of balances){
   const stats=balanceStats(type);
   const card=document.createElement("button");card.type="button";card.className="exv-balance-action exv-balance-priority";card.dataset.balance=type;
-  card.setAttribute("aria-expanded","false");card.title="Ver ranking de proyectos y procesos";
+  card.setAttribute("aria-expanded","false");card.title="Ver ranking de contratos y procesos";
   const small=document.createElement("small");small.textContent=label+" ↗";
   const strong=document.createElement("strong");strong.textContent=money(stats.amount);
   const counts=document.createElement("span");counts.className="exv-balance-counts";
