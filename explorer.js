@@ -484,7 +484,7 @@ function renderManagementTemporal(rs,cutMonth){
   }
 
   for(let i=0;i<=4;i++){const v=i*25;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"#315b6d","stroke-dasharray":"3 6"});const t=add("text",{x:L-8,y:y(v)+4,fill:"#a9cbd7","font-size":11,"text-anchor":"end"});t.textContent=v+"%";}
-  for(const s of series){if(!visible.has(s.name))continue;add("path",{d:s.values.map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join(" "),stroke:s.color,"stroke-width":3,fill:"none","stroke-linejoin":"round"});s.values.forEach((v,i)=>add("circle",{cx:x(i),cy:y(v),r:3,fill:s.color}));}
+  for(const s of series){if(!visible.has(s.name))continue;add("path",{d:s.values.slice(0,contract?12:Math.max(1,Math.min(12,cutMonth))).map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join(" "),stroke:s.color,"stroke-width":3,fill:"none","stroke-linejoin":"round"});s.values.slice(0,contract?12:Math.max(1,Math.min(12,cutMonth))).forEach((v,i)=>add("circle",{cx:x(i),cy:y(v),r:3,fill:s.color}));}
   if(!contract){const cutIndex=Math.max(0,Math.min(11,cutMonth-1));const future=add("rect",{x:x(cutIndex)+((x(1)-x(0))/2),y:T,width:Math.max(0,W-R-x(cutIndex)-((x(1)-x(0))/2)),height:H-T-B,fill:"#071c2b","fill-opacity":".56"});}
   months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
   chart.append(svg);
