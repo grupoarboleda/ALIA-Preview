@@ -1,21 +1,24 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+if not exist ".git" (
+ echo Esta carpeta proviene de un ZIP y no permite actualizaciones automaticas.
+ echo Ejecuta instalar-alia-local.bat para preparar la carpeta con Git.
+ pause
+ exit /b 1
+)
 where py >nul 2>nul
 if %errorlevel%==0 (
-  echo ALIA Local: http://localhost:5500/
-  start "" "http://localhost:5500/"
-  py -m http.server 5500 --bind 127.0.0.1
-  goto :end
+ start "" "http://localhost:5500/"
+ py servidor_alia.py
+ goto :end
 )
 where python >nul 2>nul
 if %errorlevel%==0 (
-  echo ALIA Local: http://localhost:5500/
-  start "" "http://localhost:5500/"
-  python -m http.server 5500 --bind 127.0.0.1
-  goto :end
+ start "" "http://localhost:5500/"
+ python servidor_alia.py
+ goto :end
 )
-echo Python no se encuentra instalado o disponible en PATH.
-echo Instala Python y vuelve a ejecutar este archivo.
+echo Necesitas Python disponible en PATH.
 pause
 :end
