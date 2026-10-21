@@ -213,17 +213,26 @@ function renderPanes(){
   if(isFocused)own.forEach((p,i)=>crumb.append(button("› "+p.value,()=>goBackTo(pane,i+1),"exv-pane-crumb")));
   else if(focus.length){const indicator=document.createElement("span");indicator.className="exv-cross-context";indicator.textContent="FILTRADO POR "+focus.map(p=>p.value).join(" / ");crumb.append(indicator);}
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
+  const treemap=pane==="area"&&level==="area"&&items.length>1;
+  root.classList.toggle("exv-area-treemap",treemap);
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
-  for(const item of items){
+  for(const [index,item] of items.entries()){
    const v=sum(item.rows,cut()),p=percent(v);
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
    const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
    card.disabled=!level;
    card.setAttribute("aria-label",item.value+": codificado "+money(v.budget)+", devengado "+money(v.accrued)+". Abrir siguiente nivel");
-   card.style.flexGrow=String(Math.max(0.01,v.budget));
-   card.style.flexBasis="0px";
-   card.style.minWidth="145px";
+   if(treemap){
+    const weights=items.map(x=>Math.max(0,sum(x.rows,cut()).budget));
+    const all=weights.reduce((a,b)=>a+b,0)||1;
+    if(items.length===2){const left=100*weights[0]/all;card.style.left=(index===0?0:left)+"%";card.style.top="0%";card.style.width=(index===0?left:100-left)+"%";card.style.height="100%";}
+    else {const left=Math.min(70,Math.max(35,100*weights[0]/all));const rest=weights.slice(1).reduce((a,b)=>a+b,0)||1;
+     if(index===0){card.style.left="0%";card.style.top="0%";card.style.width=left+"%";card.style.height="100%";}
+     else{const before=weights.slice(1,index).reduce((a,b)=>a+b,0),height=100*weights[index]/rest;
+      card.style.left=left+"%";card.style.top=100*before/rest+"%";card.style.width=(100-left)+"%";card.style.height=height+"%";}
+    }
+   }
    const name=document.createElement("strong");name.textContent=item.value;
    const values=document.createElement("span");values.className="exv-node-values";
    for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){
@@ -258,7 +267,7 @@ $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto
 const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>drillPane(activePane,level,g.value),"exv-link"));tr.append(td);body.append(tr);}
 renderChart(rs);$("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
-for(const pane of ["area","source"]){
+for(const pane of ["area"]){
  $("ex-reset-"+pane).addEventListener("click",goHome);
  $("ex-back-"+pane).addEventListener("click",()=>goBack(pane));
 }
