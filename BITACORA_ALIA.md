@@ -125,3 +125,9 @@
 - Cambio solicitado: leyenda debajo, línea vertical de CORTE, mes resaltado, punto de transición real/proyectado, controles % y USD, y selector Devengado / Devengado + anticipo.
 - Implementación: las curvas de devengado y su continuación proyectada conservan animación secuencial. Avance físico llega solamente al mes de corte. En USD, la escala financiera usa el monto comprometido; la serie física permanece porcentual. Las tarjetas de real, diciembre y desviación responden a los selectores.
 - Código: explorer.js commit 0475052; caché: index.html commit 96f60aa. Datos y programación DEMO. Validación visual local pendiente. Sin publicación pública.
+
+### 2026-10-21 — Corrección visual de controles y sombreado contractual
+- Usuario reportó controles %/USD invisibles, ausencia de sombreado bajo curva real y texto explicativo DEMO redundante.
+- Se aplicaron estilos explícitos de visibilidad a los dos botones y su contenedor, idénticos al selector de unidad en gráfica general.
+- Se añadió relleno turquesa semitransparente bajo devengado real hasta corte, con animación. Se retiró exclusivamente el párrafo descriptivo bajo la leyenda contractual; permanecen leyenda, tarjetas, curva física, línea CORTE y referencia comprometido.
+- Archivos: explorer.js (0335b6e), index.html (859d7c1). Validación visual pendiente; datos DEMO y sin despliegue público.
