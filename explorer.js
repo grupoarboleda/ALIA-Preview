@@ -174,9 +174,32 @@ function projectExplorer(pane,root,items,filtered){
  limit.addEventListener("change",()=>{control.limit=Number(limit.value);view();});
  outer.append(insight,tools,map,list);root.append(outer);view();
 }
+const fundingColors=["#32c6db","#74e8c5","#d6b66d","#8a9fe7","#db91ba","#88bdd6"];
+function renderFundingComposition(rows){
+ const track=$("ex-source-composition"),legend=$("ex-source-composition-legend"),totalNode=$("ex-composition-total");
+ track.replaceChildren();legend.replaceChildren();
+ const grouped=groups(rows,"source"),total=sum(rows,cut()).budget;
+ totalNode.textContent="TOTAL "+money(total);
+ for(const [i,g] of grouped.entries()){
+  const budget=sum(g.rows,cut()).budget,share=total?100*budget/total:0;
+  if(share<=0)continue;
+  const color=fundingColors[i%fundingColors.length];
+  const part=document.createElement("div");part.className="exv-source-segment";part.style.width=share+"%";part.style.background=color;
+  part.title=g.value+" · "+money(budget)+" · "+share.toFixed(1)+"% del codificado";
+  part.setAttribute("role","img");part.setAttribute("aria-label",part.title);
+  if(share>=13){const pct=document.createElement("span");pct.textContent=share.toFixed(1)+"%";part.append(pct);}
+  track.append(part);
+  const item=document.createElement("div");item.className="exv-source-legend-item";
+  const dot=document.createElement("i");dot.style.background=color;
+  const label=document.createElement("span");label.textContent=g.value;
+  const amount=document.createElement("strong");amount.textContent=money(budget)+" · "+share.toFixed(1)+"%";
+  item.append(dot,label,amount);legend.append(item);
+ }
+ if(!grouped.length||!total){const empty=document.createElement("span");empty.textContent="SIN PRESUPUESTO PARA ESTA SELECCIÓN";track.append(empty);}
+}
 function renderPanes(){
  const focus=focusPath();
- for(const pane of ["area","source"]){
+ for(const pane of ["area"]){
   const own=paneTrails[pane],isFocused=pane===activePane;
   const path=isFocused?own:[],levels=paneOrder[pane],level=levels[path.length];
   const filtered=filterBy(records,focus);
@@ -198,8 +221,9 @@ function renderPanes(){
    const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
    card.disabled=!level;
    card.setAttribute("aria-label",item.value+": codificado "+money(v.budget)+", devengado "+money(v.accrued)+". Abrir siguiente nivel");
-   card.style.flexGrow=String(Math.max(1,v.budget/total*100));
-   card.style.flexBasis=items.length>4?"39%":"43%";
+   card.style.flexGrow=String(Math.max(0.01,v.budget));
+   card.style.flexBasis="0px";
+   card.style.minWidth="145px";
    const name=document.createElement("strong");name.textContent=item.value;
    const values=document.createElement("span");values.className="exv-node-values";
    for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){
@@ -227,7 +251,7 @@ $("ex-committed-rate").textContent=committedRate.toFixed(1)+"%";
 $("ex-rate").textContent=accruedRate.toFixed(1)+"%";
 $("ex-advance-rate").textContent=advanceRate.toFixed(1)+"%";
 for(const [id,rate] of [["ex-committed-progress",committedRate],["ex-accrued-progress",accruedRate],["ex-advance-progress",advanceRate]])$(id).style.width=Math.max(0,Math.min(100,rate))+"%";
-renderPanes();
+renderFundingComposition(rs);renderPanes();
 $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",goHome,"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
