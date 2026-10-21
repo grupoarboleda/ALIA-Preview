@@ -75,9 +75,47 @@ function projectExplorer(pane,root,items,filtered){
  const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
  const insightTitle=document.createElement("h3");insightTitle.textContent="LECTURA GERENCIAL · ¿DÓNDE INTERVENIR?";
  const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
- for(const [label,value] of [["SALDO POR DEVENGAR",money(totalGap)],["POR COMPROMETER",money(Math.max(0,baseline.budget-baseline.committed))],["COMPROMETIDO POR DEVENGAR",money(Math.max(0,baseline.committed-baseline.accrued))],["DEVENGADO / COMPROMETIDO",baseline.committed?(100*baseline.accrued/baseline.committed).toFixed(1)+"%":"N/D"],["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%"],["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%"]]){
-  const card=document.createElement("div"),small=document.createElement("small"),strong=document.createElement("strong");small.textContent=label;strong.textContent=value;card.append(small,strong);insightMetrics.append(card);
+ const balances=[
+ ["SALDO POR DEVENGAR",money(totalGap),"pending"],
+ ["POR COMPROMETER",money(Math.max(0,baseline.budget-baseline.committed)),"uncommitted"],
+ ["COMPROMETIDO POR DEVENGAR",money(Math.max(0,baseline.committed-baseline.accrued)),"committed"],
+ ["DEVENGADO / COMPROMETIDO",baseline.committed?(100*baseline.accrued/baseline.committed).toFixed(1)+"%":"N/D",null],
+ ["CONCENTRACIÓN TOP 3",totalGap?(100*topGap/totalGap).toFixed(1)+"%":"0.0%",null],
+ ["EJECUCIÓN ACTUAL",percent(baseline).toFixed(1)+"%",null]
+ ];
+ const detail=document.createElement("section");detail.className="exv-balance-detail";detail.hidden=true;
+ const detailHead=document.createElement("div");detailHead.className="exv-balance-detail-head";
+ const detailTitle=document.createElement("strong");
+ const closeDetail=button("✕ CERRAR",()=>{detail.hidden=true;insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded","false"));},"exv-balance-close");
+ detailHead.append(detailTitle,closeDetail);
+ const detailTable=document.createElement("div");detailTable.className="exv-balance-table";
+ detail.append(detailHead,detailTable);
+ function showBalance(type,label){
+  detail.hidden=false;detailTitle.textContent=label+" · DESGLOSE POR PROYECTO Y PROCESO";detailTable.replaceChildren();
+  insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
+  const entries=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,pending:Math.max(0,v.budget-v.accrued),uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};})
+   .filter(r=>r[type]>0).sort((a,b)=>b[type]-a[type]);
+  const byProject=new Map();
+  for(const r of entries){if(!byProject.has(r.project))byProject.set(r.project,[]);byProject.get(r.project).push(r);}
+  for(const [project,rows] of byProject){
+   const projectTotal=rows.reduce((v,r)=>v+r[type],0);
+   const group=document.createElement("details");group.className="exv-balance-project";group.open=byProject.size<=3;
+   const summary=document.createElement("summary");summary.textContent=project+" · "+money(projectTotal)+" · "+rows.length+" proceso(s)";group.append(summary);
+   for(const r of rows){const line=document.createElement("div");line.className="exv-balance-process";
+    const process=document.createElement("span");process.textContent=r.process+" · "+r.source;
+    const amount=document.createElement("strong");amount.textContent=money(r[type]);
+    line.append(process,amount);group.append(line);}
+   detailTable.append(group);
+  }
+  if(!entries.length){const empty=document.createElement("p");empty.textContent="No hay saldos positivos en esta selección.";detailTable.append(empty);}
  }
+ for(const [label,value,type] of balances){
+  const card=document.createElement(type?"button":"div"),small=document.createElement("small"),strong=document.createElement("strong");
+  if(type){card.type="button";card.className="exv-balance-action";card.dataset.balance=type;card.setAttribute("aria-expanded","false");card.title="Ver proyectos y procesos que componen este saldo";card.addEventListener("click",()=>showBalance(type,label));}
+  small.textContent=label+(type?" ↗":"");strong.textContent=value;card.append(small,strong);insightMetrics.append(card);
+ }
+ insight.append(insightTitle,insightMetrics,detail);
+
  const advice=document.createElement("p");advice.className="exv-management-advice";
  advice.textContent=top3.length&&topGap>0?"Mayor oportunidad de seguimiento: "+top3.map(g=>g.name).join(" · ")+". Concentran "+(100*topGap/totalGap).toFixed(1)+"% del saldo por devengar. Analizar por separado el saldo por comprometer y los compromisos pendientes de devengar.":"Sin brechas positivas de ejecución en la selección actual.";
  const scenario=document.createElement("div");scenario.className="exv-management-scenario";
@@ -87,7 +125,7 @@ function projectExplorer(pane,root,items,filtered){
  const updateScenario=()=>{const ratio=Number(scenarioSlider.value)/100,increment=topGap*ratio,newRate=baseline.budget?100*(baseline.accrued+increment)/baseline.budget:0;scenarioResult.textContent=Math.round(ratio*100)+"% de la brecha top 3 → +"+money(increment)+" devengado potencial · Ejecución "+newRate.toFixed(1)+"%";};
  scenarioSlider.addEventListener("input",updateScenario);updateScenario();
  const disclaimer=document.createElement("small");disclaimer.className="exv-management-disclaimer";disclaimer.textContent="Escenario hipotético, no pronóstico. La brecha no equivale a atraso: validar cronograma, contratos y elegibilidad antes de decidir.";
- scenario.append(scenarioLabel,scenarioSlider,scenarioResult,disclaimer);insight.append(insightTitle,insightMetrics,advice,scenario);
+ scenario.append(scenarioLabel,scenarioSlider,scenarioResult,disclaimer);insight.append(advice,scenario);
  const list=document.createElement("div");list.className="exv-project-ranking";
  const total=sum(filtered,cut()).budget;
  const view=()=>{
