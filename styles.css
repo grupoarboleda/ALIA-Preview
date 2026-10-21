@@ -503,3 +503,5 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-temporal-info>div:last-child strong{color:#f0c88c}
 #explorer .exv-temporal-note{margin:0;color:#88b4c6;font:10px/1.5 system-ui,sans-serif}
 @media(max-width:680px){#explorer #ex-pane-source.exv-temporal-pane{padding:13px!important}.exv-temporal-head{flex-direction:column}}
+
+#explorer .exv-temporal-context{font:700 10px/1.5 Consolas,monospace;color:#65e5d1;background:#0b3546;border-left:3px solid #65e5d1;padding:7px 10px;overflow-wrap:anywhere}
