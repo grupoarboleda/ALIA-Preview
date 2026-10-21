@@ -107,3 +107,10 @@
 - Aprobado: al expandir `GLOBAL · TODA LA UNIDAD`, ocultar completamente el mosaico de áreas y mostrar en su lugar los dos bloques de saldo y sus rankings. Al cerrar GLOBAL, volver a mostrar el mosaico original.
 - Cambio mínimo: `root.hidden` ligado al estado `unitManagementOpen`, con regla CSS específica para superar `display:block!important` del treemap. No se cambian cálculos ni navegación individual.
 - Archivos: `explorer.js`, `styles.css`, `index.html`; commits `3ebeaaa`, `ce07e7e`, `b7fd7a2`. Validación visual local pendiente, sin despliegue público.
+
+### 2026-10-21 — Animación automática y curvas contractuales reales/proyectadas (DEMO)
+- Solicitud: eliminar avance manual mes a mes; curvas dibujadas automáticamente al abrir seguimiento (animación única de 3 segundos, con accesibilidad para movimiento reducido).
+- Contratos: cuatro curvas activables: devengado real, devengado proyectado (discontinua), avance físico real y línea de comprometido; las curvas observadas se limitan al mes de corte y la proyección continúa hasta diciembre. Tres indicadores: real, proyectado y brecha en puntos porcentuales.
+- **Límite esencial:** la fuente actual es sintética. Tanto el devengado real mensual como su programación y el avance físico están simulados; NO se conectó la programación oficial y no debe interpretarse la proyección ilustrativa como plan contractual real. No se creó proyección de avance físico.
+- Procesos: la curva de gestión también se revela automáticamente; se mantienen bandas por etapa, corte y conteo de reportes.
+- Archivos: `explorer.js`, `styles.css`, `index.html`. Commits: `7b94617`, `d0f06cc`, `3cb0d5e`. Validación visual pendiente en ALIA Local; sin publicación pública.
