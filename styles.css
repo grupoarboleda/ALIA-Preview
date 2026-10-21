@@ -508,3 +508,9 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 #explorer .exv-temporal-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
 @media(max-width:680px){#explorer .exv-temporal-controls{justify-content:flex-start;width:100%}#explorer .exv-temporal-controls select{flex:1;min-width:135px}}
+
+#explorer .exv-temporal-unit-toggle{display:inline-flex;align-items:stretch;gap:4px;padding:3px;border:1px solid #34738b;background:#071c2b}
+#explorer .exv-temporal-unit-choice{appearance:none;cursor:pointer;min-width:54px;padding:9px 13px;background:transparent;border:1px solid transparent;color:#96c2d2;font:800 12px Consolas,monospace;transition:background .18s,border-color .18s,color .18s}
+#explorer .exv-temporal-unit-choice[aria-pressed="true"]{background:#155568;border-color:#67e7d6;color:#e9ffff;box-shadow:inset 0 -2px #67e7d6}
+#explorer .exv-temporal-unit-choice:hover{border-color:#55b5c8;color:#fff}
+#explorer .exv-temporal-unit-choice:focus-visible{outline:2px solid #f0bd70;outline-offset:2px}
