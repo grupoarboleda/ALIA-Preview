@@ -114,3 +114,9 @@
 - **Límite esencial:** la fuente actual es sintética. Tanto el devengado real mensual como su programación y el avance físico están simulados; NO se conectó la programación oficial y no debe interpretarse la proyección ilustrativa como plan contractual real. No se creó proyección de avance físico.
 - Procesos: la curva de gestión también se revela automáticamente; se mantienen bandas por etapa, corte y conteo de reportes.
 - Archivos: `explorer.js`, `styles.css`, `index.html`. Commits: `7b94617`, `d0f06cc`, `3cb0d5e`. Validación visual pendiente en ALIA Local; sin publicación pública.
+
+### 2026-10-21 — Coherencia entre proyección contractual y tarjetas
+- Eliminada línea vertical CORTE en gráfica de contratos y referencias de corte en leyenda; colores verde/naranja siguen marcando la transición de real a proyectado.
+- La tarjeta PROYECCIÓN · DICIEMBRE ahora calcula el mismo extremo final de la curva naranja: devengado real del último mes + incrementos proyectados futuros hasta diciembre, con límite de 0 a 100 %.
+- La tarjeta DESVIACIÓN VS PLAN indica explícitamente el mes al que corresponde; compara devengado real con programación de ese mismo mes. Se simplificó la nota explicativa.
+- Archivos: explorer.js, index.html. Commits 75b9bdc, 766869a. Datos DEMO; validación visual pendiente y sin publicación pública.
