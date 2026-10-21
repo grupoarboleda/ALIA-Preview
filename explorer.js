@@ -58,14 +58,14 @@ function goBack(pane){
 function goHome(){paneTrails.area=[];paneTrails.source=[];activePane="area";override=null;render();}
 
 // Budget-weighted project map and searchable ranking. Each row is a clickable drill target.
-const projectControls={area:{query:"",sort:"budget",limit:10},source:{query:"",sort:"budget",limit:10}};
+const projectControls={area:{query:"",sort:"gap",limit:10},source:{query:"",sort:"gap",limit:10}};
 function projectExplorer(pane,root,items,filtered){
  const control=projectControls[pane],outer=document.createElement("section");outer.className="exv-project-explorer";
  const tools=document.createElement("div");tools.className="exv-project-toolbar";
- const heading=document.createElement("strong");heading.textContent="MAPA DE CONCENTRACIÓN · "+items.length+" PROYECTOS";
+ const heading=document.createElement("strong");heading.textContent="PROYECTOS CON MAYOR IMPACTO POTENCIAL · "+items.length;
  const search=document.createElement("input");search.type="search";search.placeholder="Buscar proyecto…";search.setAttribute("aria-label","Buscar proyecto");search.value=control.query;
  const sort=document.createElement("select");sort.setAttribute("aria-label","Ordenar proyectos");
- for(const [key,label] of [["budget","Mayor codificado"],["accrued","Mayor devengado"],["rate","Mayor % devengado"],["risk","Menor % devengado"]]){const option=document.createElement("option");option.value=key;option.textContent=label;sort.append(option);}sort.value=control.sort;
+ for(const [key,label] of [["gap","Mayor brecha de ejecución"],["budget","Mayor codificado"],["accrued","Mayor devengado"],["rate","Mayor % devengado"],["risk","Menor % devengado"]]){const option=document.createElement("option");option.value=key;option.textContent=label;sort.append(option);}sort.value=control.sort;
  const limit=document.createElement("select");limit.setAttribute("aria-label","Cantidad de proyectos");
  for(const [key,label] of [[10,"Top 10"],[20,"Top 20"],[0,"Todos"]]){const option=document.createElement("option");option.value=String(key);option.textContent=label;limit.append(option);}limit.value=String(control.limit);
  tools.append(heading,search,sort,limit);
@@ -77,7 +77,7 @@ function projectExplorer(pane,root,items,filtered){
   const found=items.filter(g=>g.value.toLocaleLowerCase("es").includes(control.query.toLocaleLowerCase("es")));
   const sorted=[...found].sort((a,b)=>{
    const x=sum(a.rows,cut()),y=sum(b.rows,cut());
-   return control.sort==="rate"?percent(y)-percent(x):control.sort==="risk"?percent(x)-percent(y):y[control.sort]-x[control.sort];
+   return control.sort==="rate"?percent(y)-percent(x):control.sort==="risk"?percent(x)-percent(y):control.sort==="gap"?Math.max(0,y.budget-y.accrued)-Math.max(0,x.budget-x.accrued):y[control.sort]-x[control.sort];
   });
   const shown=control.limit?sorted.slice(0,control.limit):sorted;
   const visibleTotal=shown.reduce((n,g)=>n+sum(g.rows,cut()).budget,0);
@@ -99,7 +99,7 @@ function projectExplorer(pane,root,items,filtered){
   }
   map.append(strips);
   if(!shown.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="No hay proyectos con ese nombre.";map.append(empty);}
-  const listTitle=document.createElement("strong");listTitle.textContent="RANKING · HAZ CLIC PARA VER PROCESOS";list.append(listTitle);
+  const listTitle=document.createElement("strong");listTitle.textContent="PRIORIDAD DE SEGUIMIENTO · BRECHA CODIFICADO − DEVENGADO";list.append(listTitle);
   for(const [i,g] of shown.entries()){
    const v=sum(g.rows,cut()),share=total?100*v.budget/total:0;
    const row=document.createElement("button");row.type="button";row.className="exv-project-row";
@@ -107,10 +107,10 @@ function projectExplorer(pane,root,items,filtered){
    row.setAttribute("aria-label","Abrir "+g.value);
    const rank=document.createElement("span");rank.textContent=String(i+1).padStart(2,"0");
    const title=document.createElement("span");title.className="exv-project-row-name";title.textContent=g.value;
-   const amount=document.createElement("span");amount.textContent=money(v.budget);
-   const rate=document.createElement("span");rate.textContent=percent(v).toFixed(1)+"% dev.";
+   const amount=document.createElement("span");amount.textContent=money(v.budget);amount.title="Codificado";
+   const rate=document.createElement("span");rate.textContent=percent(v).toFixed(1)+"% dev.";const gap=document.createElement("span");gap.className="exv-project-gap";gap.textContent=money(Math.max(0,v.budget-v.accrued))+" pendiente";
    const bar=document.createElement("span");bar.className="exv-project-row-bar";const fill=document.createElement("span");fill.style.width=share+"%";bar.append(fill);
-   row.append(rank,title,amount,rate,bar);list.append(row);
+   row.append(rank,title,amount,rate,gap,bar);list.append(row);
   }
  };
  search.addEventListener("input",()=>{control.query=search.value;view();});
