@@ -555,21 +555,18 @@ function renderManagementTemporal(rs,cutMonth){
     drawLine(values.map((v,i)=>({i,v})),item.color,{dashed:!!item.dashed,reference:item.name==="COMPROMETIDO",duration:2});
    }
   }
-  if(contract){
-   const line=add("line",{x1:x(cutIndex),x2:x(cutIndex),y1:T,y2:H-B,stroke:"#d8f4fa","stroke-width":1.3,"stroke-dasharray":"4 5"});
-   const label=add("text",{x:Math.max(L+16,Math.min(W-R-16,x(cutIndex))),y:T-7,fill:"#d8f4fa","font-size":10,"text-anchor":"middle"});label.textContent="CORTE";
-  }
   if(!contract){const cutIndex=Math.max(0,Math.min(11,cutMonth-1));const future=add("rect",{x:x(cutIndex)+((x(1)-x(0))/2),y:T,width:Math.max(0,W-R-x(cutIndex)-((x(1)-x(0))/2)),height:H-T-B,fill:"#071c2b","fill-opacity":".56"});}
   months.forEach((m,i)=>{const t=add("text",{x:x(i),y:H-22,fill:"#a9cbd7","font-size":10,"text-anchor":"middle"});t.textContent=m;});
   chart.append(svg);
   const note=document.createElement("p");note.className="exv-temporal-note";
-  if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos · Verde: devengado hasta el corte; naranja: continuación proyectada desde el valor real al corte. Brecha frente al plan original: "+(last-planned)+" pp. El avance físico y la programación mensual son ilustrativos.";}
+  if(contract){const last=dev.slice(0,cutMonth).at(-1),planned=projected.slice(0,cutMonth).at(-1);let idle=0;for(let i=cutMonth-1;i>0&&dev[i]===dev[i-1];i--)idle++;note.textContent="DEMO · "+money(commit)+" comprometidos. La proyección continúa desde el último devengado real hasta diciembre. La desviación compara el devengado real con la programación del mismo mes ("+(last-planned)+" pp). Datos físicos y financieros ilustrativos.";}
   else{const current=stages[Math.max(0,cutMonth-1)];let duration=0;for(let i=cutMonth-1;i>=0&&stages[i]===current;i--)duration++;note.textContent="DEMO · Estado al corte: "+current+" · "+duration+" reporte(s) mensuales consecutivos en la misma etapa. Se cuentan reportes, no días.";}
   chart.append(note);
   if(contract){
    const kpis=document.createElement("div");kpis.className="exv-contract-variance";
    const current=Math.max(0,Math.min(11,cutMonth-1));
-   for(const [label,value] of [["DEVENGADO REAL",dev[current]+"%"],["DEVENGADO PROYECTADO",projected[current]+"%"],["BRECHA AL CORTE",(dev[current]-projected[current])+" pp"]]){
+   const forecastDecember=Math.min(100,Math.max(0,dev[current]+projected[11]-projected[current]));
+   for(const [label,value] of [["DEVENGADO REAL · "+months[current],dev[current]+"%"],["PROYECCIÓN · DICIEMBRE",forecastDecember+"%"],["DESVIACIÓN VS PLAN · "+months[current],(dev[current]-projected[current])+" pp"]]){
     const box=document.createElement("div");const cap=document.createElement("small");cap.textContent=label;const num=document.createElement("strong");num.textContent=value;box.append(cap,num);kpis.append(box);
    }
    chart.append(kpis);
@@ -579,8 +576,8 @@ function renderManagementTemporal(rs,cutMonth){
  if(contract){
   const legend=document.createElement("div");legend.className="exv-contract-legend";
   const entries=[
-   ["#66e9d1","DEVENGADO REAL · HASTA CORTE",false],
-   ["#f0bd70","PROYECCIÓN DEVENGADO · DESPUÉS DEL CORTE",true],
+   ["#66e9d1","DEVENGADO REAL",false],
+   ["#f0bd70","DEVENGADO PROYECTADO",true],
    ["#74a9ff","AVANCE FÍSICO REAL",false],
    ["#d7e8f1","COMPROMETIDO · REFERENCIA",true]
   ];
