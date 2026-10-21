@@ -321,3 +321,12 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 #explorer .exv-source-execution{height:18px!important;border:2px solid #052b3b!important;background:#052b3b!important;border-radius:3px!important;overflow:hidden!important}
 #explorer .exv-source-execution-fill{background:#fff!important;box-shadow:none!important}
 #explorer .exv-source-execution-rate{font-size:11px!important;letter-spacing:.2px!important}
+
+/* Source labels and visually contrasted demo execution */
+#explorer .exv-source-segment{justify-content:center!important;gap:9px!important}
+#explorer .exv-source-segment-header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0;color:#092c39}
+#explorer .exv-source-name{font:700 clamp(10px,1vw,14px)/1.2 Consolas,monospace;overflow-wrap:anywhere}
+#explorer .exv-source-segment-header .exv-source-share{font:700 clamp(11px,1.2vw,16px)/1.2 Consolas,monospace!important;white-space:nowrap}
+#explorer .exv-source-execution-rate{text-align:left!important;font:700 clamp(10px,.9vw,13px)/1.3 Consolas,monospace!important}
+#explorer .exv-source-execution{height:10px!important;border:1px solid #164858!important}
+@media(max-width:720px){#explorer .exv-source-segment-header{flex-wrap:wrap;gap:3px}#explorer .exv-source-name{font-size:9px}#explorer .exv-source-execution-rate{font-size:9px!important}}
