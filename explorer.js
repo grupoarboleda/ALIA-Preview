@@ -272,6 +272,7 @@ function renderPanes(){
   const filtered=fundingScope(filterBy(records,focus));
   const root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
   root.replaceChildren();crumb.replaceChildren();
+  const priorGlobal=root.parentElement.querySelector(".exv-unit-management");if(priorGlobal)priorGlobal.remove();
   const back=$("ex-back-"+pane);
   if(back)back.disabled=!isFocused||!own.length;
   const rootLabel=pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO";
@@ -288,7 +289,7 @@ function renderPanes(){
    const heading=document.createElement("p");heading.className="exv-unit-management-caption";
    heading.textContent="TODAS LAS ÁREAS · Selecciona un saldo para ver los procesos o contratos prioritarios de la unidad.";
    globalPanel.insertBefore(heading,globalPanel.children[1]);
-   root.append(globalPanel);
+   root.parentElement.insertBefore(globalPanel,root);
   }
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
   if(level==="project"&&items.length){projectExplorer(pane,root,items,filtered);$("ex-pane-"+pane).classList.toggle("is-active",isFocused);continue;}
