@@ -282,10 +282,14 @@ function renderTemporal(rs,cutMonth){
  const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador financiero");
  for(const [key,label] of [["accrued","% Devengado"],["committed","% Comprometido"],["advance","% Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
  picker.value=host.dataset.metric||"accrued";picker.addEventListener("change",()=>{host.dataset.metric=picker.value;renderTemporal(rs,cutMonth);});
- const unitPicker=document.createElement("select");unitPicker.className="exv-temporal-picker";unitPicker.setAttribute("aria-label","Unidad de la gráfica");
- for(const [key,label] of [["percent","% del codificado"],["usd","USD acumulados"]]){const o=document.createElement("option");o.value=key;o.textContent=label;unitPicker.append(o);}
- unitPicker.value=host.dataset.unit||"percent";
- unitPicker.addEventListener("change",()=>{host.dataset.unit=unitPicker.value;renderTemporal(rs,cutMonth);});
+ const unitPicker=document.createElement("div");unitPicker.className="exv-temporal-unit-toggle";unitPicker.setAttribute("role","group");unitPicker.setAttribute("aria-label","Unidad de la gráfica");
+ const activeUnit=host.dataset.unit||"percent";
+ for(const [key,label] of [["percent","%"],["usd","USD"]]){
+  const choice=document.createElement("button");choice.type="button";choice.className="exv-temporal-unit-choice";choice.textContent=label;
+  choice.setAttribute("aria-pressed",String(activeUnit===key));choice.title=key==="percent"?"Porcentaje del codificado":"Dólares acumulados";
+  choice.addEventListener("click",()=>{if(host.dataset.unit===key)return;host.dataset.unit=key;renderTemporal(rs,cutMonth);});
+  unitPicker.append(choice);
+ }
  const controls=document.createElement("div");controls.className="exv-temporal-controls";controls.append(picker,unitPicker);
  const context=document.createElement("div");context.className="exv-temporal-context";
  const tags=[...paneTrails[activePane].map(p=>p.value)];
@@ -332,7 +336,7 @@ function renderTemporal(rs,cutMonth){
   :Math.max(0,target+(v-anchor)));
  const budget=sum(rs,cutMonth).budget;
  const rates=values.map(v=>budget>0?Math.max(0,Math.min(100,100*v/budget)):0);
- const inPercent=unitPicker.value==="percent";
+ const inPercent=(host.dataset.unit||"percent")==="percent";
  const chartValues=inPercent?rates:values;
  const projected=chartValues.map((v,i)=>i<=cutIdx?null:v);
  const historical=chartValues.map((v,i)=>i<=cutIdx?v:null);
