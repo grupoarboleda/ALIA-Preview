@@ -78,3 +78,9 @@
 - Interacción: desde el ranking de procesos/contratos, `VER EVOLUCIÓN` activa la Rama 02. Proceso: bandas de etapas y avance de gestión; contrato: curvas devengado, avance físico y compromiso. Las bandas y curvas se pueden activar/desactivar.
 - Los estados, meses y porcentajes de la vista nueva son DEMO sintéticos, **no** lecturas de reportes reales. Se requiere conectar snapshots mensuales reales por código de proceso/contrato para validar estancamientos.
 - Archivos: `explorer.js`, `index.html`. Commit principal `bb55941`. Validación visual pendiente.
+
+### 2026-10-21 — Acceso directo a curvas desde ranking gerencial
+- Aprobado: un clic en la fila de proceso/contrato activa directamente su curva en Rama 02. Se elimina botón intermedio `VER EVOLUCIÓN` y el desglose de proyectos/financiamiento del ranking.
+- Cada fila presenta código, saldo, etapa y reportes mensuales consecutivos (procesos), o devengado porcentual e intervalos sin incremento (contratos). Orden económico descendente conservado.
+- Gráfica individual incluye aviso `ATENCIÓN GERENCIAL` con orientación de revisión. Todos los estados y avances temporales siguen siendo **DEMO**; no interpretar como datos reales.
+- Archivos: `explorer.js`, `styles.css`, `index.html`. Commits `06a8200`, `bce466c`, `9d0f0d0`. Validación visual local pendiente.
