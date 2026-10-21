@@ -422,3 +422,29 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
  #explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-summary{font-size:10px!important}
  #explorer #ex-tree-area.exv-area-treemap>.exv-node .exv-node-foot{font-size:8px!important}
 }
+
+/* Ensure the smallest proportional area also displays every KPI and its navigation footer. */
+#explorer #ex-tree-area.exv-area-treemap{height:560px!important;min-height:560px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact{
+  padding:11px 16px!important;gap:0!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact>strong{
+  font-size:15px!important;margin:0 0 7px!important;line-height:1.2!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values{
+  margin:0 0 7px!important;gap:10px!important;
+}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values>span{gap:3px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values small{font-size:9px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values b{font-size:14px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-summary{font-size:11px!important;margin-bottom:5px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-bar{height:5px!important}
+#explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-foot{
+  padding-top:6px!important;font-size:9px!important;
+}
+@media(max-width:720px){
+ #explorer #ex-tree-area.exv-area-treemap{height:530px!important;min-height:530px!important}
+ #explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact{padding:7px!important}
+ #explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important}
+ #explorer #ex-tree-area.exv-area-treemap>.exv-node.exv-node-compact .exv-node-values b{font-size:10px!important}
+}
