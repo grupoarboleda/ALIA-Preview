@@ -37,6 +37,8 @@
 | 2026-10-21 | Reforzar visibilidad de los botones con estilos explícitos y renovar versión de script para evitar caché | `explorer.js`, `index.html` | `e91bd8f`, `5518fcb` | Código incorporado; **validación visual local pendiente** |
 | 2026-10-21 | Crear bitácora central y registrar en adelante todos los ajustes | `BITACORA_ALIA.md` | Este commit | Registro iniciado |
 
+| 2026-10-21 | Navegación aprobada: retirar INICIO duplicado de Rama 01, conservar VOLVER por nivel, y dejar LIMPIAR global como única acción para nueva exploración; mantener unidad %/USD e indicador temporal | `index.html`, `explorer.js` | `b756243`, `d13be62` | Código incorporado; validación visual local pendiente |
+
 ## 4. Protocolo para próximas modificaciones
 
 1. Consultar esta bitácora antes de modificar ALIA.
@@ -49,6 +51,7 @@
 
 ## 5. Pendientes y límites
 
-- **Pendiente:** confirmación visual de los dos botones `%` y `USD` en ALIA Local después del ajuste `5518fcb`.
+- **Validado por el usuario:** los botones `%` y `USD` funcionan correctamente en ALIA Local.
+- **Pendiente:** validación visual local del ajuste de navegación (un único LIMPIAR y VOLVER por nivel).
 - **Pendiente para fase de datos reales:** importar y validar cortes Excel y series históricas observadas; no presentar series simuladas como registros oficiales.
 - El hecho de registrar un cambio en GitHub no implica que se haya probado la interfaz en la computadora del usuario.
