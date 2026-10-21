@@ -278,9 +278,9 @@ function renderTemporal(rs,cutMonth){
  host.classList.add("exv-temporal-pane");host.setAttribute("aria-label","Evolución y proyección presupuestaria");
  host.replaceChildren();
  const head=document.createElement("div");head.className="exv-temporal-head";
- const title=document.createElement("div");title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / INTELIGENCIA TEMPORAL</span><h3>EVOLUCIÓN Y PROYECCIÓN</h3><p>Histórico al corte · proyección diferenciada</p>';
+ const title=document.createElement("div");title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / INTELIGENCIA TEMPORAL</span><h3>EVOLUCIÓN Y PROYECCIÓN</h3><p>Porcentaje del codificado vs. tiempo · proyección diferenciada</p>';
  const picker=document.createElement("select");picker.className="exv-temporal-picker";picker.setAttribute("aria-label","Indicador financiero");
- for(const [key,label] of [["accrued","Devengado"],["budget","Codificado"],["committed","Comprometido"],["advance","Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
+ for(const [key,label] of [["accrued","% Devengado"],["committed","% Comprometido"],["advance","% Devengado + anticipo"]]){const o=document.createElement("option");o.value=key;o.textContent=label;picker.append(o);}
  picker.value=host.dataset.metric||"accrued";picker.addEventListener("change",()=>{host.dataset.metric=picker.value;renderTemporal(rs,cutMonth);});
  const context=document.createElement("div");context.className="exv-temporal-context";
  const tags=[...paneTrails[activePane].map(p=>p.value)];
@@ -325,10 +325,12 @@ function renderTemporal(rs,cutMonth){
  const values=raw.map((v,i)=>i<=cutIdx
   ?(anchor>0?v*target/anchor:0)
   :Math.max(0,target+(v-anchor)));
- const projected=values.map((v,i)=>i<=cutIdx?null:v);
- const historical=values.map((v,i)=>i<=cutIdx?v:null);
- const baseline=values[cutIdx];
- const max=Math.max(1,...values)*1.17;
+ const budget=sum(rs,cutMonth).budget;
+ const rates=values.map(v=>budget>0?Math.max(0,Math.min(100,100*v/budget)):0);
+ const projected=rates.map((v,i)=>i<=cutIdx?null:v);
+ const historical=rates.map((v,i)=>i<=cutIdx?v:null);
+ const baseline=rates[cutIdx];
+ const max=100;
  const W=620,H=300,L=54,R=20,T=20,B=46;
  const x=i=>L+i*(W-L-R)/11,y=v=>H-B-(v/max)*(H-T-B);
  const svgRoot=document.createElementNS("http://www.w3.org/2000/svg","svg");svgRoot.setAttribute("viewBox","0 0 620 300");svgRoot.setAttribute("role","img");svgRoot.setAttribute("aria-label","Curva histórica simulada hasta el corte y proyección demostrativa posterior");
@@ -336,7 +338,7 @@ function renderTemporal(rs,cutMonth){
  const add=(tag,attrs,parent=svgRoot)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
  const defs=add("defs",{});const grad=add("linearGradient",{id:"exvTemporalFill",x1:"0",y1:"0",x2:"0",y2:"1"},defs);
  add("stop",{offset:"0%","stop-color":"#54dfd0","stop-opacity":".2"},grad);add("stop",{offset:"100%","stop-color":"#54dfd0","stop-opacity":"0"},grad);
- for(let i=0;i<5;i++){const v=max*i/4,yy=y(v);add("line",{x1:L,x2:W-R,y1:yy,y2:yy,stroke:"#265269","stroke-dasharray":"3 7"});const t=add("text",{x:L-9,y:yy+4,fill:"#85b4c7","font-size":"10","text-anchor":"end"});t.textContent=v>=1000000?(v/1000000).toFixed(1)+"M":Math.round(v/1000)+"k";}
+ for(let i=0;i<5;i++){const v=max*i/4,yy=y(v);add("line",{x1:L,x2:W-R,y1:yy,y2:yy,stroke:"#265269","stroke-dasharray":"3 7"});const t=add("text",{x:L-9,y:yy+4,fill:"#85b4c7","font-size":"10","text-anchor":"end"});t.textContent=Math.round(v)+"%";}
  const coords=arr=>arr.map((v,i)=>v===null?null:[x(i),y(v)]).filter(Boolean);
  const path=points=>points.map(([xx,yy],i)=>(i?"L":"M")+xx.toFixed(1)+" "+yy.toFixed(1)).join(" ");
  const h=coords(historical),p=coords(projected),continuation=projected.some(v=>v!==null)?[[x(cutIdx),y(baseline)],...p]:[];
@@ -345,12 +347,12 @@ function renderTemporal(rs,cutMonth){
  add("line",{x1:x(cutIdx),x2:x(cutIdx),y1:T,y2:H-B,stroke:"#c6d9e5","stroke-dasharray":"4 5","stroke-opacity":".7"});
  const cutLabel=add("text",{x:Math.min(W-60,x(cutIdx)+7),y:15,fill:"#d9f5fa","font-size":"10"});cutLabel.textContent="CORTE";
  for(let i=0;i<12;i++){const t=add("text",{x:x(i),y:H-22,fill:i===cutIdx?"#eaffff":"#8bb5c6","font-size":"10","font-weight":i===cutIdx?"700":"400","text-anchor":"middle"});t.textContent=months[i];}
- h.forEach(([xx,yy],i)=>{const c=add("circle",{cx:xx,cy:yy,r:i===cutIdx?5:2.5,fill:"#70f0d5"});const tip=add("title",{},c);tip.textContent=months[i]+": "+money(historical[i]);});
+ h.forEach(([xx,yy],i)=>{const c=add("circle",{cx:xx,cy:yy,r:i===cutIdx?5:2.5,fill:"#70f0d5"});const tip=add("title",{},c);tip.textContent=months[i]+": "+historical[i].toFixed(1)+"%";});
  p.forEach(([xx,yy])=>add("circle",{cx:xx,cy:yy,r:3,fill:"#f0bd70"}));
  host.append(svgRoot);
  const legend=document.createElement("div");legend.className="exv-temporal-legend";legend.innerHTML='<span><i class="exv-temporal-real"></i>HISTÓRICO SIMULADO</span><span><i class="exv-temporal-future"></i>PROYECCIÓN DEMO</span>';host.append(legend);
- const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>VALOR AL CORTE</small><strong>"+money(baseline)+"</strong>";const right=document.createElement("div");right.innerHTML="<small>ESTIMACIÓN DICIEMBRE</small><strong>"+money(values[11])+"</strong>";info.append(left,right);host.append(info);
- const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados.";host.append(note);
+ const info=document.createElement("div");info.className="exv-temporal-info";const left=document.createElement("div");left.innerHTML="<small>EJECUCIÓN AL CORTE</small><strong>"+baseline.toFixed(1)+"%</strong>";const right=document.createElement("div");right.innerHTML="<small>PROYECCIÓN DICIEMBRE</small><strong>"+rates[11].toFixed(1)+"%</strong>";info.append(left,right);host.append(info);
+ const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="SIMULACIÓN · Cada fuente y proceso tiene un calendario mensual demostrativo distinto. Las pendientes y los puntos de inflexión cambian según el filtro; no son movimientos históricos observados ni pronósticos validados. El denominador es el codificado de la selección al corte; el eje vertical es fijo de 0% a 100%.";host.append(note);
 }
 
 function goBackTo(pane,length){paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
