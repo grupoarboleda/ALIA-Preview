@@ -36,15 +36,15 @@ const r=document.createElement("div");r.className="exv-tile-rate";const label=do
 const counts=document.createElement("div");counts.className="exv-tile-counts";counts.append(button("PROYECTOS ↗ "+projects,()=>{if(key)trail.push({key,value:g.value});$("ex-project").value="all";render("project");},"exv-count-link"),button("PROCESOS ↗ "+processes,()=>{if(key)trail.push({key,value:g.value});render("process");},"exv-count-link"));
 const explore=button(key?"EXPLORAR SIGUIENTE NIVEL ↗":"SELECCIONA UNA RAMA ARRIBA ↗",()=>enter(key,g.value),"exv-explore-link");el.append(heading,amounts,r,track,counts,explore);return el;}
 
-const paneTrails={area:[],source:[]};let activePane="area";
+const paneTrails={area:[],source:[]},paneOverrides={area:null,source:null};let activePane="area";
 const paneOrder={area:["area","project","process"],source:["source","area","project","process"]};
 function renderPanes(){
  for(const pane of ["area","source"]){
-  const path=paneTrails[pane],levels=paneOrder[pane],level=levels[path.length],root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
+  const path=paneTrails[pane],levels=paneOrder[pane],level=paneOverrides[pane]||levels[path.length],root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
   const filtered=records.filter(r=>path.every(p=>r[p.key]===p.value));
   root.replaceChildren();crumb.replaceChildren();
-  crumb.append(button(pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO",()=>{paneTrails[pane]=[];activePane=pane;render();},"exv-pane-crumb"));
-  path.forEach((p,i)=>crumb.append(button("› "+p.value,()=>{paneTrails[pane]=path.slice(0,i+1);activePane=pane;render();},"exv-pane-crumb")));
+  crumb.append(button(pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO",()=>{paneTrails[pane]=[];paneOverrides[pane]=null;activePane=pane;render();},"exv-pane-crumb"));
+  path.forEach((p,i)=>crumb.append(button("› "+p.value,()=>{paneTrails[pane]=path.slice(0,i+1);paneOverrides[pane]=null;activePane=pane;render();},"exv-pane-crumb")));
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
   for(const item of items){
    const v=sum(item.rows,cut()),p=percent(v),projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
@@ -55,8 +55,8 @@ function renderPanes(){
    const bar=document.createElement("div");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
    const summary=document.createElement("div");summary.className="exv-node-summary";summary.textContent=p.toFixed(1)+"% DEVENGADO";
    const actions=document.createElement("div");actions.className="exv-node-actions";
-   const drill=()=>{activePane=pane;if(level)paneTrails[pane].push({key:level,value:item.value});render();};
-   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;render(target);};
+   const drill=()=>{activePane=pane;if(level)paneTrails[pane].push({key:level,value:item.value});paneOverrides[pane]=null;render();};
+   const jump=target=>{activePane=pane;const base=[...path];if(level)base.push({key:level,value:item.value});paneTrails[pane]=base;paneOverrides[pane]=target;render(target);};
    if(level){actions.append(button("ABRIR ↗",drill,"exv-node-action"));actions.append(button("PROYECTOS "+projects,()=>jump("project"),"exv-node-action"));actions.append(button("PROCESOS "+processes,()=>jump("process"),"exv-node-action"));}
    card.append(name,values,summary,bar,actions);root.append(card);
   }
@@ -67,15 +67,15 @@ let override=null;
 function render(requested){if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=records.filter(r=>currentPath.every(p=>r[p.key]===p.value)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];$("ex-root-budget").textContent=money(sum(records,c).budget);
 $("ex-budget").textContent=money(v.budget);$("ex-committed").textContent=money(v.committed);$("ex-accrued").textContent=money(v.accrued);$("ex-advance").textContent=money(v.accrued+v.advance);$("ex-rate").textContent=percent(v).toFixed(1)+"%";
 renderPanes();
-$("ex-context").textContent=["CNEL EP · ESMERALDAS",...trail.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
+$("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.value)].join(" / ");$("ex-period").textContent="CORTE DEMO · "+({9:"SEP",10:"OCT",11:"NOV",12:"DIC"}[c])+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();crumbs.append(button("◉ EMPRESA",()=>{branch=null;trail=[];override=null;render();},"exv-crumb"));if(branch)crumbs.append(button(branch==="source"?"FINANCIAMIENTO":"ÁREAS",()=>{trail=[];override=null;render();},"exv-crumb"));trail.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>{trail=trail.slice(0,i+1);override=null;render();},"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
 const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>{override=null;enter(level,g.value);},"exv-link"));tr.append(td);body.append(tr);}
 renderChart(rs);$("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
-for(const pane of ["area","source"])$("ex-reset-"+pane).addEventListener("click",()=>{paneTrails[pane]=[];activePane=pane;override=null;render();});
-$("ex-home").addEventListener("click",()=>{paneTrails.area=[];paneTrails.source=[];activePane="area";override=null;render();});
-$("ex-back").addEventListener("click",()=>{if(override)override=null;else paneTrails[activePane].pop();render();});
+for(const pane of ["area","source"])$("ex-reset-"+pane).addEventListener("click",()=>{paneTrails[pane]=[];paneOverrides[pane]=null;activePane=pane;override=null;render();});
+$("ex-home").addEventListener("click",()=>{paneTrails.area=[];paneTrails.source=[];paneOverrides.area=null;paneOverrides.source=null;activePane="area";override=null;render();});
+$("ex-back").addEventListener("click",()=>{if(override)override=null;else paneTrails[activePane].pop();paneOverrides[activePane]=null;render();});
 $("ex-cut").addEventListener("change",()=>render());
 for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",()=>render());
 render();
