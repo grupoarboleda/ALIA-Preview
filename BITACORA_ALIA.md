@@ -176,3 +176,9 @@
 - Se recuperaron reglas originales: sumar porciones financieras sin eliminar filas repetidas, contar procesos y contratos únicos, distinguir monto contratado de codificado anual y calcular incrementos mensuales por diferencia de cortes acumulados.
 - Se creó `importador_matriz.py` (commit `19f1f78`), parser XLSX local con lectura de MATRIZ CONSOLIDADA, fecha interna, columnas financieras, claves de proceso/contrato, incidencias y salida JSON opcional de previsualización. No sube archivos, no altera el dashboard ni importa datos automáticamente.
 - Se amplió `ARQUITECTURA_DATOS_ALIA.md` con estas reglas. Pendiente: prueba integral del parser, conciliación de saldos, conexión al panel y carga de 9 reportes históricos que el usuario facilitará mañana. Datos reales no publicados.
+
+### 2026-10-22 — Primera integración de matriz real en ALIA Local
+- Revisada la matriz actualizada de 564 columnas. 398 asignaciones con corte 20/10/2026; SD 12,594,351.20, SF 10,380,402.00, SG 6,421,438.90; 208 códigos proceso y 176 contrato. Columnas UH–US registran avance físico mensual.
+- Se extendió el parser local `importador_matriz.py`, el servidor `servidor_alia.py` y el frontend `explorer.js`. Importación XLSX mediante botón en ALIA, datos almacenados únicamente en el equipo del usuario (directorio de usuario, fuera de GitHub). KPI reales y rankings por área/proceso/contrato; curva de avance físico mensual provisional. Histórico de devengado real y proyección no validados: no mostrar curvas sintéticas como reales.
+- SI contiene números con apariencia de fechas: no sumar anticipos no conciliados. Avance físico de contratos multiasignación se representa provisionalmente mediante máximo de filas, pendiente conciliación. Fecha de corte real única, no 9 reportes separados.
+- Código: commits 19d946c, 5a2b5be, 0139605, c960501, f00d1a2. Validación en navegador local y reinicio del servidor pendientes. No se subió XLSX ni se desplegó información real públicamente.
