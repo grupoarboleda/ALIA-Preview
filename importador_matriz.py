@@ -19,7 +19,8 @@ COLS = {
     "process": "P", "process_name": "R", "project": "S", "area": "T",
     "state": "AT", "contract": "AV", "contract_alt": "AP",
     "physical": "HS", "budget": "SD", "committed": "SF",
-    "accrued": "SG", "advance": "SI", "accrued_advance": "SK"
+    "accrued": "SG", "advance": "SI", "accrued_advance": "SK",
+    **{"physical_month_"+str(i+1): col for i,col in enumerate(("UH","UI","UJ","UK","UL","UM","UN","UO","UP","UQ","UR","US"))}
 }
 REQUIRED = {"A": "Reporte", "P": "CÓDIGO DEL PROCESO",
             "SD": "CODIFICADO AÑO N", "SF": "COMPROMETIDO AÑO N",
@@ -119,18 +120,23 @@ def inspect_file(path):
         else:
             issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
         values = {name: row.get(col, "") for name, col in COLS.items()}
-        for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical"):
+        for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
             values[field] = amount(values[field])
             if values[field] is None:
                 issues.append({"row": row_num, "code": "INVALID_NUMBER", "field": field})
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
-        values["contract_key"] = norm(values["contract"] or values["contract_alt"])
+        values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
         values["project_key"] = norm(values["project_code"])
         values["source_row"] = row_num
+        # Some SI/SK cells contain Excel date serials, not monetary amounts.
+        # Never turn such values into financial advances without reconciliation.
+        if values["advance"] is not None and 40000 <= values["advance"] <= 80000:
+            issues.append({"row": row_num, "code": "ADVANCE_RESEMBLES_EXCEL_DATE", "value": values["advance"]})
+            values["advance"] = None
         if not values["process_key"]:
             issues.append({"row": row_num, "code": "MISSING_PROCESS_CODE"})
-        if values["physical"] is not None and not 0 <= values["physical"] <= 1:
+        if values["physical"] is not None and not 0 <= values["physical"] <= 1.00001:
             issues.append({"row": row_num, "code": "PHYSICAL_OUT_OF_RANGE"})
         records.append(values)
     if header_row is None:
