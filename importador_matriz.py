@@ -121,7 +121,7 @@ def inspect_file(path):
             issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
         values = {name: row.get(col, "") for name, col in COLS.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
-            values[field] = amount(values[field])
+            values[field] = (None if field.startswith("physical_month_") and values[field] in ("", None) else amount(values[field]))
             if values[field] is None:
                 issues.append({"row": row_num, "code": "INVALID_NUMBER", "field": field})
         values["report_date"] = date
