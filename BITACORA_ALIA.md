@@ -182,3 +182,11 @@
 - Se extendió el parser local `importador_matriz.py`, el servidor `servidor_alia.py` y el frontend `explorer.js`. Importación XLSX mediante botón en ALIA, datos almacenados únicamente en el equipo del usuario (directorio de usuario, fuera de GitHub). KPI reales y rankings por área/proceso/contrato; curva de avance físico mensual provisional. Histórico de devengado real y proyección no validados: no mostrar curvas sintéticas como reales.
 - SI contiene números con apariencia de fechas: no sumar anticipos no conciliados. Avance físico de contratos multiasignación se representa provisionalmente mediante máximo de filas, pendiente conciliación. Fecha de corte real única, no 9 reportes separados.
 - Código: commits 19d946c, 5a2b5be, 0139605, c960501, f00d1a2. Validación en navegador local y reinicio del servidor pendientes. No se subió XLSX ni se desplegó información real públicamente.
+
+### 2026-10-22 — Módulo exclusivo Centro de importación · 12 matrices
+- Solicitud: separar por completo la importación del Explorador financiero y preparar 12 archivos mensuales como mínimo, con diez archivos iniciales pendientes de recepción.
+- Se agregó navegación **Centro de importación**, 12 casillas mensuales, selección múltiple, estado y advertencias, reemplazo por mes y botón de activación únicamente con 12 meses.
+- Se creó `importaciones.js` y `importaciones_backend.py`; se actualizó `index.html`, `app.js`, `styles.css`, `servidor_alia.py` y `explorer.js`. Se eliminó el botón antiguo de importación del Explorador financiero.
+- El backend guarda datos parseados en el equipo del usuario fuera de GitHub, valida la fecha real del reporte y conserva cada mes por separado. No mezcla acumulados ni reemplaza los datos activos durante la carga. La activación es explícita.
+- Commits: interfaz `b4d0531`, navegación `0256165`, cliente `d713464`, backend `bb98f56`, endpoints `b809e3c`, explorador `f1143c3`, estilos `c0385f4`.
+- Pendiente: recepción y prueba con los diez archivos, dos meses faltantes, validación funcional en localhost y reinicio del servidor Python para activar los endpoints nuevos. Sin despliegue público ni archivos institucionales en GitHub.
