@@ -611,3 +611,36 @@ footer{border-top:1px solid #204154;font-family:Consolas,monospace;letter-spacin
 
 /* Area drill-down: managerial balances occupy full width above project cards. */
 #explorer #ex-tree-area>.exv-area-management{grid-column:1/-1;width:100%;box-sizing:border-box;margin-bottom:12px}
+
+
+/* Centro de importación: módulo independiente de Explorador financiero */
+#imports{color:#e6f1fa}
+#imports .alia-import-heading{border:1px solid #2c7084;padding:26px 28px;background:linear-gradient(125deg,#0b2a3b,#0a1c30);border-radius:10px;margin-bottom:20px}
+#imports .alia-import-heading h2{font-size:25px;letter-spacing:.6px;margin:12px 0;color:#d8f9ff}
+#imports .alia-import-heading h2 span{color:#66e9d1}
+#imports .alia-import-heading p{color:#a7c3d2;line-height:1.65;font-size:13px;max-width:850px}
+#imports .alia-import-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
+#imports .alia-import-overview>div{border:1px solid #295268;background:#10283a;padding:19px;border-radius:9px;display:flex;flex-direction:column;gap:8px}
+#imports .alia-import-overview small{color:#8ec9d7;letter-spacing:1px;font-size:10px;font-weight:750}
+#imports .alia-import-overview strong{font-size:22px;color:#f0faff}
+#imports .alia-import-overview span{font-size:11px;color:#96b8c9}
+#imports .alia-import-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}
+#imports .alia-import-toolbar button,#imports .alia-import-pick{border:1px solid #40869b;background:#10384b;color:#c8fbf7;padding:12px 15px;font-size:11px;letter-spacing:.3px;border-radius:6px;cursor:pointer;font-weight:750}
+#imports .alia-import-toolbar button:disabled{opacity:.45;cursor:not-allowed}
+#imports .alia-import-help{font-size:12px;line-height:1.7;color:#a6c5d3}
+#imports .alia-import-feedback{border-left:3px solid #55d9c4;background:#0b2a36;color:#bdf6eb;padding:13px 15px;font-size:12px;margin:16px 0}
+#imports .alia-import-feedback.alia-import-error{border-left-color:#f59a7c;color:#ffc6b7}
+#imports .alia-import-months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#imports .alia-import-month{display:flex;align-items:center;gap:13px;background:#0d2535;border:1px solid #295167;padding:15px;border-radius:8px;min-width:0}
+#imports .alia-import-month-num{color:#65e3d2;font-weight:800;font-size:19px}
+#imports .alia-import-month-name{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+#imports .alia-import-month-name strong{font-size:12px;letter-spacing:.6px}
+#imports .alia-import-month-name small{font-size:10px;color:#91b5c4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#imports .alia-import-month-status{color:#91aabd;font-size:9px;font-weight:800}
+#imports .alia-import-month-status.is-loaded{color:#6fe7c9}
+#imports .alia-import-month button{background:transparent;border:1px solid #3a7c92;color:#baf0ed;padding:8px 10px;border-radius:4px;font-size:10px}
+#imports .alia-import-footer{border:1px solid #28536b;background:#0d2334;padding:20px;border-radius:8px;margin:20px 0}
+#imports .alia-import-footer strong{color:#9cebdc}
+#imports .alia-import-footer p{font-size:12px;line-height:1.65;color:#a5c2d1}
+#alia-import-issues p{font-size:11px;color:#efc597}
+@media(max-width:920px){#imports .alia-import-months{grid-template-columns:1fr}#imports .alia-import-overview{grid-template-columns:1fr}}
