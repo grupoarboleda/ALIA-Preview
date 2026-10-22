@@ -7,6 +7,9 @@ import threading
 import time
 import json
 import tempfile
+import zipfile
+from urllib.parse import unquote
+import importaciones_backend as monthly
 from importador_matriz import inspect_file
 
 ROOT = Path(__file__).resolve().parent
@@ -45,6 +48,19 @@ def sync():
 
 class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
+        endpoint = self.path.split("?", 1)[0]
+        if endpoint in ("/__alia_import_stage", "/__alia_import_activate"):
+            try:
+                if endpoint == "/__alia_import_activate":
+                    return self._json(monthly.activate())
+                size = int(self.headers.get("Content-Length", "0"))
+                if size < 1 or size > 40 * 1024 * 1024:
+                    return self._json({"ok": False, "error": "Archivo inválido o mayor a 40 MB"}, 413)
+                filename = unquote(self.headers.get("X-ALIA-Filename", "matriz.xlsx"))
+                requested = self.headers.get("X-ALIA-Month", "auto")
+                return self._json(monthly.stage(self.rfile.read(size), filename, requested))
+            except (ValueError, OSError, KeyError, zipfile.BadZipFile) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if self.path.split("?", 1)[0] != "/__alia_import":
             self.send_error(404)
             return
@@ -111,6 +127,11 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        endpoint = self.path.split("?", 1)[0]
+        if endpoint == "/__alia_import_status":
+            return self._json(monthly.status())
+        if endpoint == "/__alia_monthly_history":
+            return self._json(monthly.monthly_history())
         if self.path.split("?", 1)[0] in ("/", "/index.html"):
             sync()
         if self.path.split("?", 1)[0] == "/__alia_data":
