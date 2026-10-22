@@ -5,8 +5,12 @@ import os
 import subprocess
 import threading
 import time
+import json
+import tempfile
+from importador_matriz import inspect_file
 
 ROOT = Path(__file__).resolve().parent
+LOCAL_DATA = Path.home() / ".alia_local_data" / "current.json"
 os.chdir(ROOT)
 _lock = threading.Lock()
 _last_sync = 0.0
@@ -40,9 +44,82 @@ def sync():
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def do_POST(self):
+        if self.path.split("?", 1)[0] != "/__alia_import":
+            self.send_error(404)
+            return
+        size = int(self.headers.get("Content-Length", "0"))
+        if size < 1 or size > 40 * 1024 * 1024:
+            self.send_error(413, "Archivo fuera de rango (máximo 40 MB)")
+            return
+        data = self.rfile.read(size)
+        if not data.startswith(b"PK"):
+            self.send_error(400, "Se requiere archivo XLSX")
+            return
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+                tmp.write(data)
+                path = Path(tmp.name)
+            try:
+                batch = inspect_file(path)
+            finally:
+                path.unlink(missing_ok=True)
+            if not batch["records"]:
+                raise ValueError("Matriz sin registros válidos")
+            records = []
+            for row in batch["records"]:
+                if not row.get("report_date") or not row.get("process_key"):
+                    continue
+                records.append({
+                    "area": row.get("area") or "SIN ÁREA",
+                    "source": row.get("source") or "SIN FUENTE",
+                    "project": row.get("project") or "SIN PROYECTO",
+                    "process": row["process_key"],
+                    "contract": row.get("contract_key") or "",
+                    "budget": row.get("budget") or 0,
+                    "committed": row.get("committed") or 0,
+                    "accrued": row.get("accrued") or 0,
+                    "advance": row.get("advance") or 0,
+                    "physical": row.get("physical"),
+                    "physicalMonths": [row.get("physical_month_" + str(i)) for i in range(1,13)],
+                    "reportDate": row["report_date"]
+                })
+            if not records:
+                raise ValueError("No hay asignaciones con fecha y proceso")
+            payload = {"mode": "REAL", "records": records,
+                       "report_dates": batch["report_dates"],
+                       "issues": batch["issues"][:100],
+                       "warnings_count": len(batch["issues"]),
+                       "file_hash": batch["sha256"]}
+            LOCAL_DATA.parent.mkdir(parents=True, exist_ok=True)
+            temp = LOCAL_DATA.with_suffix(".tmp")
+            temp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            temp.replace(LOCAL_DATA)
+            self._json({"ok": True, "records": len(records),
+                        "report_dates": batch["report_dates"],
+                        "warnings": len(batch["issues"]),
+                        "mode": "REAL"})
+        except Exception as exc:
+            self._json({"ok": False, "error": str(exc)}, 422)
+
+    def _json(self, payload, code=200):
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self):
         if self.path.split("?", 1)[0] in ("/", "/index.html"):
             sync()
+        if self.path.split("?", 1)[0] == "/__alia_data":
+            if not LOCAL_DATA.exists():
+                return self._json({"mode": "DEMO", "records": []})
+            try:
+                return self._json(json.loads(LOCAL_DATA.read_text(encoding="utf-8")))
+            except (OSError, ValueError) as exc:
+                return self._json({"error": str(exc)}, 500)
         if self.path.split("?", 1)[0] == "/__alia_status":
             body = _status.encode("utf-8")
             self.send_response(200)
