@@ -723,31 +723,16 @@ $("ex-back").addEventListener("click",()=>goBack(activePane));
 $("ex-cut").addEventListener("change",render);
 for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",render);
 render();
-// The workbook stays on this computer: upload is processed only by the local ALIA server.
-const importControl=document.createElement("div");importControl.style.cssText="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0";
-const importButton=button("IMPORTAR MATRIZ REAL · XLSX",()=>fileInput.click(),"exv-count-link");
-const fileInput=document.createElement("input");fileInput.type="file";fileInput.accept=".xlsx";fileInput.hidden=true;
-const importStatus=document.createElement("span");importStatus.style.cssText="font-size:11px;color:#9fd9d6";
-importStatus.textContent="MODO DEMO · Sin datos reales importados";
-importControl.append(importButton,fileInput,importStatus);
-$("ex-home").parentElement.append(importControl);
 function activateReal(data){
  if(!data||data.mode!=="REAL"||!Array.isArray(data.records)||!data.records.length)return;
  records=data.records.map(r=>({...r,budget:Number(r.budget)||0,committed:Number(r.committed)||0,accrued:Number(r.accrued)||0,advance:Number(r.advance)||0}));
  realMode=true;selectedManagement=null;unitManagementOpen=false;
  paneTrails.area=[];activePane="area";trail=[];branch=null;override=null;
- $("ex-cut").value="10";$("ex-cut").disabled=true;
- importStatus.textContent="DATOS REALES · "+records.length+" asignaciones · "+Object.keys(data.report_dates||{}).join(", ")+" · "+(data.warnings_count||0)+" alertas";
+ $("ex-cut").value=String(Number(Object.keys(data.report_dates||{})[0]?.slice(5,7))||10);$("ex-cut").disabled=true;
+ const marker=document.querySelector("#explorer .exv-demo");if(marker)marker.textContent="● DATOS REALES · "+Object.keys(data.report_dates||{}).join(", ");
  render();
 }
-fileInput.addEventListener("change",async()=>{
- const file=fileInput.files[0];if(!file)return;
- importStatus.textContent="Validando matriz local…";
- try{
-  const response=await fetch("/__alia_import",{method:"POST",headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},body:file});
-  const result=await response.json();
-  if(!response.ok||!result.ok)throw Error(result.error||"Error de importación");
-  const loaded=await fetch("/__alia_data").then(r=>r.json());activateReal(loaded);
+fetch("/__alia_data").then(r=>r.json());activateReal(loaded);
  }catch(error){importStatus.textContent="No se pudo importar: "+error.message;}
 });
 fetch("/__alia_data").then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
