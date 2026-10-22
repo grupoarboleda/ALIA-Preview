@@ -1,9 +1,10 @@
 "use strict";
-// ALIA Preview: ALL figures and dates are synthetic. No official matrix is exposed.
+// ALIA Preview: DEMO is synthetic; REAL data is loaded only from local localhost importer.
 (()=>{
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("es-EC",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
-const records=[
+let realMode=false;
+let records=[
 ["Distribución","BID","Modernización de redes","PROC-001",950000,740000,580000,32000],
 ["Distribución","Recursos propios","Modernización de redes","PROC-002",900000,710000,540000,25000],
 ["Infraestructura","CAF","Infraestructura de subestaciones","PROC-003",1350000,990000,630000,76000],
@@ -18,7 +19,7 @@ const names={source:"Fuente de financiamiento",area:"Área",project:"Proyecto",p
 let branch=null,trail=[];
 const hierarchy=()=>branch==="source"?["source","area","project","process"]:["area","project","process"];
 const cut=()=>Number($("ex-cut").value);
-const sum=(rs,c)=>rs.reduce((v,r)=>({budget:v.budget+r.budget*factors[c][0],committed:v.committed+r.committed,accrued:v.accrued+r.accrued*factors[c][1],advance:v.advance+r.advance}),{budget:0,committed:0,accrued:0,advance:0});
+const sum=(rs,c)=>rs.reduce((v,r)=>({budget:v.budget+r.budget*(realMode?1:factors[c][0]),committed:v.committed+r.committed,accrued:v.accrued+r.accrued*(realMode?1:factors[c][1]),advance:v.advance+r.advance}),{budget:0,committed:0,accrued:0,advance:0});
 const percent=v=>v.budget?100*v.accrued/v.budget:0;
 const button=(label,fn,cls)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.className=cls;b.addEventListener("click",fn);return b;};
 const scoped=()=>records.filter(r=>trail.every(p=>r[p.key]===p.value)&&["area","source","project"].every(k=>$( {area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value==="all"||r[k]===$({area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value));
@@ -364,6 +365,7 @@ function renderPanes(){
 let selectedManagement=null;
 let unitManagementOpen=false;
 function renderTemporal(rs,cutMonth){
+ if(realMode){renderRealTemporal(rs,cutMonth);return;}
  if(selectedManagement){renderManagementTemporal(rs,cutMonth);return;}
  const host=$("ex-pane-source");if(!host)return;
  host.classList.add("exv-temporal-pane");host.setAttribute("aria-label","Evolución y proyección presupuestaria");
@@ -479,7 +481,48 @@ function stageMessage(stages,cutMonth){
  const i=Math.max(0,cutMonth-1),stage=stages[i];let n=0;for(let j=i;j>=0&&stages[j]===stage;j--)n++;
  return "ATENCIÓN GERENCIAL · "+stage+" durante "+n+" reporte(s) consecutivo(s); revisar próximo hito.";
 }
+function renderRealTemporal(rs,cutMonth){
+ const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
+ const heading=document.createElement("div");heading.className="exv-temporal-head";
+ const title=document.createElement("div");heading.append(title);host.append(heading);
+ const choice=selectedManagement;
+ const rows=choice?rs.filter(r=>(choice.type==="committed"?(r.contract||r.process):r.process)===choice.id):rs;
+ const total=sum(rows,cutMonth);
+ const label=choice?(choice.type==="committed"?"CONTRATO ":"PROCESO ")+choice.id:"UNIDAD / ÁREA · DATOS REALES";
+ title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · REPORTE OCTUBRE</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
+ title.querySelector("h3").textContent=label;
+ const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
+ const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued]];
+ for(const [name,value] of cards){
+  const card=document.createElement("div");card.className="exv-summary-card";const small=document.createElement("small");small.textContent=name;
+  const strong=document.createElement("strong");strong.textContent=money(value);card.append(small,strong);summary.append(card);
+ }
+ host.append(summary);
+ const warning=document.createElement("p");warning.className="exv-temporal-note";
+ warning.textContent="DATOS REALES · El archivo contiene los acumulados financieros al corte, pero aún no se ha verificado una serie mensual de devengado real. No se dibujan curvas financieras ficticias ni proyecciones inventadas.";
+ host.append(warning);
+ if(choice&&choice.type==="committed"){
+  const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+  const physical=months.map((_,i)=>{
+   const values=rows.map(r=>r.physicalMonths?.[i]).filter(v=>typeof v==="number"&&Number.isFinite(v));
+   return values.length?Math.max(...values)*100:null;
+  });
+  const graph=document.createElement("div");graph.className="exv-temporal-chart";
+  const cap=document.createElement("h4");cap.textContent="AVANCE FÍSICO HISTÓRICO · %";graph.append(cap);
+  const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");chart.setAttribute("viewBox","0 0 750 230");chart.style.width="100%";
+  const add=(tag,attrs)=>{const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));chart.append(el);return el;};
+  const x=i=>55+i*59,y=v=>185-v*1.5;
+  for(let v=0;v<=100;v+=25){add("line",{x1:55,x2:710,y1:y(v),y2:y(v),stroke:"#3e6274","stroke-dasharray":"3 6"});const t=add("text",{x:44,y:y(v)+4,fill:"#abcbd8","text-anchor":"end","font-size":11});t.textContent=v+"%";}
+  const available=physical.map((v,i)=>({v,i})).filter(p=>p.v!==null&&p.i<=9);
+  if(available.length){add("polyline",{points:available.map(p=>x(p.i)+","+y(p.v)).join(" "),fill:"none",stroke:"#74a9ff","stroke-width":3});for(const p of available)add("circle",{cx:x(p.i),cy:y(p.v),r:3,fill:"#74a9ff"});}
+  months.forEach((m,i)=>{const t=add("text",{x:x(i),y:209,fill:i===9?"#fff":"#9cbecb","font-size":10,"text-anchor":"middle"});t.textContent=m;});
+  graph.append(chart);host.append(graph);
+  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="Avance físico por mes extraído de las nuevas columnas UH–UQ. Cuando un contrato aparece en varias filas se muestra el máximo reportado provisionalmente; esta regla debe conciliarse con la matriz.";host.append(note);
+ }
+ if(choice){host.append(button("← VOLVER A EVOLUCIÓN GENERAL",()=>{selectedManagement=null;renderTemporal(rs,cutMonth);},"exv-count-link"));}
+}
 function renderManagementTemporal(rs,cutMonth){
+ if(realMode){renderRealTemporal(rs,cutMonth);return;}
  const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
  const choice=selectedManagement,type=choice.type,contract=type==="committed";
  const rows=rs.filter(r=>(contract?(r.contract||r.process):r.process)===choice.id);
@@ -680,4 +723,32 @@ $("ex-back").addEventListener("click",()=>goBack(activePane));
 $("ex-cut").addEventListener("change",render);
 for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",render);
 render();
+// The workbook stays on this computer: upload is processed only by the local ALIA server.
+const importControl=document.createElement("div");importControl.style.cssText="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0";
+const importButton=button("IMPORTAR MATRIZ REAL · XLSX",()=>fileInput.click(),"exv-count-link");
+const fileInput=document.createElement("input");fileInput.type="file";fileInput.accept=".xlsx";fileInput.hidden=true;
+const importStatus=document.createElement("span");importStatus.style.cssText="font-size:11px;color:#9fd9d6";
+importStatus.textContent="MODO DEMO · Sin datos reales importados";
+importControl.append(importButton,fileInput,importStatus);
+$("ex-home").parentElement.append(importControl);
+function activateReal(data){
+ if(!data||data.mode!=="REAL"||!Array.isArray(data.records)||!data.records.length)return;
+ records=data.records.map(r=>({...r,budget:Number(r.budget)||0,committed:Number(r.committed)||0,accrued:Number(r.accrued)||0,advance:Number(r.advance)||0}));
+ realMode=true;selectedManagement=null;unitManagementOpen=false;
+ paneTrails.area=[];activePane="area";trail=[];branch=null;override=null;
+ $("ex-cut").value="10";$("ex-cut").disabled=true;
+ importStatus.textContent="DATOS REALES · "+records.length+" asignaciones · "+Object.keys(data.report_dates||{}).join(", ")+" · "+(data.warnings_count||0)+" alertas";
+ render();
+}
+fileInput.addEventListener("change",async()=>{
+ const file=fileInput.files[0];if(!file)return;
+ importStatus.textContent="Validando matriz local…";
+ try{
+  const response=await fetch("/__alia_import",{method:"POST",headers:{"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},body:file});
+  const result=await response.json();
+  if(!response.ok||!result.ok)throw Error(result.error||"Error de importación");
+  const loaded=await fetch("/__alia_data").then(r=>r.json());activateReal(loaded);
+ }catch(error){importStatus.textContent="No se pudo importar: "+error.message;}
+});
+fetch("/__alia_data").then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
 })();
