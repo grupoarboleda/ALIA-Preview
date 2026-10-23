@@ -121,9 +121,15 @@ def inspect_file(path):
             issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
         values = {name: row.get(col, "") for name, col in COLS.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
-            values[field] = (None if field.startswith("physical_month_") and values[field] in ("", None) else amount(values[field]))
+            raw_value = values[field]
+            if field.startswith("physical_month_") and (raw_value is None or str(raw_value).strip() == ""):
+                # Future / unreported months are missing data, NOT malformed numbers.
+                values[field] = None
+                continue
+            values[field] = amount(raw_value)
             if values[field] is None:
-                issues.append({"row": row_num, "code": "INVALID_NUMBER", "field": field})
+                issues.append({"row": row_num, "code": "INVALID_NUMBER", "field": field,
+                               "value": str(raw_value)[:80]})
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
