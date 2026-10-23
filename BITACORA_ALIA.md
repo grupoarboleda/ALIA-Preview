@@ -197,3 +197,10 @@
 - Ajustado importaciones_backend.py para reconocer mes por prefijo 01.–12. o casilla seleccionada y guardar discrepancia de fecha como incidencia de auditoría. Activación bloqueada si los 12 meses contienen los mismos totales financieros.
 - El mensaje Failed to fetch es de comunicación navegador/servidor, no de estructura XLSX. Mejorado importaciones.js para mostrar explicación de conectividad y necesidad de reiniciar el proceso Python cuando su código cambió. index.html explica la asignación por mes y actualiza caché.
 - Commits: b72196b (backend), 85d61a4 (cliente), 531209e (interfaz). Validación en localhost del usuario pendiente. Los XLSX no se incorporaron al repositorio.
+
+### 2026-10-22 — Corrección de 1.194 falsos errores de avance físico
+- Error reportado: `01. Enero.xlsx: 1194 incidencias críticas. Primera: {"row": 13, "code": "INVALID_NUMBER", "field": "physical_month_10"}`.
+- Diagnóstico: la rutina `inspect_file` convertía correctamente vacíos de `physical_month_*` en `None`, pero luego los registraba erróneamente como `INVALID_NUMBER`. Son meses no informados, no números mal formados.
+- Inspección de los diez XLSX: cada uno contiene 1.266 celdas vacías en UH:US (incluye filas de encabezados adicionales) y cero valores no numéricos no vacíos en dichas columnas. El bloque octubre-diciembre de 398 registros explica los 1.194 errores reportados.
+- Solución en `importador_matriz.py`: aceptar vacíos como `None` y generar `INVALID_NUMBER` únicamente cuando existe contenido no numérico. Commit `3e0254d`.
+- Pendiente: verificar carga real en localhost después de reiniciar el proceso Python. Los archivos fuente no se modificaron.
