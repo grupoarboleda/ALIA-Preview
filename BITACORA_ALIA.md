@@ -190,3 +190,10 @@
 - El backend guarda datos parseados en el equipo del usuario fuera de GitHub, valida la fecha real del reporte y conserva cada mes por separado. No mezcla acumulados ni reemplaza los datos activos durante la carga. La activación es explícita.
 - Commits: interfaz `b4d0531`, navegación `0256165`, cliente `d713464`, backend `bb98f56`, endpoints `b809e3c`, explorador `f1143c3`, estilos `c0385f4`.
 - Pendiente: recepción y prueba con los diez archivos, dos meses faltantes, validación funcional en localhost y reinicio del servidor Python para activar los endpoints nuevos. Sin despliegue público ni archivos institucionales en GitHub.
+
+### 2026-10-22 — Auditoría de diez XLSX recibidos y corrección de importación
+- Revisados los diez archivos 01. Enero.xlsx a 10. Octubre.xlsx, 9 MB aprox. cada uno. Todos tienen MATRIZ CONSOLIDADA como primera hoja y 398 filas con código de proceso.
+- Hallazgo crítico: la columna A Reporte contiene el mismo serial Excel 46315 (= 20/10/2026) en los diez archivos; el importador anterior asignaba todos a octubre. Las hojas son distintas (hash de XML diferente), pero los agregados SD=12,594,351.20; SF=11,228,514.02; SG=6,409,138.50 son idénticos en los diez archivos. No es legítimo presentar esta serie como evolución financiera mensual real sin reconciliar el origen de cada corte.
+- Ajustado importaciones_backend.py para reconocer mes por prefijo 01.–12. o casilla seleccionada y guardar discrepancia de fecha como incidencia de auditoría. Activación bloqueada si los 12 meses contienen los mismos totales financieros.
+- El mensaje Failed to fetch es de comunicación navegador/servidor, no de estructura XLSX. Mejorado importaciones.js para mostrar explicación de conectividad y necesidad de reiniciar el proceso Python cuando su código cambió. index.html explica la asignación por mes y actualiza caché.
+- Commits: b72196b (backend), 85d61a4 (cliente), 531209e (interfaz). Validación en localhost del usuario pendiente. Los XLSX no se incorporaron al repositorio.
