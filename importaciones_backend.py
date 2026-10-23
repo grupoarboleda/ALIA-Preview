@@ -4,6 +4,7 @@ Cargas: matrices XLSX por mes, validación previa, activación atómica solo con
 import datetime
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from urllib.parse import unquote
@@ -74,8 +75,15 @@ def stage(content, filename, expected_month="auto"):
     if parsed.year != YEAR:
         raise ValueError("El reporte no corresponde al ejercicio 2026: " + date)
     month = parsed.month
-    if expected_month != "auto" and int(expected_month) != month:
-        raise ValueError("El archivo contiene corte " + date + ", pero se eligió " + str(expected_month) + ". Corrige la selección.")
+    if expected_month != "auto":
+        month = int(expected_month)
+    else:
+        prefix = re.match(r"^\s*(0?[1-9]|1[0-2])\s*[. _-]", filename)
+        if prefix:
+            month = int(prefix.group(1))
+    if not 1 <= month <= 12:
+        raise ValueError("Mes fuera de rango")
+    mismatch = parsed.month != month
     if not batch["records"]:
         raise ValueError("La matriz no contiene filas de asignaciones")
     blocking = [e for e in batch["issues"] if e["code"] in CRITICAL]
@@ -90,6 +98,8 @@ def stage(content, filename, expected_month="auto"):
     if old and old.get("sha256") == batch["sha256"]:
         return {"ok": True, "month": month, "records": len(records),
                 "warnings": len(batch["issues"]), "duplicate": True}
+    if mismatch:
+        batch["issues"].append({"code": "REPORT_DATE_MONTH_MISMATCH", "internal_date": date, "assigned_month": month})
     snapshot = {"date": date, "month": month, "year": YEAR,
                 "file": filename, "sha256": batch["sha256"],
                 "records": records, "issues": batch["issues"]}
@@ -126,6 +136,12 @@ def activate():
         if not snap or snap.get("month") != month or not snap.get("records"):
             raise ValueError(f"Falta snapshot válido del mes {month:02d}")
         snapshots.append(snap)
+    signatures = {tuple(round(sum(r[k] for r in snap["records"]), 2)
+                        for k in ("budget", "committed", "accrued"))
+                  for snap in snapshots}
+    if len(signatures) == 1:
+        raise ValueError("Los 12 reportes tienen idénticos totales financieros. "
+                         "No se activará una falsa serie histórica sin conciliar los cortes.")
     # Latest financial figures are cumulative snapshots: never sum twelve cuts.
     latest = snapshots[-1]
     payload = {"mode": "REAL", "records": latest["records"],
