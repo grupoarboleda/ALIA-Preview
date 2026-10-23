@@ -38,8 +38,8 @@ function draw(){
  if(warnings.length>20){const p=document.createElement("p");p.textContent="Y "+(warnings.length-20)+" observaciones adicionales.";issues.append(p);}
 }
 async function request(path,options){
- const response=await fetch(path,{cache:"no-store",...options});
- let data;try{data=await response.json();}catch{throw Error("El servidor local no tiene todavía el módulo de importación actualizado. Reinicia ALIA Local una vez.");}
+ let response;try{response=await fetch(path,{cache:"no-store",...options});}catch{throw Error("No se pudo conectar al servidor local de ALIA. El servicio puede estar cerrado o necesitar reiniciarse para cargar el nuevo importador.");}
+ let data;try{data=await response.json();}catch{throw Error("El servidor local aún no responde con el módulo de importación. Cierra la ventana de ALIA Local y vuelve a iniciar ALIA Local; después actualiza la página.");}
  if(!response.ok||data.ok===false)throw Error(data.error||"No se pudo completar la operación");
  return data;
 }
