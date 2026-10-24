@@ -11,7 +11,7 @@ import re
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
-from reglas_matriz_alia import check_record, check_catalog
+from reglas_matriz_alia import check_record, check_catalog, check_source_cell
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
       "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
@@ -92,6 +92,7 @@ def inspect_file(path, assigned_month=None):
     variant = None
     mapped = {}
     numbered_columns = {}
+    column_ids = {}
     dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_COLUMNAS_ALIA.json").read_text(encoding="utf-8"))
     block_dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_BLOQUES_ALIA.json").read_text(encoding="utf-8"))
     def group_for(identifier):
@@ -117,6 +118,7 @@ def inspect_file(path, assigned_month=None):
                 if identifier in numbered_columns:
                     raise ValueError(f"Identificador de columna duplicado: {identifier}")
                 numbered_columns[identifier] = column
+                column_ids[column] = identifier
             if not numbered_columns:
                 raise ValueError("La fila 12 no contiene identificadores numéricos")
             mapped = {}
@@ -146,6 +148,11 @@ def inspect_file(path, assigned_month=None):
         date = f"2026-{int(assigned_month):02d}-01" if assigned_month else None
         if date:
             dates[date] += 1
+        # Validar todos los campos tipados por ID, incluidos los 25 pagos.
+        for column, raw in row.items():
+            identifier = column_ids.get(column)
+            if identifier is not None:
+                issues.extend(check_source_cell(identifier, row_num, column, raw))
         values = {name: row.get(col, "") if col else "" for name, col in mapped.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
             raw_value = values[field]
