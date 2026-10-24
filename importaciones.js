@@ -43,6 +43,24 @@ auditPanel.style.cssText="margin-top:16px;padding:18px;border:1px solid #32738b;
 auditPanel.hidden=true;
 message.insertAdjacentElement("afterend",auditPanel);
 function auditLine(label,value){const p=document.createElement("p");const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));return p;}
+const issueNames={
+ ADVANCE_RESEMBLES_EXCEL_DATE:"Aviso antiguo: importe confundido con posible fecha",
+ COLUMN_MISMATCH:"El encabezado no coincide con el diccionario",
+ INVALID_NUMBER:"Valor no numérico en un campo que requiere número",
+ MISSING_PROCESS_CODE:"Falta el código del proceso",
+ PHYSICAL_OUT_OF_RANGE:"Avance físico fuera del rango permitido",
+ INVALID_REPORT_DATE:"Fecha de reporte no válida",
+ NO_INTERNAL_REPORT_DATE:"La fecha de corte real no está verificada",
+ MULTIPLE_REPORT_DATES:"Se encontraron varias fechas de reporte"
+};
+function describeIssue(issue){
+ const legacy=issue.code==="ADVANCE_RESEMBLES_EXCEL_DATE";
+ const label=issueNames[issue.code]||"Observación de validación";
+ const where=[issue.row?"Fila "+issue.row:null,issue.column?"columna "+issue.column:null,issue.field?"campo "+issue.field:null].filter(Boolean).join(" · ");
+ const value=issue.value===undefined?"":" · Valor: "+issue.value;
+ const advice=legacy?" · Aviso de una carga anterior. El número por sí solo no demuestra que sea una fecha. Vuelve a cargar este mes para recalcular sin esta regla.":issue.code==="COLUMN_MISMATCH"?" · Comprobar número de columna y encabezado.":" · Revisar en el archivo original.";
+ return (legacy?"AVISO ANTIGUO · ":"")+label+(where?" · "+where:"")+value+advice;
+}
 async function showAudit(month){
  auditPanel.hidden=false;auditPanel.replaceChildren(auditLine("AUDITORÍA","Consultando mes "+month+"…"));
  show("Abriendo auditoría de "+names[month-1]+". Consulta el panel debajo de este mensaje.");
@@ -59,10 +77,11 @@ async function showAudit(month){
     "Codificado "+totals.budget+" · Comprometido "+totals.committed+" · Devengado "+totals.accrued));
   if((data.identical_financial_months||[]).length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
   const summary=document.createElement("h4");summary.textContent="Observaciones por tipo";auditPanel.append(summary);
-  for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(code,count));
+  for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(issueNames[code]||code,count));
   const detail=document.createElement("details");const detailTitle=document.createElement("summary");detailTitle.textContent="Ver "+data.issues.length+" observaciones (fila, columna, motivo)";detail.append(detailTitle);
-  for(const issue of data.issues){const p=document.createElement("p");p.textContent=JSON.stringify(issue);detail.append(p);}
+  for(const issue of data.issues){const p=document.createElement("p");p.textContent=describeIssue(issue);detail.append(p);}
   auditPanel.append(detail);
+  if(data.issues.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Estas observaciones son de una carga anterior. La regla fue retirada; vuelve a cargar el archivo para corregir los importes y recalcular la auditoría."));
   const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
   for(const col of (data.column_catalog||[]))catalog.append(auditLine("#"+col.id+" · "+col.column,col.label+(col.mapped_field?" [ALIA: "+col.mapped_field+"]":"")));
   auditPanel.append(catalog);
