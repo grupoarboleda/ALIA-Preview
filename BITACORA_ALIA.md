@@ -264,3 +264,9 @@
 - `reconciled_snapshot` construye una vista derivada en memoria, identifica `ADVANCE_RESEMBLES_EXCEL_DATE` obsoleta, restaura el importe de `advance` desde `issue.value` si el registro `sourceRow` coincide y el valor existente es 0, nulo o idéntico; las discrepancias quedan pendientes. No modifica el snapshot original ni el Excel.
 - La auditoría muestra grupo plegable de alertas conciliadas automáticamente; contadores y activación usan vista derivada. Las observaciones de validación no bloquean la importación; errores estructurales y requisitos de activación siguen aplicando.
 - Pendiente: verificar en equipo local recuperación de 59 importes, totales y activación. No se ha realizado prueba de extremo a extremo con archivos locales.
+
+### 2026-10-24 — Limpieza de reglas y preservación del Explorador Financiero
+- A solicitud del propietario, auditoría sin textos «aviso antiguo» ni aprobaciones individuales. Se elimina de la vista el código de alerta obsoleto y se genera vista de validación actual sobre snapshots ya cargados.
+- Para registros con evidencia local del importe de anticipo (ID 502), la vista de trabajo restaura el valor solo si coincide el número de fila y no contradice un valor no nulo previo; conflictos quedan como `ADVANCE_VALUE_CONFLICT`.
+- Se mantienen intactos `app.js`, `explorer.js`, estilos y diseños del Explorador Financiero, así como los XLSX y snapshots originales. El flujo de activación existente conserva sus restricciones (12 meses y conciliación de totales).
+- Pendiente comprobar ejecución en servidor Python reiniciado y conciliación de datos en el equipo local; el archivo original no está almacenado en GitHub.
