@@ -4,6 +4,141 @@
   "column_count": 564,
   "groups": [
     {
+      "name": "Identificación y planificación",
+      "start": 1,
+      "end": 29
+    },
+    {
+      "name": "Proceso precontractual y contrato",
+      "start": 30,
+      "end": 61
+    },
+    {
+      "name": "Redes de distribución integral y alumbrado",
+      "start": 62,
+      "end": 71
+    },
+    {
+      "name": "Alimentadores primarios",
+      "start": 72,
+      "end": 77
+    },
+    {
+      "name": "Redes preensambladas",
+      "start": 78,
+      "end": 84
+    },
+    {
+      "name": "Normalización de clientes",
+      "start": 85,
+      "end": 88
+    },
+    {
+      "name": "Construcción de subestaciones",
+      "start": 89,
+      "end": 96
+    },
+    {
+      "name": "Construcción del TAP",
+      "start": 97,
+      "end": 103
+    },
+    {
+      "name": "Líneas de subtransmisión",
+      "start": 104,
+      "end": 110
+    },
+    {
+      "name": "Reforzamiento de alimentadores",
+      "start": 111,
+      "end": 118
+    },
+    {
+      "name": "Reforzamiento de subestación",
+      "start": 119,
+      "end": 125
+    },
+    {
+      "name": "Reforzamiento de redes de distribución",
+      "start": 126,
+      "end": 131
+    },
+    {
+      "name": "Construcción de redes de distribución",
+      "start": 132,
+      "end": 136
+    },
+    {
+      "name": "Repotenciación de centros de transformación",
+      "start": 137,
+      "end": 139
+    },
+    {
+      "name": "Equipos para calidad de servicio",
+      "start": 140,
+      "end": 143
+    },
+    {
+      "name": "Infraestructura SCADA",
+      "start": 144,
+      "end": 163
+    },
+    {
+      "name": "Elaboración de estudios",
+      "start": 164,
+      "end": 167
+    },
+    {
+      "name": "Supervisión",
+      "start": 168,
+      "end": 171
+    },
+    {
+      "name": "Fiscalización",
+      "start": 172,
+      "end": 175
+    },
+    {
+      "name": "Socialización",
+      "start": 176,
+      "end": 178
+    },
+    {
+      "name": "Inventario de PCBs",
+      "start": 179,
+      "end": 185
+    },
+    {
+      "name": "Readecuación de proyectos civiles",
+      "start": 186,
+      "end": 194
+    },
+    {
+      "name": "Adquisición de terrenos",
+      "start": 195,
+      "end": 205
+    },
+    {
+      "name": "Energías renovables",
+      "start": 206,
+      "end": 215
+    },
+    {
+      "name": "Bienes y equipos tecnológicos",
+      "start": 216,
+      "end": 221
+    },
+    {
+      "name": "Mediciones de calidad",
+      "start": 222,
+      "end": 225
+    },
+    {
+      "name": "Avance físico consolidado y prórrogas",
+      "start": 226,
+      "end": 232
+    },
+    {
       "name": "Anticipo contractual",
       "start": 233,
       "end": 236
@@ -24,6 +159,16 @@
         "Fecha de transferencia",
         "Total pagado factura"
       ]
+    },
+    {
+      "name": "Contratos complementarios y liquidación",
+      "start": 437,
+      "end": 470
+    },
+    {
+      "name": "Indicadores y estados del proyecto",
+      "start": 471,
+      "end": 495
     },
     {
       "name": "Ejecución presupuestaria",
