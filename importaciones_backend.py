@@ -100,15 +100,48 @@ def stage(content, filename, expected_month="auto"):
         batch["issues"].append({"code": "REPORT_DATE_MONTH_MISMATCH", "internal_date": date, "assigned_month": month})
     snapshot = {"date": date, "date_origin": "ASSIGNED_MONTH_NOT_VERIFIED", "month": month, "year": YEAR,
                 "file": filename, "sha256": batch["sha256"],
-                "records": records, "issues": batch["issues"]}
+                "records": records, "issues": batch["issues"],
+                "column_catalog": batch.get("column_catalog", [])}
     write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
     manifest["months"][str(month)] = {"date": date, "file": filename,
         "sha256": batch["sha256"], "records": len(records),
-        "warnings": len(batch["issues"])}
+        "warnings": len(batch["issues"]), "columns": len(batch.get("column_catalog", []))}
     manifest["active"] = False
     write_json_atomic(MANIFEST, manifest)
     return {"ok": True, "month": month, "records": len(records),
             "warnings": len(batch["issues"]), "duplicate": False}
+
+
+def audit(month):
+    """Read-only, local audit. Never sends workbook data to GitHub."""
+    month = int(month)
+    if not 1 <= month <= 12:
+        raise ValueError("Mes fuera de rango")
+    snap = read_json(STAGING / f"{month:02d}.json", None)
+    if not snap:
+        raise ValueError(f"El mes {month:02d} no tiene una matriz cargada")
+    issues = snap.get("issues", [])
+    counts = {}
+    for item in issues:
+        code = item.get("code", "UNKNOWN")
+        counts[code] = counts.get(code, 0) + 1
+    totals = {key: round(sum((row.get(key) or 0) for row in snap["records"]), 2)
+              for key in ("budget", "committed", "accrued")}
+    other = []
+    for other_month in range(1, 13):
+        if other_month == month:
+            continue
+        previous = read_json(STAGING / f"{other_month:02d}.json", None)
+        if previous:
+            previous_totals = tuple(round(sum((row.get(key) or 0) for row in previous["records"]), 2)
+                                    for key in ("budget", "committed", "accrued"))
+            if previous_totals == tuple(totals.values()):
+                other.append(other_month)
+    return {"ok": True, "month": month, "file": snap.get("file"),
+            "date_origin": snap.get("date_origin", "UNKNOWN"),
+            "records": len(snap["records"]), "issues": issues,
+            "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
+            "totals": totals, "identical_financial_months": other}
 
 
 def status():
