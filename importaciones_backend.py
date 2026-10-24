@@ -115,6 +115,36 @@ def stage(content, filename, expected_month="auto"):
             "warnings": len(batch["issues"]), "duplicate": False}
 
 
+def reconciled_snapshot(snapshot):
+    """Reconcile retired rules in memory, without replacing local uploads."""
+    if not snapshot:
+        return snapshot
+    result = dict(snapshot)
+    result["records"] = [dict(r) for r in snapshot.get("records", [])]
+    by_row = {r.get("sourceRow"): r for r in result["records"]}
+    remaining, resolved = [], []
+    for issue in snapshot.get("issues", []):
+        if issue.get("code") != "ADVANCE_RESEMBLES_EXCEL_DATE":
+            remaining.append(issue)
+            continue
+        row = by_row.get(issue.get("row"))
+        try:
+            value = float(issue["value"])
+            existing = row.get("advance") if row else None
+            valid = row is not None and (existing is None or float(existing) == 0 or abs(float(existing) - value) < 0.00001)
+        except (ValueError, TypeError, KeyError):
+            valid = False
+        if not valid:
+            remaining.append(issue)
+            continue
+        if existing is None or float(existing) == 0:
+            row["advance"] = value
+        resolved.append({**issue, "resolution": "AUTO_RESOLVED_OBSOLETE_RULE"})
+    result["issues"] = remaining
+    result["resolved_issues"] = resolved
+    return result
+
+
 def audit(month):
     """Read-only, local audit. Never sends workbook data to GitHub."""
     month = int(month)
@@ -123,6 +153,7 @@ def audit(month):
     snap = read_json(STAGING / f"{month:02d}.json", None)
     if not snap:
         raise ValueError(f"El mes {month:02d} no tiene una matriz cargada")
+    snap = reconciled_snapshot(snap)
     issues = snap.get("issues", [])
     counts = {}
     for item in issues:
@@ -136,6 +167,7 @@ def audit(month):
             continue
         previous = read_json(STAGING / f"{other_month:02d}.json", None)
         if previous:
+            previous = reconciled_snapshot(previous)
             previous_totals = tuple(round(sum((row.get(key) or 0) for row in previous["records"]), 2)
                                     for key in ("budget", "committed", "accrued"))
             if previous_totals == tuple(totals.values()):
@@ -143,6 +175,7 @@ def audit(month):
     return {"ok": True, "month": month, "file": snap.get("file"),
             "date_origin": snap.get("date_origin", "UNKNOWN"),
             "records": len(snap["records"]), "issues": issues,
+            "resolved_issues": snap.get("resolved_issues", []),
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
             "totals": totals, "identical_financial_months": other,
             "requires_reimport": snap.get("parser_version") != "grouped-v1"}
@@ -170,7 +203,7 @@ def activate():
         snap = read_json(STAGING / f"{month:02d}.json", None)
         if not snap or snap.get("month") != month or not snap.get("records"):
             raise ValueError(f"Falta snapshot válido del mes {month:02d}")
-        snapshots.append(snap)
+        snapshots.append(reconciled_snapshot(snap))
     signatures = {tuple(round(sum(r[k] for r in snap["records"]), 2)
                         for k in ("budget", "committed", "accrued"))
                   for snap in snapshots}
@@ -201,7 +234,7 @@ def monthly_history():
         snap = read_json(STAGING / f"{month:02d}.json", None)
         if not snap:
             continue
-        rows = snap["records"]
+        rows = reconciled_snapshot(snap)["records"]
         series.append({"month": month, "date": snap["date"],
                        "budget": sum(r["budget"] for r in rows),
                        "committed": sum(r["committed"] for r in rows),
