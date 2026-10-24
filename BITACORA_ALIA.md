@@ -217,3 +217,10 @@
 - Se verificó directamente el XLSX adjunto: encabezado en fila 11; O = CÓDIGO DEL PROCESO, SC = CODIFICADO AÑO N, SE = COMPROMETIDO AÑO N, SF = DEVENGADO AÑO N; A = CODIGO PAI CONTROL 1 (no Reporte).
 - Se corrigió `importador_matriz.py` para utilizar exclusivamente el mapa CORP 2026 y evitar posiciones antiguas. Commit `d003a36f`.
 - Los datos activos no se modificaron; validación funcional de importación en localhost pendiente. Reiniciar servidor Python para recargar módulo.
+
+### 2026-10-23 — Aprobación de arquitectura por fila numerada
+- Aprobado por propietario: la fila 12 de MATRIZ CONSOLIDADA es el identificador estable de columnas; fila 11 es descripción y fila 13 inicia registros.
+- Creado `DICCIONARIO_COLUMNAS_ALIA.json` con 16 campos de uso inmediato, número, nombre y tipo; commit `fe1a3dff`.
+- `importador_matriz.py` ahora construye el mapa a partir de números de fila 12, contrasta encabezados de fila 11 y evita confiar en letras de Excel; commit `bb12f79f`.
+- El resto de columnas todavía no están catalogadas semánticamente. Avance físico mensual queda sin asignar hasta verificar identificadores exactos, sin fabricar valores.
+- Pendiente: reinicio de servidor Python y validación de cargas reales enero–octubre. No se alteraron snapshots activos ni hubo publicación pública.
