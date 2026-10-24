@@ -237,3 +237,11 @@
 - Usuario reportó que botón AUDITAR no mostraba resultado. Se encontró que el panel se añadía al pie, debajo de los 12 meses, fuera de vista.
 - Se movió panel justo debajo del mensaje de importación, con desplazamiento automático, feedback visible, errores y compatibilidad con catálogos de snapshots anteriores. Commits `26fcf2cb`, `229e7a01` (caché).
 - Pendiente comprobación visual en localhost; no se modificaron snapshots ni producción.
+
+### 2026-10-23 — Observaciones de Anticipo y corrección del formato definitivo
+- Propietario aclaró que la primera columna Reporte fue eliminada del Excel definitivo; el desplazamiento aparente de letras no debe corregirse restando 1 a todos los identificadores: el contrato del importador es el número escrito en fila 12, cotejado con encabezado de fila 11.
+- Auditoría octubre aportada por usuario: 398 registros, 59 avisos ADVANCE_RESEMBLES_EXCEL_DATE, catálogo 0 porque el snapshot se creó antes del catálogo; totales informados 12.003.770,67 codificado, 10.380.402 comprometido, 6.746.277,17 devengado (provisionales, no conciliados).
+- Hallazgo: regla antigua clasificaba importes 40.000–80.000 como fechas sin consultar formato de celda, y los eliminaba de Anticipo. Eliminada regla y preservados importes numéricos; commit `4a99e932`.
+- Interfaz AUDITAR traduce códigos a español y muestra fila, columna/campo y valor, con explicación de advertencias antiguas; commit `5f371058`.
+- Backend permite reimportar un mismo archivo con igual hash para regenerar snapshots antiguos, con versión de parser `numbered-v2`; commit `511bf5f1`. Caché HTML `f60e1261`.
+- **Requiere reiniciar servidor Python y volver a importar octubre (REEMPLAZAR) para corregir sus datos guardados y actualizar catálogo/avisos.** Luego repetir los demás meses antes de activar. Validación en localhost pendiente. Sin despliegue público.
