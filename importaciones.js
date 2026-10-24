@@ -83,7 +83,15 @@ async function showAudit(month){
   auditPanel.append(detail);
   if(data.issues.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Estas observaciones son de una carga anterior. La regla fue retirada; vuelve a cargar el archivo para corregir los importes y recalcular la auditoría."));
   const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
-  for(const col of (data.column_catalog||[]))catalog.append(auditLine("#"+col.id+" · "+col.column,col.label+(col.mapped_field?" [ALIA: "+col.mapped_field+"]":"")));
+  for(const col of (data.column_catalog||[])){
+   const p=document.createElement("p");
+   const heading=document.createElement("strong");
+   heading.textContent="#"+col.id+" · "+col.column+" · "+col.label;
+   p.append(heading);
+   const block=col.block||"Otros campos de la matriz";
+   p.append(document.createTextNode(" — "+block+(col.subblock?" / "+col.subblock:"")+(col.field_in_subblock?" / "+col.field_in_subblock:"")));
+   catalog.append(p);
+  }
   auditPanel.append(catalog);
   show("Auditoría de "+names[month-1]+" disponible en el panel superior.");
  }catch(e){auditPanel.replaceChildren(auditLine("Error",e.message));show("Error de auditoría: "+e.message,true);}
