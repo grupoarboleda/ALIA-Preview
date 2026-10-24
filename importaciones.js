@@ -41,30 +41,33 @@ const auditPanel=document.createElement("section");
 auditPanel.id="alia-audit-panel";
 auditPanel.style.cssText="margin-top:16px;padding:18px;border:1px solid #32738b;border-radius:6px;background:#0b2332;color:#d7f4ff;overflow:auto;max-height:560px";
 auditPanel.hidden=true;
-issues.parentElement.append(auditPanel);
+message.insertAdjacentElement("afterend",auditPanel);
 function auditLine(label,value){const p=document.createElement("p");const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));return p;}
 async function showAudit(month){
  auditPanel.hidden=false;auditPanel.replaceChildren(auditLine("AUDITORÍA","Consultando mes "+month+"…"));
+ show("Abriendo auditoría de "+names[month-1]+". Consulta el panel debajo de este mensaje.");
+ auditPanel.scrollIntoView({behavior:"smooth",block:"start"});
  try{
   const data=await request("/__alia_import_audit?month="+month);
   auditPanel.replaceChildren();
   const heading=document.createElement("h3");heading.textContent="AUDITORÍA · "+names[month-1];auditPanel.append(heading);
   auditPanel.append(auditLine("Archivo",data.file),auditLine("Filas",data.records),
-    auditLine("Columnas numeradas catalogadas",data.column_catalog.length),
+    auditLine("Columnas numeradas catalogadas",(data.column_catalog||[]).length),
     auditLine("Fecha",data.date_origin==="ASSIGNED_MONTH_NOT_VERIFIED"?"Mes asignado, fecha real de corte sin verificar":data.date_origin));
   const totals=data.totals||{};
   auditPanel.append(auditLine("Totales acumulados (no movimientos del mes)",
     "Codificado "+totals.budget+" · Comprometido "+totals.committed+" · Devengado "+totals.accrued));
-  if(data.identical_financial_months.length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
+  if((data.identical_financial_months||[]).length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
   const summary=document.createElement("h4");summary.textContent="Observaciones por tipo";auditPanel.append(summary);
-  for(const [code,count] of Object.entries(data.issue_counts))auditPanel.append(auditLine(code,count));
+  for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(code,count));
   const detail=document.createElement("details");const detailTitle=document.createElement("summary");detailTitle.textContent="Ver "+data.issues.length+" observaciones (fila, columna, motivo)";detail.append(detailTitle);
   for(const issue of data.issues){const p=document.createElement("p");p.textContent=JSON.stringify(issue);detail.append(p);}
   auditPanel.append(detail);
-  const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+data.column_catalog.length+" columnas";catalog.append(title);
-  for(const col of data.column_catalog)catalog.append(auditLine("#"+col.id+" · "+col.column,col.label+(col.mapped_field?" [ALIA: "+col.mapped_field+"]":"")));
+  const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
+  for(const col of (data.column_catalog||[]))catalog.append(auditLine("#"+col.id+" · "+col.column,col.label+(col.mapped_field?" [ALIA: "+col.mapped_field+"]":"")));
   auditPanel.append(catalog);
- }catch(e){auditPanel.replaceChildren(auditLine("Error",e.message));}
+  show("Auditoría de "+names[month-1]+" disponible en el panel superior.");
+ }catch(e){auditPanel.replaceChildren(auditLine("Error",e.message));show("Error de auditoría: "+e.message,true);}
 }
 async function request(path,options){
  let response;try{response=await fetch(path,{cache:"no-store",...options});}catch{throw Error("No se pudo conectar al servidor local de ALIA. El servicio puede estar cerrado o necesitar reiniciarse para cargar el nuevo importador.");}
