@@ -103,6 +103,19 @@ async function showAudit(month){
   if((data.identical_financial_months||[]).length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
   const summary=document.createElement("h4");summary.textContent="Observaciones por tipo";auditPanel.append(summary);
   for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(issueNames[code]||code,count));
+  const resolved=data.resolved_issues||[];
+  if(resolved.length){
+   const summary=document.createElement("details");
+   const label=document.createElement("summary");
+   label.textContent="Regla antigua conciliada automáticamente · "+resolved.length+" alertas resueltas";
+   summary.append(label);
+   const explanation=document.createElement("p");
+   explanation.textContent="Los importes de ANTICIPO AÑO N se recuperan del registro local de las observaciones. No se cambian los Excel originales ni es necesario aprobar cada fila.";
+   summary.append(explanation);
+   const sample=document.createElement("p");
+   sample.textContent="Filas afectadas: "+resolved.slice(0,20).map(x=>x.row).join(", ")+(resolved.length>20?" y "+(resolved.length-20)+" más":"");
+   summary.append(sample);auditPanel.append(summary);
+  }
   const entries=data.issues||[];
   const catalogEntries=data.column_catalog||[];
   const toolbar=document.createElement("div");toolbar.className="alia-audit-toolbar";
@@ -180,7 +193,7 @@ async function showAudit(month){
    const a=document.createElement("a");a.href=url;a.download="ALIA_auditoria_"+String(month).padStart(2,"0")+".csv";a.click();URL.revokeObjectURL(url);
   });
   render();
-  if(entries.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Los avisos históricos no son errores confirmados. Reimporta el mes para recalcularlos con la regla actual."));
+  if(entries.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Existen avisos antiguos que no pudieron conciliarse automáticamente; revisa esos casos sin necesidad de recargar Excel."));
   const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
   for(const col of (data.column_catalog||[])){
    const p=document.createElement("p");
