@@ -104,12 +104,11 @@ async function showAudit(month){
   let page=1;const pageSize=15;
   function issueMeta(issue){
    const knownIds={advance:502,budget:497,committed:499,accrued:500,accrued_advance:504,physical:226};
-   const legacy=false;
    const id=issue.id??knownIds[issue.field]??null;
    const col=catalogEntries.find(x=>Number(x.id)===Number(id))||catalogEntries.find(x=>x.column===issue.column);
-   return {id,col,legacy,label:issueNames[issue.code]||issue.code||"Observación",
-    field:col?.label||(legacy?"ANTICIPO AÑO N":issue.expected||issue.field||"No identificado"),
-    block:col?.block||(legacy?"Ejecución presupuestaria año N":"Sin bloque identificado"),
+   return {id,col,label:issueNames[issue.code]||issue.code||"Observación",
+    field:col?.label||issue.expected||issue.field||"No identificado",
+    block:col?.block||"Sin bloque identificado",
     letter:issue.column||col?.column||null};
   }
   function filtered(){
