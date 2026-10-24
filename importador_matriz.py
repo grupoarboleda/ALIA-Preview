@@ -102,16 +102,41 @@ def inspect_file(path, assigned_month=None):
     dates = collections.Counter()
     variant = None
     mapped = COLS
+    numbered_columns = {}
+    dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_COLUMNAS_ALIA.json").read_text(encoding="utf-8"))
     for row_num, row in rows:
+        if row_num == dictionary["header_row"]:
+            headers = row
+            continue
+        if row_num == dictionary["id_row"]:
+            for column, raw_id in row.items():
+                try:
+                    identifier = int(float(raw_id))
+                except (ValueError, TypeError):
+                    continue
+                if identifier in numbered_columns:
+                    raise ValueError(f"Identificador de columna duplicado: {identifier}")
+                numbered_columns[identifier] = column
+            if not numbered_columns:
+                raise ValueError("La fila 12 no contiene identificadores numéricos")
+            mapped = {}
+            for field, definition in dictionary["fields"].items():
+                identifier = definition["id"]
+                column = numbered_columns.get(identifier)
+                if not column:
+                    raise ValueError(f"Falta columna numerada {identifier}: {definition['label']}")
+                if norm(headers.get(column)) != norm(definition["label"]):
+                    issues.append({"row": 11, "code": "COLUMN_MISMATCH",
+                                   "column": column, "id": identifier,
+                                   "expected": definition["label"], "found": headers.get(column, "")})
+                mapped[field] = column
+            mapped["report"] = None
+            for i in range(1, 13):
+                mapped["physical_month_" + str(i)] = None
+            header_row = dictionary["header_row"]
+            variant = dictionary["schema"]
+            continue
         if header_row is None:
-            if norm(row.get("O")) == norm(REQUIRED["O"]) and norm(row.get("SC")) == norm(REQUIRED["SC"]):
-                header_row, headers = row_num, row
-                variant = "CORP_2026"
-                mapped = COLS
-                for col, expected in REQUIRED.items():
-                    if norm(row.get(col)) != norm(expected):
-                        issues.append({"row": row_num, "code": "COLUMN_MISMATCH", "column": col,
-                                       "expected": expected, "found": row.get(col, "")})
             continue
         # Numeric index row follows the header and is not an assignment.
         if row_num <= header_row + 1:
