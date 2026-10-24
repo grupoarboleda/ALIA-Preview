@@ -211,3 +211,9 @@
 - El mes se asigna por prefijo del archivo o casilla; se marca expresamente como **mes asignado, no fecha de corte verificada**. No se activan diez meses automáticamente; persisten los controles de 12 meses y la comprobación de totales idénticos.
 - Archivos: importador_matriz.py (dca437fe), importaciones_backend.py (2fc3a834).
 - Pendiente: ejecutar pruebas del parser con los diez archivos reales en el servidor local y validar importes, avance físico y columnas. Sin despliegue público, sin modificar datos activos.
+
+### 2026-10-23 — Corrección del formato definitivo CORP 2026
+- Usuario reportó en ALIA Local: `01. Enero.xlsx: No se encontró el encabezado de MATRIZ CONSOLIDADA`.
+- Se verificó directamente el XLSX adjunto: encabezado en fila 11; O = CÓDIGO DEL PROCESO, SC = CODIFICADO AÑO N, SE = COMPROMETIDO AÑO N, SF = DEVENGADO AÑO N; A = CODIGO PAI CONTROL 1 (no Reporte).
+- Se corrigió `importador_matriz.py` para utilizar exclusivamente el mapa CORP 2026 y evitar posiciones antiguas. Commit `d003a36f`.
+- Los datos activos no se modificaron; validación funcional de importación en localhost pendiente. Reiniciar servidor Python para recargar módulo.
