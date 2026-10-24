@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from importador_matriz import inspect_file
+from reglas_matriz_alia import check_record, check_catalog, RULE_VERSION
 
 DATA_ROOT = Path.home() / ".alia_local_data"
 STAGING = DATA_ROOT / "monthly"
@@ -140,7 +141,20 @@ def validated_snapshot(snapshot):
             issues.append({"code": "ADVANCE_VALUE_CONFLICT", "row": item.get("row"),
                            "id": 502, "field": "advance", "value": item.get("value"),
                            "detail": "El importe no coincide con el registro cargado; revisar."})
+    # Recalcular observaciones desde los datos disponibles en el snapshot.
+    # No reescribir archivos locales ni modificar los registros originales.
+    regenerated = []
+    for record in result["records"]:
+        regenerated.extend(check_record(record))
+    regenerated.extend(check_catalog(result.get("column_catalog", [])))
+    existing = {(i.get("code"), i.get("row"), i.get("id")) for i in issues}
+    for issue in regenerated:
+        key = (issue.get("code"), issue.get("row"), issue.get("id"))
+        if key not in existing:
+            issues.append(issue)
+            existing.add(key)
     result["issues"] = issues
+    result["validation_model"] = RULE_VERSION
     return result
 
 
@@ -176,7 +190,7 @@ def audit(month):
             "records": len(snap["records"]), "issues": issues,
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
             "totals": totals, "identical_financial_months": other,
-            "validation_model": "dictionary-v1"}
+            "validation_model": RULE_VERSION}
 
 
 def status():
