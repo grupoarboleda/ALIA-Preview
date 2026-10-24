@@ -232,3 +232,8 @@
 - Servidor expone GET `/__alia_import_audit?month=N` solo en localhost; commit `908253c5`. Interfaz añade botón AUDITAR por mes y despliega incidencias y catálogo; commit `371e31bc`. Caché HTML actualizado `ec2bbca4`.
 - IMPORTANTE: para completar el catálogo de los diez snapshots ya guardados, volver a cargar cada archivo desde REEMPLAZAR después de reiniciar servidor; la carga no activa ni reemplaza el explorador. Hasta reimportar, auditoría de archivos previos puede mostrar 0 columnas catalogadas.
 - Pendiente: validación en localhost, análisis de los 59 avisos y reconciliación de fechas/totales históricos. No se alteró producción ni se publicó información.
+
+### 2026-10-23 — Corrección de visibilidad de AUDITAR
+- Usuario reportó que botón AUDITAR no mostraba resultado. Se encontró que el panel se añadía al pie, debajo de los 12 meses, fuera de vista.
+- Se movió panel justo debajo del mensaje de importación, con desplazamiento automático, feedback visible, errores y compatibilidad con catálogos de snapshots anteriores. Commits `26fcf2cb`, `229e7a01` (caché).
+- Pendiente comprobación visual en localhost; no se modificaron snapshots ni producción.
