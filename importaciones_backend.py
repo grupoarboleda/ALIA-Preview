@@ -60,11 +60,15 @@ def stage(content, filename, expected_month="auto"):
         raise ValueError("Archivo inválido: solo XLSX")
     if len(content) > 40 * 1024 * 1024:
         raise ValueError("Límite de 40 MB por archivo")
+    prefix = re.match(r"^\\s*(0?[1-9]|1[0-2])\\s*[. _-]", filename)
+    month = int(expected_month) if expected_month != "auto" else (int(prefix.group(1)) if prefix else None)
+    if month is None or not 1 <= month <= 12:
+        raise ValueError("No se pudo identificar el mes: utiliza prefijo 01.–12. o selecciona su casilla")
     with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as fp:
         fp.write(content)
         tmp = Path(fp.name)
     try:
-        batch = inspect_file(tmp)
+        batch = inspect_file(tmp, assigned_month=month)
     finally:
         tmp.unlink(missing_ok=True)
     dates = batch["report_dates"]
@@ -74,16 +78,10 @@ def stage(content, filename, expected_month="auto"):
     parsed = datetime.date.fromisoformat(date)
     if parsed.year != YEAR:
         raise ValueError("El reporte no corresponde al ejercicio 2026: " + date)
-    month = parsed.month
-    if expected_month != "auto":
-        month = int(expected_month)
-    else:
-        prefix = re.match(r"^\s*(0?[1-9]|1[0-2])\s*[. _-]", filename)
-        if prefix:
-            month = int(prefix.group(1))
+
     if not 1 <= month <= 12:
         raise ValueError("Mes fuera de rango")
-    mismatch = parsed.month != month
+    mismatch = False  # El archivo CORP no tiene fecha interna de reporte; mes asignado es provisional.
     if not batch["records"]:
         raise ValueError("La matriz no contiene filas de asignaciones")
     blocking = [e for e in batch["issues"] if e["code"] in CRITICAL]
@@ -100,7 +98,7 @@ def stage(content, filename, expected_month="auto"):
                 "warnings": len(batch["issues"]), "duplicate": True}
     if mismatch:
         batch["issues"].append({"code": "REPORT_DATE_MONTH_MISMATCH", "internal_date": date, "assigned_month": month})
-    snapshot = {"date": date, "month": month, "year": YEAR,
+    snapshot = {"date": date, "date_origin": "ASSIGNED_MONTH_NOT_VERIFIED", "month": month, "year": YEAR,
                 "file": filename, "sha256": batch["sha256"],
                 "records": records, "issues": batch["issues"]}
     write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
