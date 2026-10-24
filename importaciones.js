@@ -97,10 +97,84 @@ async function showAudit(month){
   if((data.identical_financial_months||[]).length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
   const summary=document.createElement("h4");summary.textContent="Observaciones por tipo";auditPanel.append(summary);
   for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(issueNames[code]||code,count));
-  const detail=document.createElement("details");const detailTitle=document.createElement("summary");detailTitle.textContent="Ver "+data.issues.length+" observaciones (fila, columna, motivo)";detail.append(detailTitle);
-  for(const issue of data.issues){const p=document.createElement("p");p.textContent=describeIssue(issue,data.column_catalog||[]);detail.append(p);}
-  auditPanel.append(detail);
-  if(data.issues.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Estas observaciones son de una carga anterior. La regla fue retirada; vuelve a cargar el archivo para corregir los importes y recalcular la auditoría."));
+  const entries=data.issues||[];
+  const catalogEntries=data.column_catalog||[];
+  const toolbar=document.createElement("div");toolbar.className="alia-audit-toolbar";
+  const search=document.createElement("input");search.type="search";search.placeholder="Buscar fila, columna, valor o motivo…";search.setAttribute("aria-label","Buscar observaciones");
+  const typeFilter=document.createElement("select");typeFilter.setAttribute("aria-label","Filtrar por tipo de observación");
+  for(const [value,label] of [["","Todos los tipos"],...Object.keys(data.issue_counts||{}).map(code=>[code,issueNames[code]||code])]){
+   const opt=document.createElement("option");opt.value=value;opt.textContent=label;typeFilter.append(opt);
+  }
+  const counter=document.createElement("span");counter.className="alia-audit-count";
+  const exportBtn=document.createElement("button");exportBtn.type="button";exportBtn.className="outline";exportBtn.textContent="Exportar CSV";
+  const clearBtn=document.createElement("button");clearBtn.type="button";clearBtn.className="outline";clearBtn.textContent="Limpiar filtros";
+  toolbar.append(search,typeFilter,counter,exportBtn,clearBtn);auditPanel.append(toolbar);
+  const results=document.createElement("div");results.className="alia-audit-results";auditPanel.append(results);
+  let page=1;const pageSize=15;
+  function issueMeta(issue){
+   const knownIds={advance:502,budget:497,committed:499,accrued:500,accrued_advance:504,physical:226};
+   const legacy=issue.code==="ADVANCE_RESEMBLES_EXCEL_DATE";
+   const id=issue.id??knownIds[issue.field]??(legacy?502:null);
+   const col=catalogEntries.find(x=>Number(x.id)===Number(id))||catalogEntries.find(x=>x.column===issue.column);
+   return {id,col,legacy,label:issueNames[issue.code]||issue.code||"Observación",
+    field:col?.label||(legacy?"ANTICIPO AÑO N":issue.expected||issue.field||"No identificado"),
+    block:col?.block||(legacy?"Ejecución presupuestaria año N":"Sin bloque identificado"),
+    letter:issue.column||col?.column||null};
+  }
+  function filtered(){
+   const q=search.value.trim().toLocaleLowerCase("es");
+   return entries.filter(issue=>{
+    if(typeFilter.value&&issue.code!==typeFilter.value)return false;
+    if(!q)return true;
+    const m=issueMeta(issue);
+    return [issue.row,issue.value,issue.code,m.id,m.field,m.block,m.letter,describeIssue(issue,catalogEntries)]
+     .some(x=>String(x??"").toLocaleLowerCase("es").includes(q));
+   });
+  }
+  function csvEscape(x){const s=String(x??"");return '"'+s.replace(/"/g,'""')+'"';}
+  function render(){
+   const visible=filtered();const pages=Math.max(1,Math.ceil(visible.length/pageSize));page=Math.min(page,pages);
+   counter.textContent=visible.length+" de "+entries.length+" observaciones";results.replaceChildren();
+   if(!visible.length){const empty=document.createElement("p");empty.textContent="No hay observaciones con estos filtros.";results.append(empty);return;}
+   const table=document.createElement("table");table.className="alia-audit-table";
+   const thead=document.createElement("thead");const header=document.createElement("tr");
+   for(const label of ["Estado","Fila","Columna ID","Campo / bloque","Valor","Detalle"]){const th=document.createElement("th");th.textContent=label;header.append(th);}
+   thead.append(header);table.append(thead);
+   const tbody=document.createElement("tbody");
+   for(const issue of visible.slice((page-1)*pageSize,page*pageSize)){
+    const m=issueMeta(issue);const tr=document.createElement("tr");
+    const cells=[
+      m.legacy?"Histórico":"Revisar",
+      issue.row??"—",m.id??"—",m.field,issue.value??"—"
+    ];
+    cells.forEach((value,i)=>{const td=document.createElement("td");td.textContent=String(value);if(i===3){const small=document.createElement("small");small.textContent=m.block;td.append(document.createElement("br"),small);}tr.append(td);});
+    const td=document.createElement("td");const btn=document.createElement("button");btn.type="button";btn.className="outline";btn.textContent="Ver";
+    btn.setAttribute("aria-expanded","false");
+    const detail=document.createElement("div");detail.className="alia-audit-detail";detail.hidden=true;
+    detail.textContent=describeIssue(issue,catalogEntries);
+    const copy=document.createElement("button");copy.type="button";copy.className="outline";copy.textContent="Copiar referencia";
+    copy.addEventListener("click",()=>{const ref=m.letter&&issue.row?m.letter+issue.row:"ID "+(m.id??"?")+", fila "+(issue.row??"?");navigator.clipboard?.writeText(ref+" — "+m.field+" — valor "+(issue.value??"")).then(()=>{copy.textContent="Copiado";}).catch(()=>{copy.textContent="No se pudo copiar";});});
+    detail.append(document.createElement("br"),copy);
+    btn.addEventListener("click",()=>{detail.hidden=!detail.hidden;btn.setAttribute("aria-expanded",String(!detail.hidden));btn.textContent=detail.hidden?"Ver":"Ocultar";});
+    td.append(btn,detail);tr.append(td);tbody.append(tr);
+   }
+   table.append(tbody);results.append(table);
+   const nav=document.createElement("div");nav.className="alia-audit-pagination";
+   const prev=document.createElement("button");prev.type="button";prev.className="outline";prev.textContent="Anterior";prev.disabled=page===1;prev.onclick=()=>{page--;render();};
+   const next=document.createElement("button");next.type="button";next.className="outline";next.textContent="Siguiente";next.disabled=page===pages;next.onclick=()=>{page++;render();};
+   const status=document.createElement("span");status.textContent="Página "+page+" de "+pages;nav.append(prev,status,next);results.append(nav);
+  }
+  search.addEventListener("input",()=>{page=1;render();});typeFilter.addEventListener("change",()=>{page=1;render();});
+  clearBtn.addEventListener("click",()=>{search.value="";typeFilter.value="";page=1;render();});
+  exportBtn.addEventListener("click",()=>{
+   const rows=[["Tipo","Fila Excel","ID columna","Letra Excel","Campo","Bloque","Valor","Descripción"]];
+   for(const issue of filtered()){const m=issueMeta(issue);rows.push([m.label,issue.row,m.id,m.letter,m.field,m.block,issue.value,describeIssue(issue,catalogEntries)]);}
+   const csv="\uFEFF"+rows.map(row=>row.map(csvEscape).join(";")).join("\r\n");
+   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");a.href=url;a.download="ALIA_auditoria_"+String(month).padStart(2,"0")+".csv";a.click();URL.revokeObjectURL(url);
+  });
+  render();
+  if(entries.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Los avisos históricos no son errores confirmados. Reimporta el mes para recalcularlos con la regla actual."));
   const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
   for(const col of (data.column_catalog||[])){
    const p=document.createElement("p");
