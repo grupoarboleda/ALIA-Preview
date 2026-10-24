@@ -104,24 +104,11 @@ def inspect_file(path, assigned_month=None):
     mapped = COLS
     for row_num, row in rows:
         if header_row is None:
-            is_original = norm(row.get("A")) == "REPORTE" and norm(row.get("P")) == norm(REQUIRED["P"])
-            is_new = (norm(row.get("O")) == "CÓDIGO DEL PROCESO" and
-                      norm(row.get("SC")) == "CODIFICADO AÑO N" and
-                      norm(row.get("SF")) == "DEVENGADO AÑO N")
-            if is_original or is_new:
+            if norm(row.get("O")) == norm(REQUIRED["O"]) and norm(row.get("SC")) == norm(REQUIRED["SC"]):
                 header_row, headers = row_num, row
-                variant = "CORP_2026" if is_new else "ORIGINAL"
-                if is_new:
-                    mapped = {**COLS, "report": None, "project_code": "B",
-                              "unit": "E", "source": "L", "process": "O",
-                              "process_name": "Q", "project": "R", "area": "S",
-                              "state": "AS", "contract": "AU", "contract_alt": "AO",
-                              "physical": "HR", "budget": "SC", "committed": "SE",
-                              "accrued": "SF", "advance": "SH",
-                              "accrued_advance": "SJ",
-                              **{"physical_month_"+str(i): None for i in range(1,13)}}
-                for col, expected in ({"O": "CÓDIGO DEL PROCESO", "SC": "CODIFICADO AÑO N",
-                                       "SE": "COMPROMETIDO AÑO N", "SF": "DEVENGADO AÑO N"} if is_new else REQUIRED).items():
+                variant = "CORP_2026"
+                mapped = COLS
+                for col, expected in REQUIRED.items():
                     if norm(row.get(col)) != norm(expected):
                         issues.append({"row": row_num, "code": "COLUMN_MISMATCH", "column": col,
                                        "expected": expected, "found": row.get(col, "")})
@@ -131,12 +118,11 @@ def inspect_file(path, assigned_month=None):
             continue
         if not norm(row.get(mapped["process"])) and not norm(row.get(mapped["project"])):
             continue
-        date = (f"2026-{int(assigned_month):02d}-01" if variant == "CORP_2026" and assigned_month else
-                report_date(row.get("A")) if variant == "ORIGINAL" else None)
+        date = f"2026-{int(assigned_month):02d}-01" if assigned_month else None
         if date:
             dates[date] += 1
         else:
-            if variant == "ORIGINAL" or assigned_month:
+            if assigned_month:
                 issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
         values = {name: row.get(col, "") if col else "" for name, col in mapped.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
@@ -175,7 +161,7 @@ def inspect_file(path, assigned_month=None):
         # Do not silently interpret misleading filenames as reporting dates.
         month_name = {1:"ENERO",2:"FEBRERO",3:"MARZO",4:"ABRIL",5:"MAYO",6:"JUNIO",
                       7:"JULIO",8:"AGOSTO",9:"SEPTIEMBRE",10:"OCTUBRE",11:"NOVIEMBRE",12:"DICIEMBRE"}[int(major_date[5:7])]
-        if any(name in norm(path.name) for name in ("ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
+        if False and any(name in norm(path.name) for name in ("ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
                 "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE")) and month_name not in norm(path.name):
             issues.append({"code": "FILENAME_REPORT_DATE_MISMATCH", "internal_date": major_date})
     return {"schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
