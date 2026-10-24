@@ -114,33 +114,33 @@ def stage(content, filename, expected_month="auto"):
             "warnings": len(batch["issues"]), "duplicate": False}
 
 
-def reconciled_snapshot(snapshot):
-    """Reconcile retired rules in memory, without replacing local uploads."""
+def validated_snapshot(snapshot):
+    """Current dictionary-based view of existing locally loaded records.
+    Keeps stored evidence untouched; never modifies source Excel or Explorer."""
     if not snapshot:
         return snapshot
     result = dict(snapshot)
     result["records"] = [dict(r) for r in snapshot.get("records", [])]
-    by_row = {r.get("sourceRow"): r for r in result["records"]}
-    remaining, resolved = [], []
-    for issue in snapshot.get("issues", []):
-        if issue.get("code") != "ADVANCE_RESEMBLES_EXCEL_DATE":
-            remaining.append(issue)
+    rows = {r.get("sourceRow"): r for r in result["records"]}
+    issues = []
+    for item in snapshot.get("issues", []):
+        if item.get("code") != "ADVANCE_RESEMBLES_EXCEL_DATE":
+            issues.append(dict(item))
             continue
-        row = by_row.get(issue.get("row"))
+        row = rows.get(item.get("row"))
         try:
-            value = float(issue["value"])
+            value = float(item["value"])
             existing = row.get("advance") if row else None
-            valid = row is not None and (existing is None or float(existing) == 0 or abs(float(existing) - value) < 0.00001)
-        except (ValueError, TypeError, KeyError):
-            valid = False
-        if not valid:
-            remaining.append(issue)
-            continue
-        if existing is None or float(existing) == 0:
+            consistent = row is not None and (existing is None or float(existing) == 0 or abs(float(existing) - value) < 0.00001)
+        except (TypeError, ValueError, KeyError):
+            consistent = False
+        if consistent:
             row["advance"] = value
-        resolved.append({**issue, "resolution": "AUTO_RESOLVED_OBSOLETE_RULE"})
-    result["issues"] = remaining
-    result["resolved_issues"] = resolved
+        else:
+            issues.append({"code": "ADVANCE_VALUE_CONFLICT", "row": item.get("row"),
+                           "id": 502, "field": "advance", "value": item.get("value"),
+                           "detail": "El importe no coincide con el registro cargado; revisar."})
+    result["issues"] = issues
     return result
 
 
@@ -152,7 +152,7 @@ def audit(month):
     snap = read_json(STAGING / f"{month:02d}.json", None)
     if not snap:
         raise ValueError(f"El mes {month:02d} no tiene una matriz cargada")
-    snap = reconciled_snapshot(snap)
+    snap = validated_snapshot(snap)
     issues = snap.get("issues", [])
     counts = {}
     for item in issues:
@@ -166,7 +166,7 @@ def audit(month):
             continue
         previous = read_json(STAGING / f"{other_month:02d}.json", None)
         if previous:
-            previous = reconciled_snapshot(previous)
+            previous = validated_snapshot(previous)
             previous_totals = tuple(round(sum((row.get(key) or 0) for row in previous["records"]), 2)
                                     for key in ("budget", "committed", "accrued"))
             if previous_totals == tuple(totals.values()):
@@ -174,10 +174,9 @@ def audit(month):
     return {"ok": True, "month": month, "file": snap.get("file"),
             "date_origin": snap.get("date_origin", "UNKNOWN"),
             "records": len(snap["records"]), "issues": issues,
-            "resolved_issues": snap.get("resolved_issues", []),
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
             "totals": totals, "identical_financial_months": other,
-            "requires_reimport": snap.get("parser_version") != "grouped-v1"}
+            "validation_model": "dictionary-v1"}
 
 
 def status():
@@ -185,7 +184,7 @@ def status():
     months = manifest.get("months", {})
     warnings = []
     for m in sorted(months, key=int):
-        snap = reconciled_snapshot(read_json(STAGING / f"{int(m):02d}.json", {}))
+        snap = validated_snapshot(read_json(STAGING / f"{int(m):02d}.json", {}))
         count = len(snap.get("issues", []))
         if count:
             warnings.append(f"Mes {int(m):02d}: {count} observaciones para revisión")
@@ -203,7 +202,7 @@ def activate():
         snap = read_json(STAGING / f"{month:02d}.json", None)
         if not snap or snap.get("month") != month or not snap.get("records"):
             raise ValueError(f"Falta snapshot válido del mes {month:02d}")
-        snapshots.append(reconciled_snapshot(snap))
+        snapshots.append(validated_snapshot(snap))
     signatures = {tuple(round(sum(r[k] for r in snap["records"]), 2)
                         for k in ("budget", "committed", "accrued"))
                   for snap in snapshots}
@@ -234,7 +233,7 @@ def monthly_history():
         snap = read_json(STAGING / f"{month:02d}.json", None)
         if not snap:
             continue
-        rows = reconciled_snapshot(snap)["records"]
+        rows = validated_snapshot(snap)["records"]
         series.append({"month": month, "date": snap["date"],
                        "budget": sum(r["budget"] for r in rows),
                        "committed": sum(r["committed"] for r in rows),
