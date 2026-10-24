@@ -93,18 +93,35 @@ def report_date(raw):
             return None
 
 
-def inspect_file(path):
+def inspect_file(path, assigned_month=None):
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     rows = rows_xlsx(path)
     header_row, headers = None, None
     records, issues = [], []
     dates = collections.Counter()
+    variant = None
+    mapped = COLS
     for row_num, row in rows:
         if header_row is None:
-            if norm(row.get("A")) == "REPORTE" and norm(row.get("P")) == norm(REQUIRED["P"]):
+            is_original = norm(row.get("A")) == "REPORTE" and norm(row.get("P")) == norm(REQUIRED["P"])
+            is_new = (norm(row.get("O")) == "CÓDIGO DEL PROCESO" and
+                      norm(row.get("SC")) == "CODIFICADO AÑO N" and
+                      norm(row.get("SF")) == "DEVENGADO AÑO N")
+            if is_original or is_new:
                 header_row, headers = row_num, row
-                for col, expected in REQUIRED.items():
+                variant = "CORP_2026" if is_new else "ORIGINAL"
+                if is_new:
+                    mapped = {**COLS, "report": None, "project_code": "B",
+                              "unit": "E", "source": "L", "process": "O",
+                              "process_name": "Q", "project": "R", "area": "S",
+                              "state": "AS", "contract": "AU", "contract_alt": "AO",
+                              "physical": "HR", "budget": "SC", "committed": "SE",
+                              "accrued": "SF", "advance": "SH",
+                              "accrued_advance": "SJ",
+                              **{"physical_month_"+str(i): None for i in range(1,13)}}
+                for col, expected in ({"O": "CÓDIGO DEL PROCESO", "SC": "CODIFICADO AÑO N",
+                                       "SE": "COMPROMETIDO AÑO N", "SF": "DEVENGADO AÑO N"} if is_new else REQUIRED).items():
                     if norm(row.get(col)) != norm(expected):
                         issues.append({"row": row_num, "code": "COLUMN_MISMATCH", "column": col,
                                        "expected": expected, "found": row.get(col, "")})
@@ -112,14 +129,16 @@ def inspect_file(path):
         # Numeric index row follows the header and is not an assignment.
         if row_num <= header_row + 1:
             continue
-        if not norm(row.get("P")) and not norm(row.get("S")):
+        if not norm(row.get(mapped["process"])) and not norm(row.get(mapped["project"])):
             continue
-        date = report_date(row.get("A"))
+        date = (f"2026-{int(assigned_month):02d}-01" if variant == "CORP_2026" and assigned_month else
+                report_date(row.get("A")) if variant == "ORIGINAL" else None)
         if date:
             dates[date] += 1
         else:
-            issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
-        values = {name: row.get(col, "") for name, col in COLS.items()}
+            if variant == "ORIGINAL" or assigned_month:
+                issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
+        values = {name: row.get(col, "") if col else "" for name, col in mapped.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
             raw_value = values[field]
             if field.startswith("physical_month_") and (raw_value is None or str(raw_value).strip() == ""):
@@ -147,6 +166,8 @@ def inspect_file(path):
         records.append(values)
     if header_row is None:
         raise ValueError("No se encontró el encabezado de MATRIZ CONSOLIDADA")
+    if variant == "CORP_2026":
+        issues.append({"code": "NO_INTERNAL_REPORT_DATE", "detail": "Mes asignado por archivo/casilla; no es fecha observada en la matriz"})
     if len(dates) > 1:
         issues.append({"code": "MULTIPLE_REPORT_DATES", "dates": dict(dates)})
     if dates:
@@ -157,7 +178,7 @@ def inspect_file(path):
         if any(name in norm(path.name) for name in ("ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
                 "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE")) and month_name not in norm(path.name):
             issues.append({"code": "FILENAME_REPORT_DATE_MISMATCH", "internal_date": major_date})
-    return {"file": path.name, "sha256": digest, "header_row": header_row,
+    return {"schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
             "report_dates": dict(dates), "record_count": len(records),
             "unique_processes": len({r["process_key"] for r in records if r["process_key"]}),
             "unique_contract_codes": len({r["contract_key"] for r in records if r["contract_key"]}),
