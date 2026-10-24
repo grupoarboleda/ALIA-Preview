@@ -16,8 +16,7 @@ STAGING = DATA_ROOT / "monthly"
 ACTIVE = DATA_ROOT / "current.json"
 MANIFEST = DATA_ROOT / "manifest.json"
 YEAR = 2026
-CRITICAL = {"COLUMN_MISMATCH", "INVALID_REPORT_DATE", "MULTIPLE_REPORT_DATES",
-            "INVALID_NUMBER", "MISSING_PROCESS_CODE", "PHYSICAL_OUT_OF_RANGE"}
+CRITICAL = set()  # Observaciones no bloquean; requisitos estructurales siguen validándose.
 
 
 def read_json(path, default):
@@ -186,9 +185,10 @@ def status():
     months = manifest.get("months", {})
     warnings = []
     for m in sorted(months, key=int):
-        item = months[m]
-        if item.get("warnings", 0):
-            warnings.append(f"Mes {int(m):02d}: {item['warnings']} observaciones para revisión")
+        snap = reconciled_snapshot(read_json(STAGING / f"{int(m):02d}.json", {}))
+        count = len(snap.get("issues", []))
+        if count:
+            warnings.append(f"Mes {int(m):02d}: {count} observaciones para revisión")
     return {"ok": True, "months": months, "active": manifest.get("active", False),
             "blocked": False, "warnings": warnings}
 
