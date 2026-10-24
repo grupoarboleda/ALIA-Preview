@@ -50,7 +50,7 @@ document.head.append(auditCss);
 message.insertAdjacentElement("afterend",auditPanel);
 function auditLine(label,value){const p=document.createElement("p");const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));return p;}
 const issueNames={
- ADVANCE_RESEMBLES_EXCEL_DATE:"Aviso antiguo: importe confundido con posible fecha",
+ ADVANCE_VALUE_CONFLICT:"Importe de anticipo requiere revisión",
  COLUMN_MISMATCH:"El encabezado no coincide con el diccionario",
  INVALID_NUMBER:"Valor no numérico en un campo que requiere número",
  MISSING_PROCESS_CODE:"Falta el código del proceso",
@@ -60,32 +60,17 @@ const issueNames={
  MULTIPLE_REPORT_DATES:"Se encontraron varias fechas de reporte"
 };
 function describeIssue(issue, catalog=[]){
- const legacy=issue.code==="ADVANCE_RESEMBLES_EXCEL_DATE";
- const label=issueNames[issue.code]||"Observación de validación";
  const knownIds={advance:502,budget:497,committed:499,accrued:500,accrued_advance:504,physical:226};
- const id=issue.id??knownIds[issue.field]??(legacy?502:null);
- const entry=catalog.find(x=>Number(x.id)===Number(id))||
-             catalog.find(x=>x.column===issue.column);
- const excelColumn=issue.column||entry?.column||null;
- const fieldName=entry?.label||(legacy?"ANTICIPO AÑO N":issue.expected||issue.field||"Sin identificar");
- const block=entry?.block||(legacy?"Ejecución presupuestaria año N":null);
- const subblock=entry?.subblock;
- const location=[
-  id!=null?"Columna del diccionario: "+id:null,
-  "Campo: "+fieldName,
-  block?"Bloque: "+block:null,
-  subblock?"Subbloque: "+subblock:null,
-  excelColumn?"Columna Excel: "+excelColumn:null,
-  issue.row?"Fila Excel: "+issue.row:null
- ].filter(Boolean).join(" · ");
- const value=issue.value===undefined?"":" · Valor encontrado: "+String(issue.value);
- const advice=legacy
-  ?" · Aviso histórico: la carga anterior confundió este importe con una posible fecha. No implica que el valor sea incorrecto. Reimporta el archivo para auditarlo con la regla actual."
-  :issue.code==="COLUMN_MISMATCH"
-   ?" · Encabezado esperado: "+String(issue.expected||"")+" · Encabezado encontrado: "+String(issue.found||"")
-   :" · Comprueba esta celda en el Excel original.";
- return (legacy?"AVISO ANTIGUO · ":"")+label+" · "+location+value+advice;
+ const id=issue.id??knownIds[issue.field]??null;
+ const entry=catalog.find(x=>Number(x.id)===Number(id))||catalog.find(x=>x.column===issue.column);
+ const label=issueNames[issue.code]||"Observación de validación";
+ const parts=[label,id!=null?"ID "+id:null,entry?.label||issue.field,entry?.block,
+              issue.column||entry?.column?"Columna Excel "+(issue.column||entry.column):null,
+              issue.row?"Fila "+issue.row:null,issue.value!==undefined?"Valor "+issue.value:null,
+              issue.detail||null].filter(Boolean);
+ return parts.join(" · ");
 }
+
 async function showAudit(month){
  auditPanel.hidden=false;auditPanel.replaceChildren(auditLine("AUDITORÍA","Consultando mes "+month+"…"));
  show("Abriendo auditoría de "+names[month-1]+". Consulta el panel debajo de este mensaje.");
@@ -103,19 +88,6 @@ async function showAudit(month){
   if((data.identical_financial_months||[]).length)auditPanel.append(auditLine("ADVERTENCIA: totales financieros idénticos a los meses",data.identical_financial_months.join(", ")));
   const summary=document.createElement("h4");summary.textContent="Observaciones por tipo";auditPanel.append(summary);
   for(const [code,count] of Object.entries(data.issue_counts||{}))auditPanel.append(auditLine(issueNames[code]||code,count));
-  const resolved=data.resolved_issues||[];
-  if(resolved.length){
-   const summary=document.createElement("details");
-   const label=document.createElement("summary");
-   label.textContent="Regla antigua conciliada automáticamente · "+resolved.length+" alertas resueltas";
-   summary.append(label);
-   const explanation=document.createElement("p");
-   explanation.textContent="Los importes de ANTICIPO AÑO N se recuperan del registro local de las observaciones. No se cambian los Excel originales ni es necesario aprobar cada fila.";
-   summary.append(explanation);
-   const sample=document.createElement("p");
-   sample.textContent="Filas afectadas: "+resolved.slice(0,20).map(x=>x.row).join(", ")+(resolved.length>20?" y "+(resolved.length-20)+" más":"");
-   summary.append(sample);auditPanel.append(summary);
-  }
   const entries=data.issues||[];
   const catalogEntries=data.column_catalog||[];
   const toolbar=document.createElement("div");toolbar.className="alia-audit-toolbar";
@@ -132,8 +104,8 @@ async function showAudit(month){
   let page=1;const pageSize=15;
   function issueMeta(issue){
    const knownIds={advance:502,budget:497,committed:499,accrued:500,accrued_advance:504,physical:226};
-   const legacy=issue.code==="ADVANCE_RESEMBLES_EXCEL_DATE";
-   const id=issue.id??knownIds[issue.field]??(legacy?502:null);
+   const legacy=false;
+   const id=issue.id??knownIds[issue.field]??null;
    const col=catalogEntries.find(x=>Number(x.id)===Number(id))||catalogEntries.find(x=>x.column===issue.column);
    return {id,col,legacy,label:issueNames[issue.code]||issue.code||"Observación",
     field:col?.label||(legacy?"ANTICIPO AÑO N":issue.expected||issue.field||"No identificado"),
@@ -163,7 +135,7 @@ async function showAudit(month){
    for(const issue of visible.slice((page-1)*pageSize,page*pageSize)){
     const m=issueMeta(issue);const tr=document.createElement("tr");
     const cells=[
-      m.legacy?"Histórico":"Revisar",
+      "Revisar",
       issue.row??"—",m.id??"—",m.field,issue.value??"—"
     ];
     cells.forEach((value,i)=>{const td=document.createElement("td");td.textContent=String(value);if(i===3){const small=document.createElement("small");small.textContent=m.block;td.append(document.createElement("br"),small);}tr.append(td);});
@@ -193,7 +165,7 @@ async function showAudit(month){
    const a=document.createElement("a");a.href=url;a.download="ALIA_auditoria_"+String(month).padStart(2,"0")+".csv";a.click();URL.revokeObjectURL(url);
   });
   render();
-  if(entries.some(x=>x.code==="ADVANCE_RESEMBLES_EXCEL_DATE"))auditPanel.append(auditLine("Importante","Existen avisos antiguos que no pudieron conciliarse automáticamente; revisa esos casos sin necesidad de recargar Excel."));
+
   const catalog=document.createElement("details");const title=document.createElement("summary");title.textContent="Diccionario detectado: "+(data.column_catalog||[]).length+" columnas";catalog.append(title);
   for(const col of (data.column_catalog||[])){
    const p=document.createElement("p");
