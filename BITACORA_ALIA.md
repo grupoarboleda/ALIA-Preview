@@ -258,3 +258,9 @@
 - La vista AUDITAR resuelve el ID de columna (incluyendo el aviso histórico de anticipo 502), etiqueta, bloque, subbloque, letra Excel si está catalogada, fila y valor.
 - Las observaciones antiguas sin catálogo muestran la identificación por diccionario y la fila, pero no inventan letra de Excel.
 - Cambios limitados a interfaz y cache bust; sin modificar cálculos ni datos productivos. Pendiente comprobar en ALIA Local.
+
+### 2026-10-24 — Conciliación sin recarga y alertas no bloqueantes
+- Por instrucción del propietario, se reutilizan los snapshots locales cargados. No se exige reemplazar XLSX ni aprobar 59 alertas individualmente.
+- `reconciled_snapshot` construye una vista derivada en memoria, identifica `ADVANCE_RESEMBLES_EXCEL_DATE` obsoleta, restaura el importe de `advance` desde `issue.value` si el registro `sourceRow` coincide y el valor existente es 0, nulo o idéntico; las discrepancias quedan pendientes. No modifica el snapshot original ni el Excel.
+- La auditoría muestra grupo plegable de alertas conciliadas automáticamente; contadores y activación usan vista derivada. Las observaciones de validación no bloquean la importación; errores estructurales y requisitos de activación siguen aplicando.
+- Pendiente: verificar en equipo local recuperación de 59 importes, totales y activación. No se ha realizado prueba de extremo a extremo con archivos locales.
