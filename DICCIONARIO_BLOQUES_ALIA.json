@@ -1,0 +1,54 @@
+{
+  "schema": "ALIA_BLOQUES_2026",
+  "version": "1.0",
+  "column_count": 564,
+  "groups": [
+    {
+      "name": "Anticipo contractual",
+      "start": 233,
+      "end": 236
+    },
+    {
+      "name": "Pagos contra factura",
+      "start": 237,
+      "end": 436,
+      "repeat": 25,
+      "step": 8,
+      "fields": [
+        "Número de trámite",
+        "Valor facturado sin IVA",
+        "IVA facturado",
+        "Retención",
+        "Amortización del anticipo",
+        "Multas",
+        "Fecha de transferencia",
+        "Total pagado factura"
+      ]
+    },
+    {
+      "name": "Ejecución presupuestaria",
+      "start": 496,
+      "end": 507
+    },
+    {
+      "name": "Línea base de pagos",
+      "start": 508,
+      "end": 522
+    },
+    {
+      "name": "Línea base de pagos ajustada",
+      "start": 523,
+      "end": 537
+    },
+    {
+      "name": "Pagos ejecutados",
+      "start": 538,
+      "end": 552
+    },
+    {
+      "name": "Datos proyectados",
+      "start": 553,
+      "end": 564
+    }
+  ]
+}
