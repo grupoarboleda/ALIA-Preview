@@ -94,8 +94,10 @@ def stage(content, filename, expected_month="auto"):
     manifest.setdefault("months", {})
     old = manifest["months"].get(str(month))
     if old and old.get("sha256") == batch["sha256"]:
-        return {"ok": True, "month": month, "records": len(records),
-                "warnings": len(batch["issues"]), "duplicate": True}
+        prior = read_json(STAGING / f"{month:02d}.json", {})
+        if prior.get("column_catalog"):
+            return {"ok": True, "month": month, "records": len(records),
+                    "warnings": len(batch["issues"]), "duplicate": True}
     if mismatch:
         batch["issues"].append({"code": "REPORT_DATE_MONTH_MISMATCH", "internal_date": date, "assigned_month": month})
     snapshot = {"date": date, "date_origin": "ASSIGNED_MONTH_NOT_VERIFIED", "month": month, "year": YEAR,
