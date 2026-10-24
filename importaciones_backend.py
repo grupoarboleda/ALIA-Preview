@@ -95,7 +95,7 @@ def stage(content, filename, expected_month="auto"):
     old = manifest["months"].get(str(month))
     if old and old.get("sha256") == batch["sha256"]:
         prior = read_json(STAGING / f"{month:02d}.json", {})
-        if prior.get("column_catalog"):
+        if prior.get("column_catalog") and prior.get("parser_version") == "numbered-v2":
             return {"ok": True, "month": month, "records": len(records),
                     "warnings": len(batch["issues"]), "duplicate": True}
     if mismatch:
@@ -103,7 +103,8 @@ def stage(content, filename, expected_month="auto"):
     snapshot = {"date": date, "date_origin": "ASSIGNED_MONTH_NOT_VERIFIED", "month": month, "year": YEAR,
                 "file": filename, "sha256": batch["sha256"],
                 "records": records, "issues": batch["issues"],
-                "column_catalog": batch.get("column_catalog", [])}
+                "column_catalog": batch.get("column_catalog", []),
+                "parser_version": "numbered-v2"}
     write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
     manifest["months"][str(month)] = {"date": date, "file": filename,
         "sha256": batch["sha256"], "records": len(records),
@@ -143,7 +144,8 @@ def audit(month):
             "date_origin": snap.get("date_origin", "UNKNOWN"),
             "records": len(snap["records"]), "issues": issues,
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
-            "totals": totals, "identical_financial_months": other}
+            "totals": totals, "identical_financial_months": other,
+            "requires_reimport": snap.get("parser_version") != "numbered-v2"}
 
 
 def status():
