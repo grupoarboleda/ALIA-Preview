@@ -14,17 +14,17 @@ from xml.etree import ElementTree as ET
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
       "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
+# Formato definitivo CORP 2026, hoja MATRIZ CONSOLIDADA, encabezados fila 11.
 COLS = {
-    "report": "A", "project_code": "C", "unit": "F", "source": "M",
-    "process": "P", "process_name": "R", "project": "S", "area": "T",
-    "state": "AT", "contract": "AV", "contract_alt": "AP",
-    "physical": "HS", "budget": "SD", "committed": "SF",
-    "accrued": "SG", "advance": "SI", "accrued_advance": "SK",
+    "report": None, "project_code": "B", "unit": "E", "source": "L",
+    "process": "O", "process_name": "Q", "project": "R", "area": "S",
+    "state": "AS", "contract": "AU", "contract_alt": "AO",
+    "physical": "HR", "budget": "SC", "committed": "SE",
+    "accrued": "SF", "advance": "SH", "accrued_advance": "SJ",
     **{"physical_month_"+str(i+1): col for i,col in enumerate(("UH","UI","UJ","UK","UL","UM","UN","UO","UP","UQ","UR","US"))}
 }
-REQUIRED = {"A": "Reporte", "P": "CÓDIGO DEL PROCESO",
-            "SD": "CODIFICADO AÑO N", "SF": "COMPROMETIDO AÑO N",
-            "SG": "DEVENGADO AÑO N", "SI": "ANTICIPO AÑO N"}
+REQUIRED = {"O": "CÓDIGO DEL PROCESO", "SC": "CODIFICADO AÑO N",
+            "SE": "COMPROMETIDO AÑO N", "SF": "DEVENGADO AÑO N"}
 
 
 def text_cell(cell, strings):
