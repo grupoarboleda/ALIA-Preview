@@ -245,3 +245,11 @@
 - Interfaz AUDITAR traduce códigos a español y muestra fila, columna/campo y valor, con explicación de advertencias antiguas; commit `5f371058`.
 - Backend permite reimportar un mismo archivo con igual hash para regenerar snapshots antiguos, con versión de parser `numbered-v2`; commit `511bf5f1`. Caché HTML `f60e1261`.
 - **Requiere reiniciar servidor Python y volver a importar octubre (REEMPLAZAR) para corregir sus datos guardados y actualizar catálogo/avisos.** Luego repetir los demás meses antes de activar. Validación en localhost pendiente. Sin despliegue público.
+
+### 2026-10-24 — Aprobación e integración del Diccionario Maestro ALIA v1.0
+- Propietario aprobó diccionario visual de 564 columnas con bloques y subbloques.
+- Integración en develop: `DICCIONARIO_BLOQUES_ALIA.json` contiene 36 agrupaciones principales y patrón de 25 pagos contra factura, ocho campos cada uno. El catálogo del importador obtiene las etiquetas individuales directamente de los encabezados de la matriz y añade bloque, subbloque y campo de pago.
+- El importador valida que existan 564 columnas numeradas; conserva el mapeo por identificador de la fila 12 (no por desplazamiento físico).
+- Backend usa versión `grouped-v1` para obligar a regenerar snapshots antiguos aun cuando el archivo tenga el mismo hash. Interfaz AUDITAR presenta los grupos.
+- Alcance: integración operativa de agrupaciones principales; el JSON maestro de 564 definiciones de la conversación no se copió literalmente al repositorio. Las etiquetas se obtienen de cada XLSX y se validan las 16 columnas críticas mediante `DICCIONARIO_COLUMNAS_ALIA.json`. No se han implementado nuevos cálculos financieros ni activado datos.
+- Pendiente: validación en ALIA Local con archivos originales, reinicio de servidor, reimportación y comprobación del catálogo (564) y de los importes. Detectado en el borrador aprobado un rango secundario proyectado 565–567 fuera del límite 564; integración acotada a 553–564, requiere aclaración si existen campos posteriores.
