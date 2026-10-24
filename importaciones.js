@@ -51,6 +51,12 @@ message.insertAdjacentElement("afterend",auditPanel);
 function auditLine(label,value){const p=document.createElement("p");const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));return p;}
 const issueNames={
  ADVANCE_VALUE_CONFLICT:"Importe de anticipo requiere revisión",
+ INVALID_MONETARY_CELL:"Importe no numérico en columna monetaria",
+ INVALID_DATE_CELL:"Fecha no válida en campo de fecha",
+ INVALID_MONETARY_VALUE:"Importe almacenado no numérico",
+ PHYSICAL_PERCENT_OUT_OF_RANGE:"Avance físico fuera del intervalo 0–100 %",
+ INVALID_PHYSICAL_PERCENT:"Avance físico no numérico",
+ COLUMN_IDS_INCOMPLETE:"Identificadores incompletos del diccionario",
  COLUMN_MISMATCH:"El encabezado no coincide con el diccionario",
  INVALID_NUMBER:"Valor no numérico en un campo que requiere número",
  MISSING_PROCESS_CODE:"Falta el código del proceso",
