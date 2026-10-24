@@ -41,6 +41,12 @@ const auditPanel=document.createElement("section");
 auditPanel.id="alia-audit-panel";
 auditPanel.style.cssText="margin-top:16px;padding:18px;border:1px solid #32738b;border-radius:6px;background:#0b2332;color:#d7f4ff;overflow:auto;max-height:560px";
 auditPanel.hidden=true;
+auditPanel.style.borderRadius="12px";
+auditPanel.style.maxHeight="75vh";
+auditPanel.style.background="#0b2332";
+const auditCss=document.createElement("style");
+auditCss.textContent="#alia-audit-panel .alia-audit-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0}#alia-audit-panel .alia-audit-toolbar input{flex:2;min-width:210px}#alia-audit-panel .alia-audit-toolbar select{flex:1;min-width:190px}#alia-audit-panel .alia-audit-count{font-size:12px;opacity:.8}#alia-audit-panel .alia-audit-results{overflow-x:auto}#alia-audit-panel .alia-audit-table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}#alia-audit-panel .alia-audit-table th{background:#153b50;white-space:nowrap}#alia-audit-panel .alia-audit-table td,#alia-audit-panel .alia-audit-table th{padding:11px;border-bottom:1px solid #315064;vertical-align:top}#alia-audit-panel .alia-audit-table tbody tr:hover{background:#18394a}#alia-audit-panel .alia-audit-table small{display:block;opacity:.7;margin-top:4px}#alia-audit-panel .alia-audit-detail{max-width:420px;line-height:1.5;padding:10px 0;overflow-wrap:anywhere}#alia-audit-panel .alia-audit-detail[hidden]{display:none}#alia-audit-panel .alia-audit-pagination{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px}#alia-audit-panel button{cursor:pointer}";
+document.head.append(auditCss);
 message.insertAdjacentElement("afterend",auditPanel);
 function auditLine(label,value){const p=document.createElement("p");const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));return p;}
 const issueNames={
