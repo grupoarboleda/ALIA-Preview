@@ -176,7 +176,7 @@ def inspect_file(path, assigned_month=None):
             issues.append({"row": row_num, "code": "PHYSICAL_OUT_OF_RANGE"})
         records.append(values)
     if header_row is None:
-        raise ValueError("No se encontró el encabezado de MATRIZ CONSOLIDADA")
+        raise ValueError("No se detectó la fila 12 de identificadores numéricos en MATRIZ CONSOLIDADA. Verifica que el servidor Python haya sido reiniciado y esté sincronizado con develop.")
     if variant == "CORP_2026":
         issues.append({"code": "NO_INTERNAL_REPORT_DATE", "detail": "Mes asignado por archivo/casilla; no es fecha observada en la matriz"})
     if len(dates) > 1:
