@@ -11,21 +11,10 @@ import re
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
+from reglas_matriz_alia import check_record, check_catalog
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
       "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
-# Formato definitivo CORP 2026, hoja MATRIZ CONSOLIDADA, encabezados fila 11.
-COLS = {
-    "report": None, "project_code": "B", "unit": "E", "source": "L",
-    "process": "O", "process_name": "Q", "project": "R", "area": "S",
-    "state": "AS", "contract": "AU", "contract_alt": "AO",
-    "physical": "HR", "budget": "SC", "committed": "SE",
-    "accrued": "SF", "advance": "SH", "accrued_advance": "SJ",
-    **{"physical_month_"+str(i+1): col for i,col in enumerate(("UH","UI","UJ","UK","UL","UM","UN","UO","UP","UQ","UR","US"))}
-}
-REQUIRED = {"O": "CÓDIGO DEL PROCESO", "SC": "CODIFICADO AÑO N",
-            "SE": "COMPROMETIDO AÑO N", "SF": "DEVENGADO AÑO N"}
-
 
 def text_cell(cell, strings):
     v = cell.find("m:v", NS)
@@ -101,7 +90,7 @@ def inspect_file(path, assigned_month=None):
     records, issues = [], []
     dates = collections.Counter()
     variant = None
-    mapped = COLS
+    mapped = {}
     numbered_columns = {}
     dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_COLUMNAS_ALIA.json").read_text(encoding="utf-8"))
     block_dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_BLOQUES_ALIA.json").read_text(encoding="utf-8"))
@@ -157,9 +146,6 @@ def inspect_file(path, assigned_month=None):
         date = f"2026-{int(assigned_month):02d}-01" if assigned_month else None
         if date:
             dates[date] += 1
-        else:
-            if assigned_month:
-                issues.append({"row": row_num, "code": "INVALID_REPORT_DATE"})
         values = {name: row.get(col, "") if col else "" for name, col in mapped.items()}
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
             raw_value = values[field]
@@ -180,29 +166,15 @@ def inspect_file(path, assigned_month=None):
         # El identificador de la fila 12 y el tipo de celda deben prevalecer.
         if not values["process_key"]:
             issues.append({"row": row_num, "code": "MISSING_PROCESS_CODE"})
-        if values["physical"] is not None and not 0 <= values["physical"] <= 1.00001:
-            issues.append({"row": row_num, "code": "PHYSICAL_OUT_OF_RANGE"})
+        issues.extend(check_record(values))
         records.append(values)
     if header_row is None:
         raise ValueError("No se detectó la fila 12 de identificadores numéricos en MATRIZ CONSOLIDADA. Verifica que el servidor Python haya sido reiniciado y esté sincronizado con develop.")
-    if variant == "CORP_2026":
-        issues.append({"code": "NO_INTERNAL_REPORT_DATE", "detail": "Mes asignado por archivo/casilla; no es fecha observada en la matriz"})
-    if len(dates) > 1:
-        issues.append({"code": "MULTIPLE_REPORT_DATES", "dates": dict(dates)})
-    if dates:
-        major_date = dates.most_common(1)[0][0]
-        # Do not silently interpret misleading filenames as reporting dates.
-        month_name = {1:"ENERO",2:"FEBRERO",3:"MARZO",4:"ABRIL",5:"MAYO",6:"JUNIO",
-                      7:"JULIO",8:"AGOSTO",9:"SEPTIEMBRE",10:"OCTUBRE",11:"NOVIEMBRE",12:"DICIEMBRE"}[int(major_date[5:7])]
-        if False and any(name in norm(path.name) for name in ("ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-                "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE")) and month_name not in norm(path.name):
-            issues.append({"code": "FILENAME_REPORT_DATE_MISMATCH", "internal_date": major_date})
     catalog = [{"id": identifier, "column": column, "label": str(headers.get(column, "")).strip(),
                 "mapped_field": next((key for key, definition in dictionary["fields"].items() if definition["id"] == identifier), None)}
                | group_for(identifier)
                for identifier, column in sorted(numbered_columns.items())]
-    if len(catalog) != block_dictionary["column_count"]:
-        issues.append({"code": "COLUMN_COUNT_MISMATCH", "expected": block_dictionary["column_count"], "found": len(catalog)})
+    issues.extend(check_catalog(catalog))
     return {"dictionary_version": block_dictionary["version"], "column_catalog": catalog, "schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
             "report_dates": dict(dates), "record_count": len(records),
             "unique_processes": len({r["process_key"] for r in records if r["process_key"]}),
