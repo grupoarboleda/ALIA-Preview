@@ -1,0 +1,89 @@
+{
+  "schema": "ALIA_CORP_2026",
+  "sheet": "MATRIZ CONSOLIDADA",
+  "header_row": 11,
+  "id_row": 12,
+  "first_data_row": 13,
+  "fields": {
+    "project_code": {
+      "id": 2,
+      "label": "CODIGO PAI",
+      "type": "text"
+    },
+    "unit": {
+      "id": 5,
+      "label": "UNIDAD DE NEGOCIO",
+      "type": "text"
+    },
+    "source": {
+      "id": 12,
+      "label": "FUENTE DE FINANCIAMIENTO",
+      "type": "text"
+    },
+    "process": {
+      "id": 15,
+      "label": "CÓDIGO DEL PROCESO",
+      "type": "text"
+    },
+    "process_name": {
+      "id": 17,
+      "label": "NOMBRE DEL PROCESO",
+      "type": "text"
+    },
+    "project": {
+      "id": 18,
+      "label": "NOMBRE DEL PROYECTO",
+      "type": "text"
+    },
+    "area": {
+      "id": 19,
+      "label": "ÁREA REQUIRENTE",
+      "type": "text"
+    },
+    "contract_alt": {
+      "id": 41,
+      "label": "NÚMERO DE CONTRATO",
+      "type": "text"
+    },
+    "state": {
+      "id": 45,
+      "label": "ESTADO DEL PROCESO",
+      "type": "text"
+    },
+    "contract": {
+      "id": 47,
+      "label": "NÚMERO DEL CONTRATO",
+      "type": "text"
+    },
+    "physical": {
+      "id": 226,
+      "label": "TOTAL AVANCE FISICO (100%)",
+      "type": "percent"
+    },
+    "budget": {
+      "id": 497,
+      "label": "CODIFICADO AÑO N",
+      "type": "money"
+    },
+    "committed": {
+      "id": 499,
+      "label": "COMPROMETIDO AÑO N",
+      "type": "money"
+    },
+    "accrued": {
+      "id": 500,
+      "label": "DEVENGADO AÑO N",
+      "type": "money"
+    },
+    "advance": {
+      "id": 502,
+      "label": "ANTICIPO AÑO N",
+      "type": "money"
+    },
+    "accrued_advance": {
+      "id": 504,
+      "label": "DEVEN + ANTICIPO",
+      "type": "money"
+    }
+  }
+}
