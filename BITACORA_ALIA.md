@@ -253,3 +253,8 @@
 - Backend usa versión `grouped-v1` para obligar a regenerar snapshots antiguos aun cuando el archivo tenga el mismo hash. Interfaz AUDITAR presenta los grupos.
 - Alcance: integración operativa de agrupaciones principales; el JSON maestro de 564 definiciones de la conversación no se copió literalmente al repositorio. Las etiquetas se obtienen de cada XLSX y se validan las 16 columnas críticas mediante `DICCIONARIO_COLUMNAS_ALIA.json`. No se han implementado nuevos cálculos financieros ni activado datos.
 - Pendiente: validación en ALIA Local con archivos originales, reinicio de servidor, reimportación y comprobación del catálogo (564) y de los importes. Detectado en el borrador aprobado un rango secundario proyectado 565–567 fuera del límite 564; integración acotada a 553–564, requiere aclaración si existen campos posteriores.
+
+### 2026-10-24 — Observaciones trazables al diccionario y Excel
+- La vista AUDITAR resuelve el ID de columna (incluyendo el aviso histórico de anticipo 502), etiqueta, bloque, subbloque, letra Excel si está catalogada, fila y valor.
+- Las observaciones antiguas sin catálogo muestran la identificación por diccionario y la fila, pero no inventan letra de Excel.
+- Cambios limitados a interfaz y cache bust; sin modificar cálculos ni datos productivos. Pendiente comprobar en ALIA Local.
