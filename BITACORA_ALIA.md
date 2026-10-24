@@ -224,3 +224,11 @@
 - `importador_matriz.py` ahora construye el mapa a partir de números de fila 12, contrasta encabezados de fila 11 y evita confiar en letras de Excel; commit `bb12f79f`.
 - El resto de columnas todavía no están catalogadas semánticamente. Avance físico mensual queda sin asignar hasta verificar identificadores exactos, sin fabricar valores.
 - Pendiente: reinicio de servidor Python y validación de cargas reales enero–octubre. No se alteraron snapshots activos ni hubo publicación pública.
+
+### 2026-10-23 — Auditoría de importaciones y catálogo completo de columnas
+- Usuario validó visualmente 10/12 meses cargados (enero–octubre, 398 filas por archivo), con 59 observaciones en cada mes. Se aprobó ejecutar auditoría, catálogo y conciliación sin activar explorador.
+- Parser extrae TODOS los identificadores numéricos de fila 12 y sus encabezados de fila 11 en `column_catalog` (sin publicar contenido institucional); commit `72a92417`.
+- Backend almacena el catálogo junto al snapshot local, agrega auditoría por mes con observaciones individuales, agrupación por código, totales financieros y detección de meses con totales idénticos; commits `a107518e`, `a39e1949`.
+- Servidor expone GET `/__alia_import_audit?month=N` solo en localhost; commit `908253c5`. Interfaz añade botón AUDITAR por mes y despliega incidencias y catálogo; commit `371e31bc`. Caché HTML actualizado `ec2bbca4`.
+- IMPORTANTE: para completar el catálogo de los diez snapshots ya guardados, volver a cargar cada archivo desde REEMPLAZAR después de reiniciar servidor; la carga no activa ni reemplaza el explorador. Hasta reimportar, auditoría de archivos previos puede mostrar 0 columnas catalogadas.
+- Pendiente: validación en localhost, análisis de los 59 avisos y reconciliación de fechas/totales históricos. No se alteró producción ni se publicó información.
