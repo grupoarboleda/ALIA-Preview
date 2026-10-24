@@ -8,7 +8,7 @@ import time
 import json
 import tempfile
 import zipfile
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit, parse_qs
 import importaciones_backend as monthly
 from importador_matriz import inspect_file
 
@@ -128,6 +128,12 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         endpoint = self.path.split("?", 1)[0]
+        if endpoint == "/__alia_import_audit":
+            try:
+                month = parse_qs(urlsplit(self.path).query).get("month", [""])[0]
+                return self._json(monthly.audit(month))
+            except (ValueError, OSError) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint == "/__alia_import_status":
             return self._json(monthly.status())
         if endpoint == "/__alia_monthly_history":
