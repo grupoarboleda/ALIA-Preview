@@ -204,3 +204,10 @@
 - Inspección de los diez XLSX: cada uno contiene 1.266 celdas vacías en UH:US (incluye filas de encabezados adicionales) y cero valores no numéricos no vacíos en dichas columnas. El bloque octubre-diciembre de 398 registros explica los 1.194 errores reportados.
 - Solución en `importador_matriz.py`: aceptar vacíos como `None` y generar `INVALID_NUMBER` únicamente cuando existe contenido no numérico. Commit `3e0254d`.
 - Pendiente: verificar carga real en localhost después de reiniciar el proceso Python. Los archivos fuente no se modificaron.
+
+### 2026-10-23 — Sustitución del importador por estructura CORP 2026
+- Por autorización expresa del propietario se retiró la detección del esquema antiguo del parser y se adoptó la estructura de los diez XLSX CORP recibidos.
+- Cabecera detectada por O=CÓDIGO DEL PROCESO, SC=CODIFICADO AÑO N, SE=COMPROMETIDO AÑO N, SF=DEVENGADO AÑO N; anticipo SH y avance físico HR. No interpretar la columna A como fecha Reporte.
+- El mes se asigna por prefijo del archivo o casilla; se marca expresamente como **mes asignado, no fecha de corte verificada**. No se activan diez meses automáticamente; persisten los controles de 12 meses y la comprobación de totales idénticos.
+- Archivos: importador_matriz.py (dca437fe), importaciones_backend.py (2fc3a834).
+- Pendiente: ejecutar pruebas del parser con los diez archivos reales en el servidor local y validar importes, avance físico y columnas. Sin despliegue público, sin modificar datos activos.
