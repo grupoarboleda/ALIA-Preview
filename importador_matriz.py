@@ -189,7 +189,10 @@ def inspect_file(path, assigned_month=None):
         if False and any(name in norm(path.name) for name in ("ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
                 "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE")) and month_name not in norm(path.name):
             issues.append({"code": "FILENAME_REPORT_DATE_MISMATCH", "internal_date": major_date})
-    return {"schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
+    catalog = [{"id": identifier, "column": column, "label": str(headers.get(column, "")).strip(),
+                "mapped_field": next((key for key, definition in dictionary["fields"].items() if definition["id"] == identifier), None)}
+               for identifier, column in sorted(numbered_columns.items())]
+    return {"column_catalog": catalog, "schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
             "report_dates": dict(dates), "record_count": len(records),
             "unique_processes": len({r["process_key"] for r in records if r["process_key"]}),
             "unique_contract_codes": len({r["contract_key"] for r in records if r["contract_key"]}),
