@@ -165,11 +165,8 @@ def inspect_file(path, assigned_month=None):
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
         values["project_key"] = norm(values["project_code"])
         values["source_row"] = row_num
-        # Some SI/SK cells contain Excel date serials, not monetary amounts.
-        # Never turn such values into financial advances without reconciliation.
-        if values["advance"] is not None and 40000 <= values["advance"] <= 80000:
-            issues.append({"row": row_num, "code": "ADVANCE_RESEMBLES_EXCEL_DATE", "value": values["advance"]})
-            values["advance"] = None
+        # No clasificar una cantidad como fecha únicamente por su magnitud.
+        # El identificador de la fila 12 y el tipo de celda deben prevalecer.
         if not values["process_key"]:
             issues.append({"row": row_num, "code": "MISSING_PROCESS_CODE"})
         if values["physical"] is not None and not 0 <= values["physical"] <= 1.00001:
