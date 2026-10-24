@@ -95,7 +95,7 @@ def stage(content, filename, expected_month="auto"):
     old = manifest["months"].get(str(month))
     if old and old.get("sha256") == batch["sha256"]:
         prior = read_json(STAGING / f"{month:02d}.json", {})
-        if prior.get("column_catalog") and prior.get("parser_version") == "numbered-v2":
+        if prior.get("column_catalog") and prior.get("parser_version") == "grouped-v1":
             return {"ok": True, "month": month, "records": len(records),
                     "warnings": len(batch["issues"]), "duplicate": True}
     if mismatch:
@@ -104,7 +104,7 @@ def stage(content, filename, expected_month="auto"):
                 "file": filename, "sha256": batch["sha256"],
                 "records": records, "issues": batch["issues"],
                 "column_catalog": batch.get("column_catalog", []),
-                "parser_version": "numbered-v2"}
+                "parser_version": "grouped-v1"}
     write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
     manifest["months"][str(month)] = {"date": date, "file": filename,
         "sha256": batch["sha256"], "records": len(records),
@@ -145,7 +145,7 @@ def audit(month):
             "records": len(snap["records"]), "issues": issues,
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
             "totals": totals, "identical_financial_months": other,
-            "requires_reimport": snap.get("parser_version") != "numbered-v2"}
+            "requires_reimport": snap.get("parser_version") != "grouped-v1"}
 
 
 def status():
