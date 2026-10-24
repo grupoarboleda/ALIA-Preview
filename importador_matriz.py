@@ -104,6 +104,17 @@ def inspect_file(path, assigned_month=None):
     mapped = COLS
     numbered_columns = {}
     dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_COLUMNAS_ALIA.json").read_text(encoding="utf-8"))
+    block_dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_BLOQUES_ALIA.json").read_text(encoding="utf-8"))
+    def group_for(identifier):
+        for group in block_dictionary["groups"]:
+            if group["start"] <= identifier <= group["end"]:
+                if group.get("repeat"):
+                    payment = (identifier - group["start"]) // group["step"] + 1
+                    field_index = (identifier - group["start"]) % group["step"]
+                    return {"block": group["name"], "subblock": f"Pago {payment} contra factura",
+                            "field_in_subblock": group["fields"][field_index], "payment_number": payment}
+                return {"block": group["name"], "subblock": None}
+        return {"block": "Otros campos de la matriz", "subblock": None}
     for row_num, row in rows:
         if row_num == dictionary["header_row"]:
             headers = row
@@ -188,8 +199,11 @@ def inspect_file(path, assigned_month=None):
             issues.append({"code": "FILENAME_REPORT_DATE_MISMATCH", "internal_date": major_date})
     catalog = [{"id": identifier, "column": column, "label": str(headers.get(column, "")).strip(),
                 "mapped_field": next((key for key, definition in dictionary["fields"].items() if definition["id"] == identifier), None)}
+               | group_for(identifier)
                for identifier, column in sorted(numbered_columns.items())]
-    return {"column_catalog": catalog, "schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
+    if len(catalog) != block_dictionary["column_count"]:
+        issues.append({"code": "COLUMN_COUNT_MISMATCH", "expected": block_dictionary["column_count"], "found": len(catalog)})
+    return {"dictionary_version": block_dictionary["version"], "column_catalog": catalog, "schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
             "report_dates": dict(dates), "record_count": len(records),
             "unique_processes": len({r["process_key"] for r in records if r["process_key"]}),
             "unique_contract_codes": len({r["contract_key"] for r in records if r["contract_key"]}),
