@@ -489,7 +489,7 @@ function renderRealTemporal(rs,cutMonth){
  const rows=choice?rs.filter(r=>(choice.type==="committed"?(r.contract||r.process):r.process)===choice.id):rs;
  const total=sum(rows,cutMonth);
  const label=choice?(choice.type==="committed"?"CONTRATO ":"PROCESO ")+choice.id:"UNIDAD / ÁREA · DATOS REALES";
- title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · REPORTE OCTUBRE</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
+ title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
  title.querySelector("h3").textContent=label;
  const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
  const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued]];
@@ -513,11 +513,11 @@ function renderRealTemporal(rs,cutMonth){
   const add=(tag,attrs)=>{const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));chart.append(el);return el;};
   const x=i=>55+i*59,y=v=>185-v*1.5;
   for(let v=0;v<=100;v+=25){add("line",{x1:55,x2:710,y1:y(v),y2:y(v),stroke:"#3e6274","stroke-dasharray":"3 6"});const t=add("text",{x:44,y:y(v)+4,fill:"#abcbd8","text-anchor":"end","font-size":11});t.textContent=v+"%";}
-  const available=physical.map((v,i)=>({v,i})).filter(p=>p.v!==null&&p.i<=9);
+  const available=physical.map((v,i)=>({v,i})).filter(p=>p.v!==null&&p.i<cutMonth);
   if(available.length){add("polyline",{points:available.map(p=>x(p.i)+","+y(p.v)).join(" "),fill:"none",stroke:"#74a9ff","stroke-width":3});for(const p of available)add("circle",{cx:x(p.i),cy:y(p.v),r:3,fill:"#74a9ff"});}
   months.forEach((m,i)=>{const t=add("text",{x:x(i),y:209,fill:i===9?"#fff":"#9cbecb","font-size":10,"text-anchor":"middle"});t.textContent=m;});
   graph.append(chart);host.append(graph);
-  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="Avance físico por mes extraído de las nuevas columnas UH–UQ. Cuando un contrato aparece en varias filas se muestra el máximo reportado provisionalmente; esta regla debe conciliarse con la matriz.";host.append(note);
+  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="El histórico físico mensual no está disponible en los snapshots actuales. No se interpolan ni inventan valores.";host.append(note);
  }
  if(choice){host.append(button("← VOLVER A EVOLUCIÓN GENERAL",()=>{selectedManagement=null;renderTemporal(rs,cutMonth);},"exv-count-link"));}
 }
@@ -720,7 +720,10 @@ for(const pane of ["area"]){
 }
 $("ex-home").addEventListener("click",goHome);
 $("ex-back").addEventListener("click",()=>goBack(activePane));
-$("ex-cut").addEventListener("change",render);
+$("ex-cut").addEventListener("change",()=>{
+ if(realMode){loadStagedCut(Number($("ex-cut").value));return;}
+ render();
+});
 for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",render);
 render();
 function activateReal(data){
@@ -728,12 +731,27 @@ function activateReal(data){
  records=data.records.map(r=>({...r,budget:Number(r.budget)||0,committed:Number(r.committed)||0,accrued:Number(r.accrued)||0,advance:Number(r.advance)||0}));
  realMode=true;selectedManagement=null;unitManagementOpen=false;
  paneTrails.area=[];activePane="area";trail=[];branch=null;override=null;
- $("ex-cut").value=String(Number(Object.keys(data.report_dates||{})[0]?.slice(5,7))||10);$("ex-cut").disabled=true;
+ const selectedMonth=Number(data.month)||Number(Object.keys(data.report_dates||{})[0]?.slice(5,7))||10;
+ $("ex-cut").value=String(selectedMonth);
+ $("ex-cut").disabled=!Array.isArray(data.available_months)||data.available_months.length<2;
+ for(const option of $("ex-cut").options){
+  option.hidden=Array.isArray(data.available_months)&&!data.available_months.includes(Number(option.value));
+ }
  const marker=document.querySelector("#explorer .exv-demo");if(marker)marker.textContent="● DATOS REALES · "+Object.keys(data.report_dates||{}).join(", ");
  render();
 }
 fetch("/__alia_data").then(r=>r.json());activateReal(loaded);
  }catch(error){importStatus.textContent="No se pudo importar: "+error.message;}
 });
-fetch("/__alia_data").then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
+let stagedRequest=0;
+function loadStagedCut(month){
+ const request=++stagedRequest;
+ const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
+ fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
+  if(request!==stagedRequest)return;
+  if(data?.mode==="REAL"&&data.records?.length){activateReal(data);return;}
+  if(!realMode)fetch("/__alia_data",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
+ }).catch(()=>{});
+}
+loadStagedCut();
 })();
