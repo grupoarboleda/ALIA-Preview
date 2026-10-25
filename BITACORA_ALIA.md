@@ -316,3 +316,8 @@
 - Corrección visual de RAMA 01: cada barra representa 100 % del codificado de su propia área, el tramo turquesa muestra devengado/codificado y el resto azul oscuro muestra pendiente de devengar. Se elimina la escala por presupuesto del área mayor que distorsionaba la lectura de ejecución.
 - Leyenda de dos colores diferenciados y ampliación del icono de GLOBAL · TODA LA UNIDAD.
 - Se conservan importes, porcentaje de ejecución, conteos, fila TOTAL y filtros. Sin modificaciones de datos ni de la RAMA 02. Pendiente validación visual local.
+
+### 2026-10-25 — Recuento distinto de PAI y procesos
+- Corrección de indicadores de proyectos y procesos del Explorador: los proyectos se cuentan por código PAI (`project_key`/`project_code`, id 2), y los procesos por código único de proceso (`process_key`, id 15); nunca por cantidad de filas ni por descripción de proyecto.
+- La vista previa del backend ahora expone `project_code` y `process_code` directamente desde snapshots ya cargados, sin exigir recarga de XLSX. El frontend calcula `Set` de códigos no vacíos por área y globalmente (TOTAL), evitando duplicados entre filas.
+- Se preservan cálculos financieros, datos locales, filtros, diseño aprobado y RAMA 02. Requiere reiniciar servidor Python y Ctrl+F5; cifras pendientes de contrastar con Excel real.
