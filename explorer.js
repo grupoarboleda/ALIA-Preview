@@ -443,6 +443,18 @@ function renderPanes(){
    const bar=document.createElement("span");bar.className="exv-node-bar";const fill=document.createElement("span");fill.style.width=Math.min(100,Math.max(0,p))+"%";bar.append(fill);
    const foot=document.createElement("span");foot.className="exv-node-foot";
    foot.textContent=projects+" PROYECTO"+(projects===1?"":"S")+" · "+processes+" PROCESO"+(processes===1?"":"S")+(level?"   ↗":"");
+   if(areaMap){
+    const largest=Math.max(1,...items.map(x=>sum(x.rows,cut()).budget));
+    bar.style.width=(100*v.budget/largest).toFixed(3)+"%";
+    bar.style.background="#2a536d";
+    bar.style.height="23px";
+    fill.style.width=Math.max(0,Math.min(100,p)).toFixed(3)+"%";
+    fill.style.height="100%";
+    fill.style.display="block";
+    fill.style.background="linear-gradient(90deg,#30c6df,#6de8c8)";
+    summary.textContent=p.toFixed(1)+"%";
+    card.title=item.value+" · Codificado "+money(v.budget)+" · Devengado "+money(v.accrued)+" · "+p.toFixed(1)+"% de ejecución";
+   }
    card.append(name,values,summary,bar,foot);root.append(card);
   }
   $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
