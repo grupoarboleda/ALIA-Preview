@@ -42,6 +42,8 @@ def to_explorer(row):
         "area": row.get("area") or "SIN ÁREA",
         "source": row.get("source") or "SIN FUENTE",
         "project": row.get("project") or "SIN PROYECTO",
+        "project_code": row.get("project_key") or row.get("project_code") or "",
+        "process_code": row.get("process_key") or row.get("process") or "",
         "process": row["process_key"],
         "contract": row.get("contract_key") or "",
         "budget": row.get("budget") or 0,
