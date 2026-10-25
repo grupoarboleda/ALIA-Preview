@@ -295,3 +295,8 @@
 - Cada fuente mantiene su ancho proporcional al codificado. Los segmentos suficientemente anchos muestran nombre, participación y ejecución; los pequeños conservan su ancho pero se identifican exclusivamente en leyenda, evitando etiquetas verticales y superposiciones.
 - Tooltip descriptivo y filtro por clic tanto en segmento como leyenda. Colores y métricas existentes preservados; sin cambios a importador, snapshots, cálculos, jerarquía o panel temporal.
 - Pendiente: comprobación visual en ALIA Local tras reiniciar y Ctrl+F5.
+
+### 2026-10-24 — Barra compacta de fuentes v4
+- Por solicitud del propietario, se redujo la altura de la barra proporcional a 120 px (aproximadamente la mitad del diseño anterior).
+- Los segmentos con participación de 3 % a menos de 14 % muestran las primeras tres letras de su nombre (p. ej., BID); los menores de 3 % no muestran texto interno para evitar superposición. La leyenda conserva los nombres completos, importes y porcentajes; tooltip y clic conservados.
+- Sin cambios a cálculos, datos, filtros, importador ni demás paneles del Explorador. Pendiente de validación visual local.
