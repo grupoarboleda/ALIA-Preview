@@ -405,6 +405,15 @@ aliaAreaExecutionFix.textContent=`
 `;
 document.head.append(aliaAreaExecutionFix);
 
+const aliaReferenceIcons=document.createElement("style");
+aliaReferenceIcons.textContent=`
+#explorer .exv-global-icon{background:transparent!important;border:0!important;color:#41e5f1!important}
+#explorer .exv-global-icon svg{display:block;filter:drop-shadow(0 0 5px rgba(37,211,232,.35))}
+#explorer .exv-area-bars .exv-area-bar-icon.exv-area-icon-admin{color:#69e8ac!important;background:linear-gradient(145deg,#123d3c,#135642)!important;border-color:#4fdb9b!important}
+#explorer .exv-area-icon-admin svg{display:block;max-width:80%;max-height:80%}
+`;
+document.head.append(aliaReferenceIcons);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -446,7 +455,7 @@ function renderPanes(){
    trigger.setAttribute("aria-controls","exv-unit-global-detail");
    const left=document.createElement("span");left.className="exv-unit-trigger-copy";
    const name=document.createElement("strong");name.textContent="GLOBAL · TODA LA UNIDAD";
-   const globalIcon=document.createElement("span");globalIcon.className="exv-global-icon";globalIcon.textContent="◎";globalIcon.setAttribute("aria-hidden","true");
+   const globalIcon=document.createElement("span");globalIcon.className="exv-global-icon";globalIcon.innerHTML=`<svg viewBox="0 0 48 48" width="35" height="35" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="4.5"/><path d="M24 3v11M24 34v11M3 24h11M34 24h11"/></svg>`;globalIcon.setAttribute("aria-hidden","true");
    const subtitle=document.createElement("small");subtitle.textContent="Saldos pendientes de procesos y contratos · Todas las áreas";
    left.append(name,subtitle);
    trigger.prepend(globalIcon);
@@ -492,7 +501,10 @@ function renderPanes(){
    if(areaMap){
     const icon=/DISTRIBUCI/i.test(item.value)?"⚡":/ADMINISTRATIV/i.test(item.value)?"⚙":/COMERCIAL/i.test(item.value)?"👥":"▣";
     card.classList.add("exv-area-bar-row");
-    const iconNode=document.createElement("span");iconNode.className="exv-area-bar-icon";iconNode.textContent=icon;
+    const iconNode=document.createElement("span");iconNode.className="exv-area-bar-icon";if(/ADMINISTRATIV/i.test(item.value)){
+     iconNode.innerHTML=`<svg viewBox="0 0 48 48" width="29" height="29" fill="currentColor" aria-hidden="true"><path d="M20.3 4h7.4l1.4 5.1a15.5 15.5 0 0 1 3.4 1.4l4.6-2.6 5.2 5.2-2.6 4.6a15.5 15.5 0 0 1 1.4 3.4L46 22.5v7.4l-5.1 1.4a15.5 15.5 0 0 1-1.4 3.4l2.6 4.6-5.2 5.2-4.6-2.6a15.5 15.5 0 0 1-3.4 1.4L27.5 48h-7.4l-1.4-5.1a15.5 15.5 0 0 1-3.4-1.4l-4.6 2.6-5.2-5.2 2.6-4.6a15.5 15.5 0 0 1-1.4-3.4L2 29.5v-7.4l5.1-1.4a15.5 15.5 0 0 1 1.4-3.4l-2.6-4.6 5.2-5.2 4.6 2.6a15.5 15.5 0 0 1 3.4-1.4L20.3 4zm3.5 12a9.8 9.8 0 1 0 0 19.6 9.8 9.8 0 0 0 0-19.6zm0 5.2a4.6 4.6 0 1 1 0 9.2 4.6 4.6 0 0 1 0-9.2z" transform="translate(0 -2) scale(.96)"/></svg>`;
+     iconNode.classList.add("exv-area-icon-admin");
+    }else iconNode.textContent=icon;
     card.append(iconNode);
    }
    if(areaMap){
