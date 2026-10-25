@@ -388,6 +388,23 @@ aliaAreaTotalsStyle.textContent=`
 `;
 document.head.append(aliaAreaTotalsStyle);
 
+const aliaAreaExecutionFix=document.createElement("style");
+aliaAreaExecutionFix.textContent=`
+#explorer .exv-area-bars .exv-node-bar{width:100%!important;max-width:100%!important;min-width:0!important;background:#2a536d!important}
+#explorer .exv-area-bars .exv-node-bar>span{display:block!important;height:100%!important;background:#31c9dc!important}
+#explorer .exv-area-approved-total-bar{background:#2a536d!important}
+#explorer .exv-area-approved-total-bar>span{background:#31c9dc!important}
+#explorer .exv-area-approved-legend{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:14px!important;color:#b4d6e3!important}
+#explorer .exv-area-approved-legend>span{display:inline-flex;align-items:center;gap:6px}
+#explorer .exv-area-approved-legend i{display:inline-block;width:11px;height:11px;border-radius:2px}
+#explorer .exv-area-legend-executed i{background:#31c9dc}
+#explorer .exv-area-legend-pending i{background:#2a536d}
+#explorer .exv-unit-management-trigger{display:flex!important;align-items:center!important;gap:16px!important}
+#explorer .exv-global-icon{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:1px solid #31d8e4;border-radius:10px;background:#104256;color:#57e8f1;font-size:35px;line-height:1}
+@media(max-width:600px){#explorer .exv-global-icon{width:40px;height:40px;flex-basis:40px;font-size:28px}}
+`;
+document.head.append(aliaAreaExecutionFix);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -428,9 +445,11 @@ function renderPanes(){
    trigger.setAttribute("aria-expanded",String(unitManagementOpen));
    trigger.setAttribute("aria-controls","exv-unit-global-detail");
    const left=document.createElement("span");left.className="exv-unit-trigger-copy";
-   const name=document.createElement("strong");name.textContent="◉ GLOBAL · TODA LA UNIDAD";
+   const name=document.createElement("strong");name.textContent="GLOBAL · TODA LA UNIDAD";
+   const globalIcon=document.createElement("span");globalIcon.className="exv-global-icon";globalIcon.textContent="◎";globalIcon.setAttribute("aria-hidden","true");
    const subtitle=document.createElement("small");subtitle.textContent="Saldos pendientes de procesos y contratos · Todas las áreas";
    left.append(name,subtitle);
+   trigger.prepend(globalIcon);
    const arrow=document.createElement("span");arrow.className="exv-unit-trigger-arrow";arrow.textContent=unitManagementOpen?"▴":"▾";
    trigger.append(left,arrow);
    const panel=buildManagementInsight(filtered,"LECTURA GERENCIAL · TODA LA UNIDAD").insight;
@@ -447,7 +466,7 @@ function renderPanes(){
    const header=document.createElement("div");header.className="exv-area-approved-head";
    const caption=document.createElement("div");caption.innerHTML="<strong>ÁREAS</strong><small>Comparación de presupuesto codificado y devengado</small>";
    const labels=document.createElement("span");labels.className="exv-area-approved-legend";
-   labels.textContent="■ Devengado     ■ Pendiente de devengar";
+   labels.innerHTML='<span class="exv-area-legend-executed"><i></i>Devengado</span><span class="exv-area-legend-pending"><i></i>Pendiente de devengar</span>';
    header.append(caption,labels);root.append(header);
   }
   // Keep the managerial balances at area drill-down. Only the obsolete
@@ -504,8 +523,7 @@ function renderPanes(){
    const foot=document.createElement("span");foot.className="exv-node-foot";
    foot.textContent=projects+" PROYECTO"+(projects===1?"":"S")+" · "+processes+" PROCESO"+(processes===1?"":"S")+(level?"   ↗":"");
    if(areaMap){
-    const largest=Math.max(1,...items.map(x=>sum(x.rows,cut()).budget));
-    bar.style.width=(100*v.budget/largest).toFixed(3)+"%";
+    bar.style.width="100%";
     bar.style.background="#2a536d";
     bar.style.height="23px";
     fill.style.width=Math.max(0,Math.min(100,p)).toFixed(3)+"%";
