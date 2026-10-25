@@ -289,3 +289,9 @@
 - Tras comprobar visualmente que el Explorador ya recibe datos, se sustituyó únicamente la composición gráfica de fuentes (treemap desproporcionado) por filas comparativas horizontales, ordenadas por codificado, con importe, participación, barra y porcentaje devengado.
 - Se preservaron selección interactiva de fuente, filtros, tarjetas financieras, jerarquías, panel temporal y colores corporativos. Cambios solo en `explorer.js` y versión de caché de `index.html`; no se modificaron importes, reglas, snapshots ni XLSX.
 - Pendiente: comprobar la presentación y el funcionamiento de filtros en ALIA Local con los datos cargados.
+
+### 2026-10-24 — Barra de composición restaurada (v3)
+- Por decisión del propietario se restauró una única barra proporcional horizontal para las fuentes, sustituyendo las filas horizontales individuales.
+- Cada fuente mantiene su ancho proporcional al codificado. Los segmentos suficientemente anchos muestran nombre, participación y ejecución; los pequeños conservan su ancho pero se identifican exclusivamente en leyenda, evitando etiquetas verticales y superposiciones.
+- Tooltip descriptivo y filtro por clic tanto en segmento como leyenda. Colores y métricas existentes preservados; sin cambios a importador, snapshots, cálculos, jerarquía o panel temporal.
+- Pendiente: comprobación visual en ALIA Local tras reiniciar y Ctrl+F5.
