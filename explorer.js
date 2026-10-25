@@ -368,6 +368,26 @@ aliaAreaApprovedStyle.textContent=`
 `;
 document.head.append(aliaAreaApprovedStyle);
 
+const aliaAreaTotalsStyle=document.createElement("style");
+aliaAreaTotalsStyle.textContent=`
+#explorer .exv-area-approved-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid #31586b}
+#explorer .exv-area-approved-head>div{display:flex;flex-direction:column;gap:4px}
+#explorer .exv-area-approved-head strong{font-size:15px;color:#e1f7ff}
+#explorer .exv-area-approved-head small{font-size:11px;color:#9fc9db}
+#explorer .exv-area-approved-legend{font-size:10px;color:#7fe5dd;white-space:pre-wrap}
+#explorer .exv-area-approved-total{display:grid;grid-template-columns:minmax(160px,210px) minmax(100px,1fr) minmax(75px,100px) minmax(75px,100px) 65px;align-items:center;gap:10px;margin-top:10px;padding:14px;border:1px solid #36768c;border-radius:6px;background:#10394c}
+#explorer .exv-area-approved-total-identity{display:flex;flex-direction:column;gap:5px}
+#explorer .exv-area-approved-total-identity strong{font-size:14px}
+#explorer .exv-area-approved-total-identity small{font-size:10px;color:#a9ccdc}
+#explorer .exv-area-approved-total-bar{height:23px;background:#2a536d}
+#explorer .exv-area-approved-total-bar>span{display:block;height:100%;background:linear-gradient(90deg,#30c6df,#6de8c8)}
+#explorer .exv-area-approved-total>strong{text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+#explorer .exv-area-approved-total>strong:last-child{color:#81f2de}
+@media(max-width:980px){#explorer .exv-area-approved-total{grid-template-columns:minmax(110px,145px) minmax(70px,1fr) 80px 80px 52px;gap:6px;padding:9px}#explorer .exv-area-approved-total>strong{font-size:10px}}
+@media(max-width:670px){#explorer .exv-area-approved-total{grid-template-columns:1fr 1fr;gap:10px}#explorer .exv-area-approved-total-identity{grid-column:1/-1}#explorer .exv-area-approved-total-bar{grid-column:1/-1}#explorer .exv-area-approved-legend{font-size:9px}}
+`;
+document.head.append(aliaAreaTotalsStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -423,6 +443,13 @@ function renderPanes(){
   }
   if(!(pane==="area"&&level==="area"&&isFocused))root.hidden=false;
   if(!items.length){const empty=document.createElement("p");empty.className="exv-empty";empty.textContent="Sin registros para la selección actual.";root.append(empty);}
+  if(areaMap&&items.length){
+   const header=document.createElement("div");header.className="exv-area-approved-head";
+   const caption=document.createElement("div");caption.innerHTML="<strong>ÁREAS</strong><small>Comparación de presupuesto codificado y devengado</small>";
+   const labels=document.createElement("span");labels.className="exv-area-approved-legend";
+   labels.textContent="■ Devengado     ■ Pendiente de devengar";
+   header.append(caption,labels);root.append(header);
+  }
   // Keep the managerial balances at area drill-down. Only the obsolete
   // project impact map, scenario slider and ranking were retired.
   if(pane==="area"&&level==="project"&&isFocused&&filtered.length){
@@ -489,6 +516,24 @@ function renderPanes(){
     card.title=item.value+" · Codificado "+money(v.budget)+" · Devengado "+money(v.accrued)+" · "+p.toFixed(1)+"% de ejecución";
    }
    card.append(name,values,summary,bar,foot);root.append(card);
+  }
+  if(areaMap&&items.length){
+   const allRows=items.flatMap(item=>item.rows);
+   const v=sum(allRows,cut()),p=percent(v);
+   const maxBudget=Math.max(1,...items.map(item=>sum(item.rows,cut()).budget));
+   const projects=new Set(allRows.map(r=>r.project).filter(Boolean)).size;
+   const processes=new Set(allRows.map(r=>r.process).filter(Boolean)).size;
+   const row=document.createElement("div");row.className="exv-area-approved-total";
+   const identity=document.createElement("span");identity.className="exv-area-approved-total-identity";
+   const title=document.createElement("strong");title.textContent="TOTAL";
+   const meta=document.createElement("small");meta.textContent=items.length+" áreas · "+projects+" proyectos · "+processes+" procesos";
+   identity.append(title,meta);
+   const bar=document.createElement("span");bar.className="exv-area-approved-total-bar";
+   const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(100,p))+"%";bar.append(fill);
+   const cod=document.createElement("strong");cod.textContent=money(v.budget);
+   const dev=document.createElement("strong");dev.textContent=money(v.accrued);
+   const pct=document.createElement("strong");pct.textContent=p.toFixed(1)+"%";
+   row.append(identity,bar,cod,dev,pct);root.append(row);
   }
   $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
  }
