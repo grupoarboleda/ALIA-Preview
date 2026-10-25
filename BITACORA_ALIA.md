@@ -284,3 +284,8 @@
 - `explorer.js` conserva la presentación y navegación aprobadas, obtiene los cortes del endpoint, ofrece selector de meses cargados y mantiene métricas Codificado (ID 497), Comprometido (499), Devengado (500), Anticipo año N (502), con filtros por área/fuente/proyecto/proceso/contrato según los campos ya almacenados.
 - No se han generado curvas ficticias de ejecución. El módulo temporal real aún muestra resumen al corte; evolución financiera multi-mes y pagos requieren una integración posterior validada de snapshots y conciliación por identificadores únicos.
 - No se modificaron `styles.css`, `app.js`, `index.html`, ni datos locales. Pruebas funcionales en equipo del propietario pendientes.
+
+### 2026-10-24 — Presentación de fuentes con datos reales
+- Tras comprobar visualmente que el Explorador ya recibe datos, se sustituyó únicamente la composición gráfica de fuentes (treemap desproporcionado) por filas comparativas horizontales, ordenadas por codificado, con importe, participación, barra y porcentaje devengado.
+- Se preservaron selección interactiva de fuente, filtros, tarjetas financieras, jerarquías, panel temporal y colores corporativos. Cambios solo en `explorer.js` y versión de caché de `index.html`; no se modificaron importes, reglas, snapshots ni XLSX.
+- Pendiente: comprobar la presentación y el funcionamiento de filtros en ALIA Local con los datos cargados.
