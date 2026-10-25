@@ -396,7 +396,7 @@ function renderPanes(){
   const filtered=fundingScope(filterBy(records,focus));
   const root=$("ex-tree-"+pane),crumb=$("ex-path-"+pane);
   root.replaceChildren();crumb.replaceChildren();
-  root.parentElement.querySelectorAll(".exv-unit-management,.exv-unit-management-trigger").forEach(el=>el.remove());
+  root.parentElement.querySelectorAll(".exv-unit-management,.exv-unit-management-trigger,.exv-area-total-outside").forEach(el=>el.remove());
   const back=$("ex-back-"+pane);
   if(back)back.disabled=!isFocused||!own.length;
   const rootLabel=pane==="area"?"EMPRESA / ÁREAS":"EMPRESA / FINANCIAMIENTO";
@@ -520,7 +520,6 @@ function renderPanes(){
   if(areaMap&&items.length){
    const allRows=items.flatMap(item=>item.rows);
    const v=sum(allRows,cut()),p=percent(v);
-   const maxBudget=Math.max(1,...items.map(item=>sum(item.rows,cut()).budget));
    const projects=new Set(allRows.map(r=>r.project).filter(Boolean)).size;
    const processes=new Set(allRows.map(r=>r.process).filter(Boolean)).size;
    const row=document.createElement("div");row.className="exv-area-approved-total";
@@ -533,7 +532,10 @@ function renderPanes(){
    const cod=document.createElement("strong");cod.textContent=money(v.budget);
    const dev=document.createElement("strong");dev.textContent=money(v.accrued);
    const pct=document.createElement("strong");pct.textContent=p.toFixed(1)+"%";
-   row.append(identity,bar,cod,dev,pct);root.append(row);
+   row.append(identity,bar,cod,dev,pct);
+   // El total va fuera del contenedor de filas: no lo ocultan los estilos ni el scroll del listado.
+   row.classList.add("exv-area-total-outside");
+   root.insertAdjacentElement("afterend",row);
   }
   $("ex-pane-"+pane).classList.toggle("is-active",isFocused);
  }
