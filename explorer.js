@@ -745,9 +745,7 @@ function activateReal(data){
  const marker=document.querySelector("#explorer .exv-demo");if(marker)marker.textContent="● DATOS REALES · "+Object.keys(data.report_dates||{}).join(", ");
  render();
 }
-fetch("/__alia_data").then(r=>r.json());activateReal(loaded);
- }catch(error){importStatus.textContent="No se pudo importar: "+error.message;}
-});
+
 let stagedRequest=0;
 function loadStagedCut(month){
  const request=++stagedRequest;
