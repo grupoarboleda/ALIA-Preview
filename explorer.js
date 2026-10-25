@@ -350,6 +350,24 @@ aliaAreaBarsStyle.textContent=`
 `;
 document.head.append(aliaAreaBarsStyle);
 
+
+// Diseño aprobado: barras con iconos, codificado, devengado y porcentaje en columnas.
+const aliaAreaApprovedStyle=document.createElement("style");
+aliaAreaApprovedStyle.textContent=`
+#explorer .exv-area-bars .exv-area-bar-row{grid-template-columns:44px minmax(110px,155px) minmax(100px,1fr) minmax(75px,100px) minmax(75px,100px) 65px!important;column-gap:10px!important}
+#explorer .exv-area-bars .exv-node-values{display:contents!important}
+#explorer .exv-area-bars .exv-node-values>span{display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:center!important;gap:4px!important;grid-row:1/3!important;min-width:0!important}
+#explorer .exv-area-bars .exv-node-values>span:first-child{grid-column:4!important}
+#explorer .exv-area-bars .exv-node-values>span:last-child{grid-column:5!important}
+#explorer .exv-area-bars .exv-node-values small{font-size:9px!important;color:#9bc3d5!important}
+#explorer .exv-area-bars .exv-node-values b{font-size:12px!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
+#explorer .exv-area-bars .exv-node-summary{grid-column:6!important}
+#explorer .exv-area-bars .exv-node-bar{grid-column:3!important}
+@media(max-width:980px){#explorer .exv-area-bars .exv-area-bar-row{grid-template-columns:36px minmax(100px,135px) minmax(80px,1fr) 80px 80px 52px!important;gap:6px!important;padding:8px!important}#explorer .exv-area-bars .exv-node-values b{font-size:10px!important}}
+@media(max-width:670px){#explorer .exv-area-bars .exv-area-bar-row{grid-template-columns:36px minmax(0,1fr) 70px 70px!important;grid-template-rows:auto auto auto!important}#explorer .exv-area-bars .exv-area-bar-icon{grid-column:1!important;grid-row:1!important}#explorer .exv-area-bars .exv-area-bar-row>strong{grid-column:2!important;grid-row:1!important}#explorer .exv-area-bars .exv-node-foot{grid-column:2!important;grid-row:2!important}#explorer .exv-area-bars .exv-node-bar{grid-column:1/4!important;grid-row:3!important}#explorer .exv-area-bars .exv-node-summary{grid-column:4!important;grid-row:3!important}#explorer .exv-area-bars .exv-node-values>span:first-child{grid-column:3!important;grid-row:1/3!important}#explorer .exv-area-bars .exv-node-values>span:last-child{grid-column:4!important;grid-row:1/3!important}}
+`;
+document.head.append(aliaAreaApprovedStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
