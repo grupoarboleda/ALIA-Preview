@@ -300,3 +300,8 @@
 - Por solicitud del propietario, se redujo la altura de la barra proporcional a 120 px (aproximadamente la mitad del diseño anterior).
 - Los segmentos con participación de 3 % a menos de 14 % muestran las primeras tres letras de su nombre (p. ej., BID); los menores de 3 % no muestran texto interno para evitar superposición. La leyenda conserva los nombres completos, importes y porcentajes; tooltip y clic conservados.
 - Sin cambios a cálculos, datos, filtros, importador ni demás paneles del Explorador. Pendiente de validación visual local.
+
+### 2026-10-24 — Rama 01 Áreas: tarjetas adaptables
+- Se eliminó la distribución treemap de áreas que comprimía Administración y Comercial en columnas estrechas con texto vertical.
+- Rama 01 presenta tarjetas responsivas con nombres horizontales, codificado, devengado, barra de ejecución y conteos de proyectos/procesos. Conserva clic de navegación y panel GLOBAL.
+- Sin cambios a cálculos, datos, filtros, rama temporal ni composición por fuentes. Pendiente revisión visual en ALIA Local.
