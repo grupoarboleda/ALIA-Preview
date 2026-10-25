@@ -232,64 +232,78 @@ function projectExplorer(pane,root,items,filtered){
 }
 const fundingColors=["#32c6db","#74e8c5","#d6b66d","#8a9fe7","#db91ba","#88bdd6"];
 
-// Presentación compacta para composición real de fuentes; no altera cálculos ni navegación.
+// Barra proporcional única, con etiquetas externas para fuentes estrechas.
 const aliaFundingStyle=document.createElement("style");
-aliaFundingStyle.id="alia-funding-composition-v2";
+aliaFundingStyle.id="alia-funding-composition-v3";
 aliaFundingStyle.textContent=`
-#explorer .exv-funding-list{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;height:auto!important;min-height:0!important;padding:10px!important;background:#0b2635!important;overflow:visible!important}
-#explorer .exv-funding-row{display:grid!important;grid-template-columns:minmax(180px,2fr) minmax(110px,1fr) minmax(90px,.75fr) minmax(140px,1.5fr) minmax(105px,.8fr);align-items:center;gap:16px;width:100%;min-height:58px;padding:12px 16px;text-align:left;border:1px solid #315568;border-radius:8px;background:#102d3e;color:#d9f3fa;cursor:pointer;transition:background .15s,border-color .15s}
-#explorer .exv-funding-row:hover{background:#18465a;border-color:#51d7e4}
-#explorer .exv-funding-row[aria-pressed="true"]{border-color:#5ee9d2;background:#164a54;box-shadow:inset 3px 0 #5ee9d2}
-#explorer .exv-funding-name{display:flex;align-items:center;gap:10px;min-width:0;overflow-wrap:anywhere;font-size:12px;letter-spacing:.02em}
-#explorer .exv-funding-dot{width:10px;height:10px;flex:0 0 10px;border-radius:3px}
-#explorer .exv-funding-amount{font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
-#explorer .exv-funding-share,#explorer .exv-funding-execution{font-size:12px;color:#a8d1df;white-space:nowrap;font-variant-numeric:tabular-nums}
-#explorer .exv-funding-progress{display:block;height:9px;border-radius:10px;background:#254657;overflow:hidden}
-#explorer .exv-funding-progress-fill{display:block;height:100%;border-radius:10px}
-#explorer .exv-funding-footnote{display:block!important;height:auto!important;min-height:0!important;padding:8px 12px!important;font-size:11px;color:#9dbdcc}
-@media(max-width:1000px){#explorer .exv-funding-row{grid-template-columns:minmax(160px,1.5fr) minmax(100px,1fr) minmax(90px,.7fr);gap:8px}#explorer .exv-funding-progress{grid-column:1/3}#explorer .exv-funding-execution{grid-column:3}}
-@media(max-width:600px){#explorer .exv-funding-row{grid-template-columns:1fr 1fr;padding:12px;gap:10px}#explorer .exv-funding-name{grid-column:1/-1}#explorer .exv-funding-share{text-align:right}#explorer .exv-funding-progress{grid-column:1/-1}#explorer .exv-funding-execution{grid-column:1/-1}}
+#explorer .exv-funding-stack{display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:0!important;height:clamp(150px,18vw,255px)!important;min-height:150px!important;padding:0!important;background:#102c3b!important;overflow:hidden!important;border:1px solid #376075}
+#explorer .exv-funding-segment{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:13px;min-width:0;min-height:100%;padding:14px 10px;border:0;border-right:1px solid rgba(3,25,37,.3);border-radius:0;background:var(--funding-color);color:#072334;cursor:pointer;overflow:hidden;transition:filter .15s,box-shadow .15s}
+#explorer .exv-funding-segment:hover{filter:brightness(1.08);z-index:1}
+#explorer .exv-funding-segment[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #e9fbff;z-index:2}
+#explorer .exv-funding-segment:focus-visible{outline:3px solid #fff;outline-offset:-3px;z-index:3}
+#explorer .exv-funding-segment-label{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;font-size:clamp(10px,.75vw,13px);font-weight:800;overflow-wrap:anywhere;text-align:left}
+#explorer .exv-funding-segment-execution{font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
+#explorer .exv-funding-segment-meter{height:5px;width:100%;background:rgba(2,30,45,.25);overflow:hidden}
+#explorer .exv-funding-segment-meter>span{display:block;height:100%;background:#06334a}
+#explorer .exv-funding-segment-compact{padding:0!important}
+#explorer .exv-funding-legend{display:flex!important;flex-wrap:wrap!important;gap:8px 18px!important;align-items:center!important;height:auto!important;min-height:0!important;padding:12px 4px!important}
+#explorer .exv-funding-legend-item{display:inline-flex;align-items:center;gap:7px;padding:6px 7px;border:1px solid transparent;border-radius:5px;background:transparent;color:#cce8f2;cursor:pointer;font-size:11px;text-align:left}
+#explorer .exv-funding-legend-item:hover,#explorer .exv-funding-legend-item[aria-pressed="true"]{border-color:#5edbd9;background:#153e4e}
+#explorer .exv-funding-legend-dot{width:9px;height:9px;flex:0 0 9px;border-radius:2px}
+#explorer .exv-funding-legend-note{flex-basis:100%;font-size:11px;color:#9bbdca}
 `;
 document.head.append(aliaFundingStyle);
 
 function renderFundingComposition(rows){
  const track=$("ex-source-composition"),legend=$("ex-source-composition-legend"),totalNode=$("ex-composition-total");
  track.replaceChildren();legend.replaceChildren();
+ track.classList.remove("exv-funding-list");legend.classList.remove("exv-funding-footnote");
+ track.classList.add("exv-funding-stack");legend.classList.add("exv-funding-legend");
  const grouped=groups(rows,"source").map(g=>({g,figures:sum(g.rows,cut())}))
   .filter(x=>x.figures.budget>0).sort((a,b)=>b.figures.budget-a.figures.budget);
  const total=sum(rows,cut()).budget;
  totalNode.textContent="TOTAL "+money(total);
- track.classList.add("exv-funding-list");
- legend.classList.add("exv-funding-footnote");
- const instruction=document.createElement("span");
- instruction.textContent="Selecciona una fuente para filtrar · Ordenado por presupuesto codificado";
- legend.append(instruction);
+ if(!grouped.length){
+  const empty=document.createElement("p");empty.textContent="Sin presupuesto para esta selección";
+  track.append(empty);return;
+ }
  for(const [i,{g,figures}] of grouped.entries()){
   const budget=figures.budget,share=total?100*budget/total:0;
   const execution=budget?100*figures.accrued/budget:0;
   const color=fundingColors[i%fundingColors.length];
-  const part=document.createElement("button");
-  part.type="button";part.className="exv-funding-row";
-  part.setAttribute("aria-pressed",String(selectedFunding===g.value));
-  part.addEventListener("click",()=>{selectedFunding=selectedFunding===g.value?null:g.value;override=null;render();});
-  const name=document.createElement("span");name.className="exv-funding-name";
-  const dot=document.createElement("i");dot.className="exv-funding-dot";dot.style.background=color;
-  const text=document.createElement("strong");text.textContent=g.value;name.append(dot,text);
-  const value=document.createElement("strong");value.className="exv-funding-amount";value.textContent=money(budget);
-  const participation=document.createElement("span");participation.className="exv-funding-share";participation.textContent=share.toFixed(1)+"% del total";
-  const progress=document.createElement("span");progress.className="exv-funding-progress";
-  const fill=document.createElement("span");fill.className="exv-funding-progress-fill";
-  fill.style.width=Math.max(0,Math.min(100,share))+"%";fill.style.background=color;progress.append(fill);
-  const executionLabel=document.createElement("span");executionLabel.className="exv-funding-execution";
-  executionLabel.textContent=execution.toFixed(1)+"% devengado";
-  part.append(name,value,participation,progress,executionLabel);
-  part.title=g.value+" · Codificado "+money(budget)+" · Devengado "+money(figures.accrued)+" · "+execution.toFixed(1)+"%";
-  part.setAttribute("aria-label","Filtrar por "+g.value+". "+part.title);
-  track.append(part);
+  const select=()=>{selectedFunding=selectedFunding===g.value?null:g.value;override=null;render();};
+  const description=g.value+" · Codificado "+money(budget)+" · "+share.toFixed(1)+"% del total · Devengado "+money(figures.accrued)+" ("+execution.toFixed(1)+"%)";
+  const segment=document.createElement("button");segment.type="button";
+  segment.className="exv-funding-segment"+(share<14?" exv-funding-segment-compact":"");
+  segment.style.setProperty("--funding-color",color);
+  segment.style.flex="0 0 "+share.toFixed(6)+"%";
+  segment.setAttribute("aria-label","Filtrar por "+description);
+  segment.setAttribute("aria-pressed",String(selectedFunding===g.value));
+  segment.title=description;segment.addEventListener("click",select);
+  // Las fuentes pequeñas conservan su ancho real; su texto solo va en la leyenda.
+  if(share>=14){
+   const label=document.createElement("span");label.className="exv-funding-segment-label";
+   const name=document.createElement("span");name.textContent=g.value;
+   const percentage=document.createElement("span");percentage.textContent=share.toFixed(1)+"%";
+   label.append(name,percentage);
+   const executionLabel=document.createElement("span");executionLabel.className="exv-funding-segment-execution";
+   executionLabel.textContent=execution.toFixed(1)+"% DEVENGADO";
+   const meter=document.createElement("span");meter.className="exv-funding-segment-meter";
+   const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(100,execution))+"%";meter.append(fill);
+   segment.append(label,executionLabel,meter);
+  }
+  track.append(segment);
+  const item=document.createElement("button");item.type="button";item.className="exv-funding-legend-item";
+  item.setAttribute("aria-pressed",String(selectedFunding===g.value));
+  item.title=description;item.setAttribute("aria-label","Filtrar por "+description);
+  item.addEventListener("click",select);
+  const dot=document.createElement("span");dot.className="exv-funding-legend-dot";dot.style.background=color;
+  const caption=document.createElement("span");caption.textContent=g.value+" · "+money(budget)+" · "+share.toFixed(1)+"%";
+  item.append(dot,caption);legend.append(item);
  }
- if(!grouped.length){
-  const empty=document.createElement("p");empty.textContent="Sin presupuesto para esta selección";track.append(empty);
- }
+ const note=document.createElement("span");note.className="exv-funding-legend-note";
+ note.textContent="Selecciona un segmento o su leyenda para filtrar. Las fuentes pequeñas conservan su proporción sin etiquetas superpuestas.";
+ legend.append(note);
 }
 
 function renderPanes(){
