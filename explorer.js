@@ -905,6 +905,30 @@ function renderManagementTemporal(rs,cutMonth){
  }
  host.append(toggles,chart);draw();
 }
+function clearAreaExplorer(){
+ paneTrails.area=[];
+ paneTrails.source=[];
+ activePane="area";
+ selectedFunding=null;
+ selectedManagement=null;
+ unitManagementOpen=false;
+ override=null;
+ for(const id of ["ex-area","ex-source","ex-project"]){
+  const control=$(id);if(control&&Array.from(control.options).some(o=>o.value==="all"))control.value="all";
+ }
+ render();
+}
+const clearAreaButton=$("ex-clear-area");
+if(clearAreaButton)clearAreaButton.addEventListener("click",clearAreaExplorer);
+const aliaAreaActionsStyle=document.createElement("style");
+aliaAreaActionsStyle.textContent=`
+#explorer .exv-pane-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+#explorer .exv-pane-actions .exv-pane-reset{white-space:nowrap}
+#explorer #ex-clear-area{border-color:#42b4c4;color:#a5f5f0}
+#explorer #ex-clear-area:hover{background:#164758}
+`;
+document.head.append(aliaAreaActionsStyle);
+
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
 function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
