@@ -236,8 +236,8 @@ const fundingColors=["#32c6db","#74e8c5","#d6b66d","#8a9fe7","#db91ba","#88bdd6"
 const aliaFundingStyle=document.createElement("style");
 aliaFundingStyle.id="alia-funding-composition-v3";
 aliaFundingStyle.textContent=`
-#explorer .exv-funding-stack{display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:0!important;height:clamp(150px,18vw,255px)!important;min-height:150px!important;padding:0!important;background:#102c3b!important;overflow:hidden!important;border:1px solid #376075}
-#explorer .exv-funding-segment{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:13px;min-width:0;min-height:100%;padding:14px 10px;border:0;border-right:1px solid rgba(3,25,37,.3);border-radius:0;background:var(--funding-color);color:#072334;cursor:pointer;overflow:hidden;transition:filter .15s,box-shadow .15s}
+#explorer .exv-funding-stack{display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:0!important;height:120px!important;min-height:120px!important;padding:0!important;background:#102c3b!important;overflow:hidden!important;border:1px solid #376075}
+#explorer .exv-funding-segment{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:7px;min-width:0;min-height:100%;padding:9px 8px;border:0;border-right:1px solid rgba(3,25,37,.3);border-radius:0;background:var(--funding-color);color:#072334;cursor:pointer;overflow:hidden;transition:filter .15s,box-shadow .15s}
 #explorer .exv-funding-segment:hover{filter:brightness(1.08);z-index:1}
 #explorer .exv-funding-segment[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #e9fbff;z-index:2}
 #explorer .exv-funding-segment:focus-visible{outline:3px solid #fff;outline-offset:-3px;z-index:3}
@@ -245,7 +245,8 @@ aliaFundingStyle.textContent=`
 #explorer .exv-funding-segment-execution{font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
 #explorer .exv-funding-segment-meter{height:5px;width:100%;background:rgba(2,30,45,.25);overflow:hidden}
 #explorer .exv-funding-segment-meter>span{display:block;height:100%;background:#06334a}
-#explorer .exv-funding-segment-compact{padding:0!important}
+#explorer .exv-funding-segment-compact{padding:0 3px!important;align-items:center;justify-content:center}
+#explorer .exv-funding-segment-abbrev{font-size:clamp(9px,.75vw,12px);font-weight:900;white-space:nowrap;text-align:center;line-height:1}
 #explorer .exv-funding-legend{display:flex!important;flex-wrap:wrap!important;gap:8px 18px!important;align-items:center!important;height:auto!important;min-height:0!important;padding:12px 4px!important}
 #explorer .exv-funding-legend-item{display:inline-flex;align-items:center;gap:7px;padding:6px 7px;border:1px solid transparent;border-radius:5px;background:transparent;color:#cce8f2;cursor:pointer;font-size:11px;text-align:left}
 #explorer .exv-funding-legend-item:hover,#explorer .exv-funding-legend-item[aria-pressed="true"]{border-color:#5edbd9;background:#153e4e}
@@ -280,7 +281,7 @@ function renderFundingComposition(rows){
   segment.setAttribute("aria-label","Filtrar por "+description);
   segment.setAttribute("aria-pressed",String(selectedFunding===g.value));
   segment.title=description;segment.addEventListener("click",select);
-  // Las fuentes pequeñas conservan su ancho real; su texto solo va en la leyenda.
+  // Fuentes medianas: tres letras; las diminutas se identifican en la leyenda.
   if(share>=14){
    const label=document.createElement("span");label.className="exv-funding-segment-label";
    const name=document.createElement("span");name.textContent=g.value;
@@ -291,6 +292,10 @@ function renderFundingComposition(rows){
    const meter=document.createElement("span");meter.className="exv-funding-segment-meter";
    const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(100,execution))+"%";meter.append(fill);
    segment.append(label,executionLabel,meter);
+  }else if(share>=3){
+   const abbrev=document.createElement("span");abbrev.className="exv-funding-segment-abbrev";
+   abbrev.textContent=String(g.value).trim().slice(0,3).toUpperCase();
+   segment.append(abbrev);
   }
   track.append(segment);
   const item=document.createElement("button");item.type="button";item.className="exv-funding-legend-item";
