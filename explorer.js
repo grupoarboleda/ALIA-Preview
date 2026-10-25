@@ -335,6 +335,21 @@ aliaAreaStyle.textContent=`
 `;
 document.head.append(aliaAreaStyle);
 
+const aliaAreaBarsStyle=document.createElement("style");
+aliaAreaBarsStyle.textContent=`
+#explorer .exv-area-bars{display:flex!important;flex-direction:column!important;gap:0!important;height:auto!important;min-height:0!important;padding:6px!important;background:#0a293a!important;border:1px solid #326078!important}
+#explorer .exv-area-bars .exv-area-bar-row{display:grid!important;grid-template-columns:44px minmax(120px,200px) minmax(0,1fr) 60px!important;grid-template-rows:26px 22px!important;align-items:center!important;column-gap:12px!important;width:100%!important;height:auto!important;min-height:82px!important;padding:14px!important;border:0!important;border-bottom:1px solid #30556a!important;border-radius:0!important;background:transparent!important;overflow:visible!important;text-align:left!important}
+#explorer .exv-area-bars .exv-area-bar-row:hover{background:#17475a!important}
+#explorer .exv-area-bars .exv-area-bar-icon{grid-column:1;grid-row:1/3;display:grid;place-items:center;width:42px;height:42px;font-size:24px;border:1px solid #35cadb;border-radius:7px;background:#11465b}
+#explorer .exv-area-bars .exv-area-bar-row>strong{grid-column:2;grid-row:1;font-size:13px!important;overflow-wrap:anywhere;writing-mode:horizontal-tb!important}
+#explorer .exv-area-bars .exv-node-values{display:none!important}
+#explorer .exv-area-bars .exv-node-summary{grid-column:4;grid-row:1/3;white-space:nowrap;font-size:14px!important;color:#80f2de;text-align:right}
+#explorer .exv-area-bars .exv-node-bar{grid-column:3;grid-row:1/3;max-width:100%;min-width:1px;border-radius:2px;overflow:hidden}
+#explorer .exv-area-bars .exv-node-foot{grid-column:2;grid-row:2;position:static!important;white-space:normal!important;font-size:10px!important;line-height:1.4!important;color:#a6c9d8}
+@media(max-width:700px){#explorer .exv-area-bars .exv-area-bar-row{grid-template-columns:36px minmax(95px,145px) minmax(0,1fr) 48px!important;gap:7px!important;padding:9px!important}#explorer .exv-area-bars .exv-area-bar-icon{width:34px;height:34px;font-size:19px}#explorer .exv-area-bars .exv-node-summary{font-size:11px!important}}
+`;
+document.head.append(aliaAreaBarsStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
