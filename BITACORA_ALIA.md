@@ -305,3 +305,9 @@
 - Se eliminó la distribución treemap de áreas que comprimía Administración y Comercial en columnas estrechas con texto vertical.
 - Rama 01 presenta tarjetas responsivas con nombres horizontales, codificado, devengado, barra de ejecución y conteos de proyectos/procesos. Conserva clic de navegación y panel GLOBAL.
 - Sin cambios a cálculos, datos, filtros, rama temporal ni composición por fuentes. Pendiente revisión visual en ALIA Local.
+
+### 2026-10-24 — Mapa de bloques por codificado, Rama 01
+- El usuario solicitó conservar la lectura visual del mapa original, dando más superficie al área con mayor codificado y excluyendo áreas con codificado igual a cero.
+- Rama 01 filtra exclusivamente al nivel de áreas aquellas con suma de codificado > 0 para el corte/filtros actuales. El mayor presupuesto aparece como bloque dominante y las restantes áreas como bloques secundarios legibles, sin texto vertical. Diseño adaptativo a ancho disponible.
+- La superficie del bloque es jerárquica y visual (no un treemap de área matemáticamente exacta); importes, porcentajes y jerarquía se mantienen reales y sin cambios. Otros niveles no se filtran por cero.
+- Sin alteraciones a datos locales, importación, reglas, ni Rama 02. Pendiente comprobación visual local.
