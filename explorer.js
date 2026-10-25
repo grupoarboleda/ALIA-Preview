@@ -315,6 +315,12 @@ function renderFundingComposition(rows){
 const aliaAreaStyle=document.createElement("style");
 aliaAreaStyle.id="alia-area-cards-v2";
 aliaAreaStyle.textContent=`
+#explorer .exv-area-block-map{display:grid!important;grid-template-columns:minmax(0,2.2fr) minmax(230px,1fr)!important;grid-auto-rows:minmax(170px,auto)!important;gap:10px!important;align-items:stretch!important}
+#explorer .exv-area-block-map .exv-area-block-primary{grid-row:span 2!important;min-height:350px!important;background:linear-gradient(145deg,#17536c,#0d3246)!important;border-color:#53cfe1!important}
+#explorer .exv-area-block-map .exv-area-block:not(.exv-area-block-primary){min-height:170px!important}
+#explorer .exv-area-block-map .exv-node-values{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(max-width:950px){#explorer .exv-area-block-map{grid-template-columns:repeat(2,minmax(0,1fr))!important}#explorer .exv-area-block-map .exv-area-block-primary{grid-column:1/-1!important;grid-row:auto!important;min-height:205px!important}}
+@media(max-width:560px){#explorer .exv-area-block-map{grid-template-columns:1fr!important}#explorer .exv-area-block-map .exv-area-block-primary{grid-column:auto!important;min-height:190px!important}}
 #explorer .exv-area-card-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr))!important;gap:12px!important;height:auto!important;min-height:0!important;padding:10px 0!important;overflow:visible!important;align-items:stretch!important}
 #explorer .exv-area-card-grid .exv-node{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-height:185px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:12px!important;padding:18px!important;overflow:hidden!important;border:1px solid #376277!important;border-radius:8px!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;writing-mode:horizontal-tb!important}
 #explorer .exv-area-card-grid .exv-node:hover{border-color:#65e0e6!important;background:#194c61!important}
@@ -345,10 +351,14 @@ function renderPanes(){
   crumb.append(rootButton);
   if(isFocused)own.forEach((p,i)=>crumb.append(button("› "+p.value,()=>goBackTo(pane,i+1),"exv-pane-crumb")));
   else if(focus.length){const indicator=document.createElement("span");indicator.className="exv-cross-context";indicator.textContent="FILTRADO POR "+focus.map(p=>p.value).join(" / ");crumb.append(indicator);}
-  const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
-  const treemap=false; // Tarjetas legibles, sin bloques estrechos de texto vertical.
+  const allItems=groups(filtered,level);
+  const areaMap=pane==="area"&&level==="area";
+  const items=areaMap?allItems.filter(item=>sum(item.rows,cut()).budget>0):allItems;
+  const total=Math.max(sum(filtered,cut()).budget,1);
+  const treemap=false;
   root.classList.toggle("exv-area-treemap",false);
-  root.classList.toggle("exv-area-card-grid",pane==="area"&&level==="area");
+  root.classList.toggle("exv-area-card-grid",areaMap);
+  root.classList.toggle("exv-area-block-map",areaMap&&items.length>1);
   if(pane==="area"&&level==="area"&&isFocused){
    const wrapper=root.parentElement;
    const trigger=button("",()=>{
@@ -399,6 +409,11 @@ function renderPanes(){
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
    const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
    card.disabled=!level;
+   if(areaMap){
+    card.classList.add("exv-area-block");
+    if(index===0&&items.length>1)card.classList.add("exv-area-block-primary");
+    card.title=item.value+" · Codificado "+money(v.budget)+" · "+(v.budget/total*100).toFixed(1)+"% del presupuesto · Devengado "+money(v.accrued);
+   }
    card.setAttribute("aria-label",item.value+": codificado "+money(v.budget)+", devengado "+money(v.accrued)+". Abrir siguiente nivel");
    if(treemap){
     const weights=items.map(x=>Math.max(0,sum(x.rows,cut()).budget));
