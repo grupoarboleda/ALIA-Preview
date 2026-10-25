@@ -311,6 +311,24 @@ function renderFundingComposition(rows){
  legend.append(note);
 }
 
+// Las áreas usan tarjetas legibles, no un treemap con etiquetas verticales.
+const aliaAreaStyle=document.createElement("style");
+aliaAreaStyle.id="alia-area-cards-v2";
+aliaAreaStyle.textContent=`
+#explorer .exv-area-card-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr))!important;gap:12px!important;height:auto!important;min-height:0!important;padding:10px 0!important;overflow:visible!important;align-items:stretch!important}
+#explorer .exv-area-card-grid .exv-node{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-height:185px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:12px!important;padding:18px!important;overflow:hidden!important;border:1px solid #376277!important;border-radius:8px!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;writing-mode:horizontal-tb!important}
+#explorer .exv-area-card-grid .exv-node:hover{border-color:#65e0e6!important;background:#194c61!important}
+#explorer .exv-area-card-grid .exv-node>strong{display:block!important;font-size:clamp(13px,1.1vw,17px)!important;line-height:1.3!important;letter-spacing:.02em!important;writing-mode:horizontal-tb!important;overflow-wrap:break-word!important}
+#explorer .exv-area-card-grid .exv-node-values{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;width:100%!important}
+#explorer .exv-area-card-grid .exv-node-values>span{min-width:0!important;display:flex!important;flex-direction:column!important;gap:4px!important}
+#explorer .exv-area-card-grid .exv-node-values b{font-size:clamp(12px,1vw,16px)!important;overflow-wrap:anywhere!important}
+#explorer .exv-area-card-grid .exv-node-summary{font-size:11px!important;white-space:normal!important}
+#explorer .exv-area-card-grid .exv-node-bar{width:100%!important;min-height:6px!important}
+#explorer .exv-area-card-grid .exv-node-foot{margin-top:auto!important;position:static!important;white-space:normal!important;font-size:10px!important;line-height:1.5!important}
+@media(max-width:700px){#explorer .exv-area-card-grid{grid-template-columns:1fr!important}}
+`;
+document.head.append(aliaAreaStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -328,8 +346,9 @@ function renderPanes(){
   if(isFocused)own.forEach((p,i)=>crumb.append(button("› "+p.value,()=>goBackTo(pane,i+1),"exv-pane-crumb")));
   else if(focus.length){const indicator=document.createElement("span");indicator.className="exv-cross-context";indicator.textContent="FILTRADO POR "+focus.map(p=>p.value).join(" / ");crumb.append(indicator);}
   const items=groups(filtered,level),total=Math.max(sum(filtered,cut()).budget,1);
-  const treemap=pane==="area"&&level==="area"&&items.length>1;
-  root.classList.toggle("exv-area-treemap",treemap);
+  const treemap=false; // Tarjetas legibles, sin bloques estrechos de texto vertical.
+  root.classList.toggle("exv-area-treemap",false);
+  root.classList.toggle("exv-area-card-grid",pane==="area"&&level==="area");
   if(pane==="area"&&level==="area"&&isFocused){
    const wrapper=root.parentElement;
    const trigger=button("",()=>{
