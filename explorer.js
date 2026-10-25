@@ -732,11 +732,16 @@ function activateReal(data){
  realMode=true;selectedManagement=null;unitManagementOpen=false;
  paneTrails.area=[];activePane="area";trail=[];branch=null;override=null;
  const selectedMonth=Number(data.month)||Number(Object.keys(data.report_dates||{})[0]?.slice(5,7))||10;
- $("ex-cut").value=String(selectedMonth);
- $("ex-cut").disabled=!Array.isArray(data.available_months)||data.available_months.length<2;
- for(const option of $("ex-cut").options){
-  option.hidden=Array.isArray(data.available_months)&&!data.available_months.includes(Number(option.value));
+ const cutSelect=$("ex-cut");
+ if(Array.isArray(data.available_months)){
+  const labels=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  cutSelect.replaceChildren();
+  for(const month of data.available_months){
+   const option=document.createElement("option");option.value=String(month);option.textContent=labels[month-1]+" 2026";cutSelect.append(option);
+  }
  }
+ cutSelect.value=String(selectedMonth);
+ cutSelect.disabled=!Array.isArray(data.available_months)||data.available_months.length<2;
  const marker=document.querySelector("#explorer .exv-demo");if(marker)marker.textContent="● DATOS REALES · "+Object.keys(data.report_dates||{}).join(", ");
  render();
 }
