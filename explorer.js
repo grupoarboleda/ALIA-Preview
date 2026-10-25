@@ -357,8 +357,9 @@ function renderPanes(){
   const total=Math.max(sum(filtered,cut()).budget,1);
   const treemap=false;
   root.classList.toggle("exv-area-treemap",false);
-  root.classList.toggle("exv-area-card-grid",areaMap);
-  root.classList.toggle("exv-area-block-map",areaMap&&items.length>1);
+  root.classList.toggle("exv-area-card-grid",false);
+  root.classList.toggle("exv-area-block-map",false);
+  root.classList.toggle("exv-area-bars",areaMap);
   if(pane==="area"&&level==="area"&&isFocused){
    const wrapper=root.parentElement;
    const trigger=button("",()=>{
@@ -409,6 +410,12 @@ function renderPanes(){
    const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
    const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
    card.disabled=!level;
+   if(areaMap){
+    const icon=/DISTRIBUCI/i.test(item.value)?"⚡":/ADMINISTRATIV/i.test(item.value)?"⚙":/COMERCIAL/i.test(item.value)?"👥":"▣";
+    card.classList.add("exv-area-bar-row");
+    const iconNode=document.createElement("span");iconNode.className="exv-area-bar-icon";iconNode.textContent=icon;
+    card.append(iconNode);
+   }
    if(areaMap){
     card.classList.add("exv-area-block");
     if(index===0&&items.length>1)card.classList.add("exv-area-block-primary");
