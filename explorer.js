@@ -231,38 +231,65 @@ function projectExplorer(pane,root,items,filtered){
  outer.append(insight,tools,map,list);root.append(outer);view();
 }
 const fundingColors=["#32c6db","#74e8c5","#d6b66d","#8a9fe7","#db91ba","#88bdd6"];
+
+// Presentación compacta para composición real de fuentes; no altera cálculos ni navegación.
+const aliaFundingStyle=document.createElement("style");
+aliaFundingStyle.id="alia-funding-composition-v2";
+aliaFundingStyle.textContent=`
+#explorer .exv-funding-list{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;height:auto!important;min-height:0!important;padding:10px!important;background:#0b2635!important;overflow:visible!important}
+#explorer .exv-funding-row{display:grid!important;grid-template-columns:minmax(180px,2fr) minmax(110px,1fr) minmax(90px,.75fr) minmax(140px,1.5fr) minmax(105px,.8fr);align-items:center;gap:16px;width:100%;min-height:58px;padding:12px 16px;text-align:left;border:1px solid #315568;border-radius:8px;background:#102d3e;color:#d9f3fa;cursor:pointer;transition:background .15s,border-color .15s}
+#explorer .exv-funding-row:hover{background:#18465a;border-color:#51d7e4}
+#explorer .exv-funding-row[aria-pressed="true"]{border-color:#5ee9d2;background:#164a54;box-shadow:inset 3px 0 #5ee9d2}
+#explorer .exv-funding-name{display:flex;align-items:center;gap:10px;min-width:0;overflow-wrap:anywhere;font-size:12px;letter-spacing:.02em}
+#explorer .exv-funding-dot{width:10px;height:10px;flex:0 0 10px;border-radius:3px}
+#explorer .exv-funding-amount{font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#explorer .exv-funding-share,#explorer .exv-funding-execution{font-size:12px;color:#a8d1df;white-space:nowrap;font-variant-numeric:tabular-nums}
+#explorer .exv-funding-progress{display:block;height:9px;border-radius:10px;background:#254657;overflow:hidden}
+#explorer .exv-funding-progress-fill{display:block;height:100%;border-radius:10px}
+#explorer .exv-funding-footnote{display:block!important;height:auto!important;min-height:0!important;padding:8px 12px!important;font-size:11px;color:#9dbdcc}
+@media(max-width:1000px){#explorer .exv-funding-row{grid-template-columns:minmax(160px,1.5fr) minmax(100px,1fr) minmax(90px,.7fr);gap:8px}#explorer .exv-funding-progress{grid-column:1/3}#explorer .exv-funding-execution{grid-column:3}}
+@media(max-width:600px){#explorer .exv-funding-row{grid-template-columns:1fr 1fr;padding:12px;gap:10px}#explorer .exv-funding-name{grid-column:1/-1}#explorer .exv-funding-share{text-align:right}#explorer .exv-funding-progress{grid-column:1/-1}#explorer .exv-funding-execution{grid-column:1/-1}}
+`;
+document.head.append(aliaFundingStyle);
+
 function renderFundingComposition(rows){
  const track=$("ex-source-composition"),legend=$("ex-source-composition-legend"),totalNode=$("ex-composition-total");
  track.replaceChildren();legend.replaceChildren();
- const grouped=groups(rows,"source"),total=sum(rows,cut()).budget;
- totalNode.textContent="TOTAL "+money(total)+"";
- for(const [i,g] of grouped.entries()){
-  const figures=sum(g.rows,cut()),budget=figures.budget,share=total?100*budget/total:0;
-  if(share<=0)continue;
+ const grouped=groups(rows,"source").map(g=>({g,figures:sum(g.rows,cut())}))
+  .filter(x=>x.figures.budget>0).sort((a,b)=>b.figures.budget-a.figures.budget);
+ const total=sum(rows,cut()).budget;
+ totalNode.textContent="TOTAL "+money(total);
+ track.classList.add("exv-funding-list");
+ legend.classList.add("exv-funding-footnote");
+ const instruction=document.createElement("span");
+ instruction.textContent="Selecciona una fuente para filtrar · Ordenado por presupuesto codificado";
+ legend.append(instruction);
+ for(const [i,{g,figures}] of grouped.entries()){
+  const budget=figures.budget,share=total?100*budget/total:0;
   const execution=budget?100*figures.accrued/budget:0;
   const color=fundingColors[i%fundingColors.length];
-  const part=document.createElement("button");part.type="button";part.className="exv-source-segment exv-source-selectable";part.setAttribute("aria-pressed",String(selectedFunding===g.value));part.addEventListener("click",()=>{selectedFunding=selectedFunding===g.value?null:g.value;override=null;render();});
-  part.style.width=share+"%";part.style.background=color;
-  const header=document.createElement("div");header.className="exv-source-segment-header";
-  const source=document.createElement("span");source.className="exv-source-name";source.textContent=g.value;
-  const pct=document.createElement("strong");pct.className="exv-source-share";pct.textContent=share.toFixed(1)+"%";
-  header.append(source,pct);part.append(header);
-  const executionLabel=document.createElement("div");executionLabel.className="exv-source-execution-rate";
-  executionLabel.textContent=execution.toFixed(1)+"% DEVENGADO";part.append(executionLabel);
-  const progress=document.createElement("div");progress.className="exv-source-execution";
-  const fill=document.createElement("div");fill.className="exv-source-execution-fill";
-  fill.style.width=Math.max(0,Math.min(100,execution))+"%";
-  progress.append(fill);part.append(progress);
-  part.title=g.value+" · CODIFICADO "+money(budget)+" · PARTICIPACIÓN "+share.toFixed(1)+"% · DEVENGADO "+execution.toFixed(1)+"%";
+  const part=document.createElement("button");
+  part.type="button";part.className="exv-funding-row";
+  part.setAttribute("aria-pressed",String(selectedFunding===g.value));
+  part.addEventListener("click",()=>{selectedFunding=selectedFunding===g.value?null:g.value;override=null;render();});
+  const name=document.createElement("span");name.className="exv-funding-name";
+  const dot=document.createElement("i");dot.className="exv-funding-dot";dot.style.background=color;
+  const text=document.createElement("strong");text.textContent=g.value;name.append(dot,text);
+  const value=document.createElement("strong");value.className="exv-funding-amount";value.textContent=money(budget);
+  const participation=document.createElement("span");participation.className="exv-funding-share";participation.textContent=share.toFixed(1)+"% del total";
+  const progress=document.createElement("span");progress.className="exv-funding-progress";
+  const fill=document.createElement("span");fill.className="exv-funding-progress-fill";
+  fill.style.width=Math.max(0,Math.min(100,share))+"%";fill.style.background=color;progress.append(fill);
+  const executionLabel=document.createElement("span");executionLabel.className="exv-funding-execution";
+  executionLabel.textContent=execution.toFixed(1)+"% devengado";
+  part.append(name,value,participation,progress,executionLabel);
+  part.title=g.value+" · Codificado "+money(budget)+" · Devengado "+money(figures.accrued)+" · "+execution.toFixed(1)+"%";
   part.setAttribute("aria-label","Filtrar por "+g.value+". "+part.title);
   track.append(part);
-  const item=document.createElement("div");item.className="exv-source-legend-item";
-  const dot=document.createElement("i");dot.style.background=color;
-  const label=document.createElement("span");label.textContent=g.value;
-  const amount=document.createElement("strong");amount.textContent=money(budget)+" · "+share.toFixed(1)+"% del codificado";
-  item.append(dot,label,amount);legend.append(item);
  }
- if(!grouped.length||!total){const empty=document.createElement("span");empty.textContent="SIN PRESUPUESTO PARA ESTA SELECCIÓN";track.append(empty);}
+ if(!grouped.length){
+  const empty=document.createElement("p");empty.textContent="Sin presupuesto para esta selección";track.append(empty);
+ }
 }
 
 function renderPanes(){
