@@ -136,6 +136,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint == "/__alia_import_status":
             return self._json(monthly.status())
+        if endpoint == "/__alia_explorer_preview":
+            try:
+                month = parse_qs(urlsplit(self.path).query).get("month", [""])[0]
+                return self._json(monthly.explorer_preview(month))
+            except (ValueError, OSError) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint == "/__alia_monthly_history":
             return self._json(monthly.monthly_history())
         if self.path.split("?", 1)[0] in ("/", "/index.html"):
