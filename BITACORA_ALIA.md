@@ -311,3 +311,8 @@
 - Rama 01 filtra exclusivamente al nivel de áreas aquellas con suma de codificado > 0 para el corte/filtros actuales. El mayor presupuesto aparece como bloque dominante y las restantes áreas como bloques secundarios legibles, sin texto vertical. Diseño adaptativo a ancho disponible.
 - La superficie del bloque es jerárquica y visual (no un treemap de área matemáticamente exacta); importes, porcentajes y jerarquía se mantienen reales y sin cambios. Otros niveles no se filtran por cero.
 - Sin alteraciones a datos locales, importación, reglas, ni Rama 02. Pendiente comprobación visual local.
+
+### 2026-10-25 — Barras de ejecución y cabecera GLOBAL
+- Corrección visual de RAMA 01: cada barra representa 100 % del codificado de su propia área, el tramo turquesa muestra devengado/codificado y el resto azul oscuro muestra pendiente de devengar. Se elimina la escala por presupuesto del área mayor que distorsionaba la lectura de ejecución.
+- Leyenda de dos colores diferenciados y ampliación del icono de GLOBAL · TODA LA UNIDAD.
+- Se conservan importes, porcentaje de ejecución, conteos, fila TOTAL y filtros. Sin modificaciones de datos ni de la RAMA 02. Pendiente validación visual local.
