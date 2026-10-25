@@ -21,6 +21,14 @@ const hierarchy=()=>branch==="source"?["source","area","project","process"]:["ar
 const cut=()=>Number($("ex-cut").value);
 const sum=(rs,c)=>rs.reduce((v,r)=>({budget:v.budget+r.budget*(realMode?1:factors[c][0]),committed:v.committed+r.committed,accrued:v.accrued+r.accrued*(realMode?1:factors[c][1]),advance:v.advance+r.advance}),{budget:0,committed:0,accrued:0,advance:0});
 const percent=v=>v.budget?100*v.accrued/v.budget:0;
+const distinctCodes=(rows,kind)=>{
+ const field=kind==="project"?"project_code":"process_code";
+ const fallback=kind==="project"?"project":"process";
+ const codes=rows.map(r=>r[field]??(!realMode?r[fallback]:""))
+  .map(value=>String(value??"").trim().toUpperCase())
+  .filter(value=>value&&value!=="0"&&!value.startsWith("SIN "));
+ return new Set(codes).size;
+};
 const button=(label,fn,cls)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.className=cls;b.addEventListener("click",fn);return b;};
 const scoped=()=>records.filter(r=>trail.every(p=>r[p.key]===p.value)&&["area","source","project"].every(k=>$( {area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value==="all"||r[k]===$({area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value));
 const groups=(rs,key)=>key?[...new Set(rs.map(r=>r[key]))].map(value=>({value,rows:rs.filter(r=>r[key]===value)})).sort((a,b)=>sum(b.rows,cut()).budget-sum(a.rows,cut()).budget):[{value:"CNEL EP · Unidad Esmeraldas",rows:rs}];
@@ -30,7 +38,7 @@ function enter(key,value){if(!key)return;override=null;trail.push({key,value});r
 function selectBranch(value){branch=value;trail=[];render();}
 function syncFilters(){for(const key of ["area","source","project"]){const el=$({area:"ex-area",source:"ex-source",project:"ex-project"}[key]),old=el.value;const allowed=records.filter(r=>trail.every(p=>r[p.key]===p.value)&&["area","source","project"].every(k=>k===key||$({area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value==="all"||r[k]===$({area:"ex-area",source:"ex-source",project:"ex-project"}[k]).value));const vals=[...new Set(allowed.map(r=>r[key]))].sort((a,b)=>a.localeCompare(b,"es"));el.replaceChildren();const all=document.createElement("option");all.value="all";all.textContent={area:"Todas las áreas",source:"Todas las fuentes",project:"Todos los proyectos"}[key];el.append(all);for(const value of vals){const o=document.createElement("option");o.value=value;o.textContent=value;el.append(o);}el.value=vals.includes(old)?old:"all";}}
 function renderChart(rs){const root=$("ex-trend");root.replaceChildren();const series=[9,10,11,12].map(m=>sum(rs,m)),max=Math.max(1,...series.map(s=>s.budget))*1.1,x=i=>25+i*155,y=n=>200-n/max*175;for(let i=0;i<5;i++)svg(root,"line",{x1:25,x2:505,y1:25+i*44,y2:25+i*44,stroke:"#26556b","stroke-dasharray":"4 7"});for(const [field,color] of [["budget","#5bdaf7"],["accrued","#80f4c6"]]){const pts=series.map((v,i)=>[x(i),y(v[field])]);const p=svg(root,"path",{d:pts.map(([a,b],i)=>(i?"L":"M")+a+" "+b).join(" "),stroke:color,"stroke-width":3,fill:"none"});pts.forEach(([cx,cy])=>svg(root,"circle",{cx,cy,r:4,fill:color}));}["SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=svg(root,"text",{x:x(i),y:225,fill:"#98c4d4","font-size":12,"text-anchor":"middle"});t.textContent=m;});}
-function tile(g,key,total){const a=sum(g.rows,cut()),rate=percent(a),projects=new Set(g.rows.map(r=>r.project)).size,processes=new Set(g.rows.map(r=>r.process)).size;const el=document.createElement("div");el.className="exv-tile exv-tile-rich";el.style.flexGrow=String(Math.max(1,a.budget/Math.max(total,1)*100));el.style.flexBasis="30%";el.style.background="linear-gradient(145deg,#104b65,#0a2739)";
+function tile(g,key,total){const a=sum(g.rows,cut()),rate=percent(a),projects=distinctCodes(g.rows,"project"),processes=distinctCodes(g.rows,"process");const el=document.createElement("div");el.className="exv-tile exv-tile-rich";el.style.flexGrow=String(Math.max(1,a.budget/Math.max(total,1)*100));el.style.flexBasis="30%";el.style.background="linear-gradient(145deg,#104b65,#0a2739)";
 const heading=document.createElement("b");heading.className="exv-tile-heading";heading.textContent=g.value;
 const amounts=document.createElement("div");amounts.className="exv-tile-amounts";for(const [label,val] of [["CODIFICADO",money(a.budget)],["DEVENGADO",money(a.accrued)]]){const box=document.createElement("span");box.className="exv-metric";const t=document.createElement("span");t.textContent=label;const v=document.createElement("b");v.textContent=val;box.append(t,v);amounts.append(box);}
 const r=document.createElement("div");r.className="exv-tile-rate";const label=document.createElement("span");label.textContent="% DEVENGADO";const value=document.createElement("strong");value.textContent=rate.toFixed(1)+"%";r.append(label,value);const track=document.createElement("span");track.className="exv-tile-track";const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(rate,100))+"%";track.append(fill);
@@ -495,7 +503,7 @@ function renderPanes(){
   // Standard drill cards remain available at other navigation levels.
   for(const [index,item] of items.entries()){
    const v=sum(item.rows,cut()),p=percent(v);
-   const projects=new Set(item.rows.map(r=>r.project)).size,processes=new Set(item.rows.map(r=>r.process)).size;
+   const projects=distinctCodes(item.rows,"project"),processes=distinctCodes(item.rows,"process");
    const card=button("",()=>drillPane(pane,level,item.value),"exv-node exv-node-click");
    card.disabled=!level;
    if(areaMap){
@@ -550,8 +558,8 @@ function renderPanes(){
   if(areaMap&&items.length){
    const allRows=items.flatMap(item=>item.rows);
    const v=sum(allRows,cut()),p=percent(v);
-   const projects=new Set(allRows.map(r=>r.project).filter(Boolean)).size;
-   const processes=new Set(allRows.map(r=>r.process).filter(Boolean)).size;
+   const projects=distinctCodes(allRows,"project");
+   const processes=distinctCodes(allRows,"process");
    const row=document.createElement("div");row.className="exv-area-approved-total";
    const identity=document.createElement("span");identity.className="exv-area-approved-total-identity";
    const title=document.createElement("strong");title.textContent="TOTAL";
