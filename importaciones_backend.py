@@ -237,6 +237,26 @@ def activate():
     return {"ok": True, "months": 12, "records": len(latest["records"])}
 
 
+
+def explorer_preview(month=None):
+    """Read-only cut from staged months; no activation or file changes."""
+    manifest = read_json(MANIFEST, {"months": {}})
+    available = sorted(int(m) for m in manifest.get("months", {}) if str(m).isdigit() and 1 <= int(m) <= 12)
+    if not available:
+        return {"mode": "DEMO", "records": [], "available_months": []}
+    chosen = int(month) if month not in (None, "") else available[-1]
+    if chosen not in available:
+        raise ValueError("El mes solicitado no está cargado")
+    snap = read_json(STAGING / f"{chosen:02d}.json", None)
+    if not snap or not snap.get("records"):
+        raise ValueError("El mes seleccionado no tiene registros")
+    snap = validated_snapshot(snap)
+    return {"mode": "REAL", "source": "MONTHLY_STAGING_READ_ONLY",
+            "preview": True, "month": chosen, "available_months": available,
+            "date": snap.get("date"), "report_dates": {snap.get("date"): len(snap["records"])},
+            "records": snap["records"], "warnings_count": len(snap["issues"]),
+            "validation_model": RULE_VERSION}
+
 def monthly_history():
     """Read-only monthly totals; values are cumulative per cut, not monthly flows."""
     manifest = read_json(MANIFEST, {"months": {}, "active": False})
