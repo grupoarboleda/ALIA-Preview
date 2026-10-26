@@ -336,3 +336,8 @@
 - Se aplica una ponderación por raíz cuarta del codificado a la geometría del treemap de tres áreas, con bloque principal entre 52 % y 57 % del ancho y dos bloques secundarios horizontales apilados.
 - Se incrementa la altura del lienzo y se establecen reglas de espacio, columnas de importes y separación de barras y porcentajes para evitar solapamientos en Administrativo y Comercial.
 - Sin cambios en matrices, cifras financieras, RAMA 02 ni filtros. Validación visual local pendiente. Continúa pendiente el diagnóstico de conteos de proyectos y procesos en cero.
+
+### 2026-10-26 — Cabeceras horizontales y barras homologadas en treemap
+- Iconos y nombres de las áreas se presentan en una misma línea para ganar espacio vertical.
+- Cada bloque usa la misma plantilla interna de filas para importes, porcentaje, barra de ejecución y conteos, evitando solapamientos y diferencias de posición entre Distribución, Administrativo y Comercial.
+- Sin modificaciones de cifras, snapshots ni RAMA 02. Pendiente validación visual en ALIA Local. Conteos cero continúan pendientes de revisión independiente.
