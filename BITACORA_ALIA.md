@@ -331,3 +331,8 @@
 - RAMA 01: el área con mayor codificado ocupa el bloque principal vertical izquierdo (ancho suavizado 55–63 %); las dos restantes se presentan en bloques horizontales apilados a la derecha, con ancho suficiente para importes y nombres.
 - Se conservan la ejecución por barra, iconos, panel GLOBAL, fila TOTAL, navegación y filtro codificado > 0. No se modifican datos ni RAMA 02.
 - Pendiente validación visual local; el error de conteos cero se atiende por separado.
+
+### 2026-10-26 — Suavizado armónico y legibilidad del treemap
+- Se aplica una ponderación por raíz cuarta del codificado a la geometría del treemap de tres áreas, con bloque principal entre 52 % y 57 % del ancho y dos bloques secundarios horizontales apilados.
+- Se incrementa la altura del lienzo y se establecen reglas de espacio, columnas de importes y separación de barras y porcentajes para evitar solapamientos en Administrativo y Comercial.
+- Sin cambios en matrices, cifras financieras, RAMA 02 ni filtros. Validación visual local pendiente. Continúa pendiente el diagnóstico de conteos de proyectos y procesos en cero.
