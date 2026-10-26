@@ -352,3 +352,9 @@
 - Nuevo endpoint local de solo lectura `/__alia_explorer_history`; la vista filtra cada corte por área, fuente, proyecto y selección de proceso/contrato. Los meses sin archivo no se interpolan.
 - Selector Acumulado / Variación mensual / % del codificado y leyenda para activar u ocultar cada curva; los puntos muestran importes reales del corte.
 - Pendientes: validar en el equipo local que las series coincidan con las matrices; construir las curvas de etapas de contratación, avance físico y línea base cuando se verifique su historial por entidad. No se inventan etapas ni cronogramas.
+
+### 2026-10-26 — Curva mensual: línea base, real, proyección y codificado
+- Diccionario: línea base inicial IDs 508–519; programación vigente 523–534; devengado real mensual 538–549; codificado anual ID 497.
+- Importador captura las 36 celdas por fila y conserva las tres series en los nuevos registros; gráfico acumulado con línea real hasta el corte, proyección desde el último real para meses restantes y codificado anual como referencia de porcentaje.
+- Los snapshots cargados anteriormente carecen de estas columnas; no se inventan curvas ni se recalculan importes a partir de datos insuficientes. Falta mecanismo de enriquecimiento local de los snapshots desde las matrices XLSX originales sin reemplazar las cargas existentes.
+- Cambios solo en rama develop; pendientes pruebas con XLSX reales. No se modifica RAMA 01.
