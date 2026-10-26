@@ -358,3 +358,9 @@
 - Importador captura las 36 celdas por fila y conserva las tres series en los nuevos registros; gráfico acumulado con línea real hasta el corte, proyección desde el último real para meses restantes y codificado anual como referencia de porcentaje.
 - Los snapshots cargados anteriormente carecen de estas columnas; no se inventan curvas ni se recalculan importes a partir de datos insuficientes. Falta mecanismo de enriquecimiento local de los snapshots desde las matrices XLSX originales sin reemplazar las cargas existentes.
 - Cambios solo en rama develop; pendientes pruebas con XLSX reales. No se modifica RAMA 01.
+
+### 2026-10-26 — Resolución de gráfica sin series
+- Causa: los snapshots originales no almacenaron las 36 columnas mensuales, por lo que el gráfico no podía dibujar series verificables.
+- Nuevo botón de recuperación en RAMA 02: seleccionar una sola vez el XLSX original del corte. Se comprueba SHA256 idéntico al archivo ya cargado, número de filas y procesos; únicamente se añaden baselineMonthly/plannedMonthly/actualMonthly al snapshot existente. No se reemplazan los importes, el catálogo ni las observaciones, ni se vuelve a importar la matriz completa.
+- Endpoint local POST /__alia_enrich_monthly; rechazo sin cambios si el archivo no coincide. Tras completar, RAMA 02 se refresca.
+- La operación necesita selección explícita del XLSX porque el servidor no conserva una copia original del archivo Excel. Pendiente prueba de extremo a extremo con el archivo local real.
