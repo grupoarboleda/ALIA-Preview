@@ -369,3 +369,8 @@
 - Conforme a decisiones previas de 2026-10-21: leyenda de curvas bajo el gráfico, botones excluyentes % y USD, línea vertical CORTE y mes resaltado, proyección discontinua diferenciada de devengado real.
 - Cuatro curvas visibles y conmutables: Línea base inicial (violeta), Devengado real (turquesa), Proyección vigente (naranja), Codificado anual (azul). La leyenda se construye con elementos HTML visibles y permite activar/ocultar cada serie.
 - En % el denominador es el codificado anual (ID 497), en USD se usan montos acumulados. Se preservan las series reales existentes y el treemap de RAMA 01.
+
+### 2026-10-26 — Corrección de leyendas invisibles en RAMA 02
+- Diagnóstico: `styles.css` contenía la regla `#explorer #ex-pane-source.exv-reserved-pane button{display:none!important}`, heredada de la vista reservada, que ocultaba los controles de unidad y la leyenda del nuevo gráfico aunque el DOM los generaba.
+- Se retira `exv-reserved-pane` al construir la vista temporal real, preservando la clase `exv-temporal-pane`. No se modifican los datos ni las curvas.
+- Se actualiza versión del JS para evitar caché; validación visual pendiente en ALIA Local.
