@@ -1167,10 +1167,25 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
+ const pointDetail=document.createElement("div");
+ pointDetail.className="exv-chart-point-detail";
+ pointDetail.style.cssText="display:none;margin:8px 0;padding:10px 14px;border:1px solid #3d8398;border-radius:6px;background:#103449;color:#e3f6fb;font-weight:600";
+ pointDetail.setAttribute("aria-live","polite");
+ plot.after(pointDetail);
+ const monthNames=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+ const showPoint=(line,point)=>{
+  const i=point[0],value=point[1];
+  const monthBudget=budgetByMonth[i];
+  const reference=monthBudget!==null&&monthBudget>0?monthBudget:budget;
+  const pct=line===codedLine?"100.0%":reference>0?(100*value/reference).toFixed(1)+"%":"Sin codificado";
+  const referenceLabel=monthBudget!==null?"codificado de "+monthNames[i]:"codificado del corte (referencia)";
+  pointDetail.style.display="block";
+  pointDetail.textContent=line.label.toUpperCase()+" · "+monthNames[i].toUpperCase()+" · "+money(value)+" · "+pct+" del "+referenceLabel;
+ };
  const ns="http://www.w3.org/2000/svg";
  function draw(){
   for(const [value,btn] of Object.entries(unitButtons)){const selected=unit===value;btn.setAttribute("aria-pressed",String(selected));btn.style.background=selected?"#166176":"#092b3c";btn.style.borderColor=selected?"#6fe7e0":"#4e9db2";}
-  plot.replaceChildren();codedLine.points=budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
+  plot.replaceChildren();codedLine.points=unit==="%"?Array.from({length:12},(_,i)=>[i,budget]):budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
   const convert=(v,isBudget=false)=>unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v;
   const high=unit==="%"?100:Math.max(1,...visible.flatMap(l=>l.points.map(p=>p[1])));
   const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolución mensual real, proyectada, línea base y codificado");
@@ -1183,28 +1198,32 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
    if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
-   const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
+   const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine)).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
-   for(const p of l.points){if(l.label==="Proyección vigente")continue;const dot=make("circle",{cx:x(p[0]),cy:y(p[1],l===codedLine),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
+   for(const p of l.points){
+    if(l.label==="Proyección vigente")continue;
+    const px=x(p[0]),py=y(p[1],l===codedLine);
+    make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none"});
+    const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar "+l.label+" de "+monthNames[p[0]]});
+    hit.style.cursor="pointer";
+    const tip=make("title",{},hit);tip.textContent=l.label+" · "+monthNames[p[0]]+" · "+money(p[1]);
+    hit.addEventListener("click",()=>showPoint(l,p));
+    hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(l,p);}});
+   }
   }
-  // Punto interactivo de cierre de la proyección, fuera de la animación de la línea.
+  // Proyección: puntos consultables, conservando la línea naranja discontinua.
   const forecast=lines.find(l=>l.label==="Proyección vigente");
-  const finalPoint=forecast?.points?.at(-1);
-  if(finalPoint&&active.has("Proyección vigente")){
-   const cx=x(finalPoint[0]),cy=y(finalPoint[1]);
-   const hit=make("circle",{cx,cy,r:11,fill:"#ffb443",opacity:".01",tabindex:"0",role:"button","aria-label":"Consultar proyección de diciembre"});
-   make("circle",{cx,cy,r:4.5,fill:"#ffb443",stroke:"#ffe3a6","stroke-width":"1.4","pointer-events":"none"});
-   const tooltip=make("title",{},hit);tooltip.textContent="Diciembre previsto: "+money(finalPoint[1])+" · "+(budget>0?(100*finalPoint[1]/budget).toFixed(1)+"%":"sin codificado");
-   hit.style.cursor="pointer";
-   const show=()=>{
-    const pct=budget>0?(100*finalPoint[1]/budget).toFixed(1)+"%":"—";
-    let detail=section.querySelector(".exv-forecast-detail");
-    if(!detail){detail=document.createElement("div");detail.className="exv-forecast-detail";detail.style.cssText="margin:8px 0;padding:10px 14px;border:1px solid #ffb443;border-radius:6px;background:#13364a;color:#ffdf9a;font-weight:700";plot.after(detail);}
-    detail.textContent="PROYECCIÓN A DICIEMBRE · "+money(finalPoint[1])+" · "+pct+" del codificado al corte";
-   };
-   hit.addEventListener("click",show);
-   hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
+  if(active.has("Proyección vigente")){
+   for(const p of forecast.points){
+    const px=x(p[0]),py=y(p[1]);
+    const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar proyección de "+monthNames[p[0]]});
+    hit.style.cursor="pointer";
+    if(p[0]===11)make("circle",{cx:px,cy:py,r:4.5,fill:"#ffb443",stroke:"#ffe3a6","stroke-width":"1.4","pointer-events":"none"});
+    const tip=make("title",{},hit);tip.textContent="Proyección · "+monthNames[p[0]]+" · "+money(p[1]);
+    hit.addEventListener("click",()=>showPoint(forecast,p));
+    hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(forecast,p);}});
+   }
   }
   // Solo el marcador visual en la gráfica; el porcentaje va en la cuarta tarjeta.
   const realLine=lines.find(line=>line.label==="Devengado real");
