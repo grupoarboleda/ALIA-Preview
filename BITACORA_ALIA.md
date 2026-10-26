@@ -415,3 +415,8 @@
 - A solicitud del usuario se elimina el indicador flotante encima del gráfico. Se agrega una cuarta tarjeta `% DEVENGADO` junto a Codificado, Comprometido y Devengado USD en RAMA 02.
 - Valor calculado como 100 × devengado / codificado del corte y selección vigentes, con `—` cuando el codificado es cero. Las cuatro tarjetas se distribuyen en una cuadrícula de cuatro columnas con tamaños de texto adaptables.
 - La curva conserva solo el punto final resaltado, sin etiquetas superpuestas. No se modifican datos ni RAMA 01. Pendiente verificación local.
+
+### 2026-10-26 — Codificado mensual histórico y consulta de proyección diciembre
+- Curva de codificado USD obtenida de cada snapshot mensual realmente cargado mediante `/__alia_explorer_history`, sin inventar meses no cargados. En vista porcentual, codificado de los meses disponibles permanece al 100%.
+- El punto naranja al cierre de diciembre admite clic y teclado y muestra el USD previsto y su porcentaje respecto del codificado del corte seleccionado. Mantiene línea discontinua y animación secuencial.
+- Pendiente comprobar visualmente en ALIA Local la correspondencia de filtros de áreas/procesos entre reportes históricos; no se tocaron archivos Excel.
