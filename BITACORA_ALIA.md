@@ -321,3 +321,8 @@
 - Corrección de indicadores de proyectos y procesos del Explorador: los proyectos se cuentan por código PAI (`project_key`/`project_code`, id 2), y los procesos por código único de proceso (`process_key`, id 15); nunca por cantidad de filas ni por descripción de proyecto.
 - La vista previa del backend ahora expone `project_code` y `process_code` directamente desde snapshots ya cargados, sin exigir recarga de XLSX. El frontend calcula `Set` de códigos no vacíos por área y globalmente (TOTAL), evitando duplicados entre filas.
 - Se preservan cálculos financieros, datos locales, filtros, diseño aprobado y RAMA 02. Requiere reiniciar servidor Python y Ctrl+F5; cifras pendientes de contrastar con Excel real.
+
+### 2026-10-26 — Regreso al treemap equilibrado de áreas
+- A petición del propietario se sustituye la vista de barras horizontales de RAMA 01 por treemap de bloques con tamaño relativo al codificado suavizado mediante raíz cuadrada; máximo 60 % y mínimo 19 % para tres áreas, para que la de mayor presupuesto destaque sin desplazar a las demás.
+- Se conservan iconos, codificado, devengado, avance porcentual, filtro codificado > 0, fila TOTAL, panel GLOBAL y navegación; sin cambios en RAMA 02 ni archivos importados.
+- Pendiente verificación visual en ALIA Local. Los recuentos de proyectos/procesos en cero de la captura requieren diagnóstico separado sobre la procedencia de los códigos en los snapshots locales.
