@@ -444,6 +444,24 @@ aliaBalancedTreemapStyle.textContent=`
 `;
 document.head.append(aliaBalancedTreemapStyle);
 
+const aliaStackedTreemapStyle=document.createElement("style");
+aliaStackedTreemapStyle.textContent=`
+#explorer .exv-balanced-treemap:has(.exv-treemap-main){height:455px!important}
+#explorer .exv-balanced-treemap .exv-treemap-main{top:65px!important;height:calc(100% - 65px)!important}
+#explorer .exv-balanced-treemap .exv-treemap-top{top:65px!important;height:calc((100% - 65px)/2)!important}
+#explorer .exv-balanced-treemap .exv-treemap-bottom{top:calc(65px + (100% - 65px)/2)!important;height:calc((100% - 65px)/2)!important}
+#explorer .exv-balanced-treemap .exv-treemap-top,#explorer .exv-balanced-treemap .exv-treemap-bottom{gap:5px!important;padding:12px 14px!important;justify-content:center!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-area-bar-icon,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-area-bar-icon{width:32px!important;height:32px!important;font-size:19px!important}
+#explorer .exv-balanced-treemap .exv-treemap-top>strong,#explorer .exv-balanced-treemap .exv-treemap-bottom>strong{font-size:14px!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values{flex-direction:row!important;flex-wrap:wrap!important;gap:14px!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values>span,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values>span{min-width:0!important;flex:1 1 90px!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values b,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values b{font-size:13px!important;overflow-wrap:normal!important;word-break:normal!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-bar,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-bar{height:7px!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-foot,#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-foot{font-size:9px!important}
+@media(max-width:700px){#explorer .exv-balanced-treemap:has(.exv-treemap-main){height:auto!important}#explorer .exv-balanced-treemap .exv-treemap-main,#explorer .exv-balanced-treemap .exv-treemap-top,#explorer .exv-balanced-treemap .exv-treemap-bottom{top:auto!important;height:auto!important;min-height:175px!important}}
+`;
+document.head.append(aliaStackedTreemapStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -564,9 +582,23 @@ function renderPanes(){
      }
      if(!adjusted){for(const i of open)fixed[i]=remaining*weights[i]/wsum;break;}
     }
-    const start=100*fixed.slice(0,index).reduce((a,b)=>a+(b||0),0);
-    card.style.left=start+"%";card.style.top="0%";
-    card.style.width=(100*(fixed[index]||0))+"%";card.style.height="100%";
+    if(items.length===3){
+     // Bloque principal vertical a la izquierda; dos bloques horizontales apilados a la derecha.
+     // Proporción suavizada, no superficie estrictamente proporcional al codificado.
+     const main=items.findIndex(x=>sum(x.rows,cut()).budget===Math.max(...items.map(y=>sum(y.rows,cut()).budget)));
+     const right=items.map((_,i)=>i).filter(i=>i!==main);
+     const position=index===main?"main":index===right[0]?"top":"bottom";
+     card.classList.add("exv-treemap-"+position);
+     const mainShare=Math.max(.55,Math.min(.63,fixed[main]||.6));
+     card.style.left=(position==="main"?0:mainShare*100)+"%";
+     card.style.width=(position==="main"?mainShare:1-mainShare)*100+"%";
+     card.style.top=position==="bottom"?"50%":"0%";
+     card.style.height=position==="main"?"100%":"50%";
+    }else{
+     const start=100*fixed.slice(0,index).reduce((a,b)=>a+(b||0),0);
+     card.style.left=start+"%";card.style.top="0%";
+     card.style.width=(100*(fixed[index]||0))+"%";card.style.height="100%";
+    }
    }
    const name=document.createElement("strong");name.textContent=item.value;
    const values=document.createElement("span");values.className="exv-node-values";
