@@ -326,3 +326,8 @@
 - A petición del propietario se sustituye la vista de barras horizontales de RAMA 01 por treemap de bloques con tamaño relativo al codificado suavizado mediante raíz cuadrada; máximo 60 % y mínimo 19 % para tres áreas, para que la de mayor presupuesto destaque sin desplazar a las demás.
 - Se conservan iconos, codificado, devengado, avance porcentual, filtro codificado > 0, fila TOTAL, panel GLOBAL y navegación; sin cambios en RAMA 02 ni archivos importados.
 - Pendiente verificación visual en ALIA Local. Los recuentos de proyectos/procesos en cero de la captura requieren diagnóstico separado sobre la procedencia de los códigos en los snapshots locales.
+
+### 2026-10-26 — Treemap vertical y dos bloques horizontales
+- RAMA 01: el área con mayor codificado ocupa el bloque principal vertical izquierdo (ancho suavizado 55–63 %); las dos restantes se presentan en bloques horizontales apilados a la derecha, con ancho suficiente para importes y nombres.
+- Se conservan la ejecución por barra, iconos, panel GLOBAL, fila TOTAL, navegación y filtro codificado > 0. No se modifican datos ni RAMA 02.
+- Pendiente validación visual local; el error de conteos cero se atiende por separado.
