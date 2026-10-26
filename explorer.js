@@ -422,6 +422,28 @@ aliaReferenceIcons.textContent=`
 `;
 document.head.append(aliaReferenceIcons);
 
+const aliaBalancedTreemapStyle=document.createElement("style");
+aliaBalancedTreemapStyle.textContent=`
+#explorer .exv-balanced-treemap{position:relative!important;display:block!important;min-height:320px!important;height:340px!important;padding:0!important;border:1px solid #326078!important;background:#092537!important;overflow:hidden!important}
+#explorer .exv-balanced-treemap .exv-area-approved-head{position:absolute!important;top:0;left:0;right:0;height:65px;z-index:2;background:#092537}
+#explorer .exv-balanced-treemap .exv-area-block{position:absolute!important;top:65px!important;height:calc(100% - 65px)!important;min-height:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:10px!important;padding:17px 14px!important;border:3px solid #092537!important;border-radius:7px!important;overflow:hidden!important;text-align:left!important;box-sizing:border-box!important;background:#124b64!important}
+#explorer .exv-balanced-treemap .exv-area-block:nth-of-type(3n+2){background:#15546a!important}
+#explorer .exv-balanced-treemap .exv-area-block:nth-of-type(3n+3){background:#16485b!important}
+#explorer .exv-balanced-treemap .exv-area-block:hover{filter:brightness(1.15);border-color:#45d6e3!important}
+#explorer .exv-balanced-treemap .exv-area-block>strong{font-size:clamp(11px,1.1vw,17px)!important;line-height:1.2!important;overflow-wrap:anywhere!important;writing-mode:horizontal-tb!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values{display:flex!important;flex-direction:column!important;gap:7px!important;min-width:0!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values>span{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:3px!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values small{font-size:9px!important;color:#b2d6e4!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values b{font-size:clamp(11px,1.15vw,16px)!important;white-space:normal!important;overflow-wrap:anywhere!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-summary{font-size:13px!important;color:#8bf1db!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-bar{height:9px!important;flex-shrink:0!important}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-foot{position:static!important;font-size:10px!important;line-height:1.4!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#explorer .exv-balanced-treemap .exv-area-bar-icon{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;flex-shrink:0!important;font-size:23px!important;border:1px solid #35cadb!important;border-radius:7px!important;background:#10465b!important}
+#explorer .exv-balanced-treemap .exv-area-icon-admin{color:#69e8ac!important;background:#145340!important;border-color:#4fdb9b!important}
+@media(max-width:700px){#explorer .exv-balanced-treemap{height:auto!important;min-height:0!important;display:flex!important;flex-direction:column!important}#explorer .exv-balanced-treemap .exv-area-approved-head{position:static!important;height:auto!important}#explorer .exv-balanced-treemap .exv-area-block{position:static!important;width:100%!important;height:auto!important;min-height:160px!important;flex:1 1 auto!important}}
+`;
+document.head.append(aliaBalancedTreemapStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -442,11 +464,12 @@ function renderPanes(){
   const areaMap=pane==="area"&&level==="area";
   const items=areaMap?allItems.filter(item=>sum(item.rows,cut()).budget>0):allItems;
   const total=Math.max(sum(filtered,cut()).budget,1);
-  const treemap=false;
-  root.classList.toggle("exv-area-treemap",false);
+  const treemap=areaMap;
+  root.classList.toggle("exv-area-treemap",treemap);
   root.classList.toggle("exv-area-card-grid",false);
   root.classList.toggle("exv-area-block-map",false);
-  root.classList.toggle("exv-area-bars",areaMap);
+  root.classList.toggle("exv-area-bars",false);
+  root.classList.toggle("exv-balanced-treemap",areaMap);
   if(pane==="area"&&level==="area"&&isFocused){
    const wrapper=root.parentElement;
    const trigger=button("",()=>{
@@ -522,16 +545,29 @@ function renderPanes(){
    }
    card.setAttribute("aria-label",item.value+": codificado "+money(v.budget)+", devengado "+money(v.accrued)+". Abrir siguiente nivel");
    if(treemap){
-    const weights=items.map(x=>Math.max(0,sum(x.rows,cut()).budget));
-    const all=weights.reduce((a,b)=>a+b,0)||1;
-    if(items.length===2){const left=100*weights[0]/all;card.style.left=(index===0?0:left)+"%";card.style.top="0%";card.style.width=(index===0?left:100-left)+"%";card.style.height="100%";}
-    else {const left=100*weights[0]/all;const rest=weights.slice(1).reduce((a,b)=>a+b,0)||1;
-     if(index===0){card.style.left="0%";card.style.top="0%";card.style.width=left+"%";card.style.height="100%";}
-     else{const before=weights.slice(1,index).reduce((a,b)=>a+b,0),height=100*weights[index]/rest;
-      card.style.left=left+"%";card.style.top=100*before/rest+"%";card.style.width=(100-left)+"%";card.style.height=height+"%";}
+    // Superficie visual suavizada: la mayor área conserva el liderazgo sin ocultar las pequeñas.
+    const weights=items.map(x=>Math.sqrt(Math.max(0,sum(x.rows,cut()).budget)));
+    const minShare=items.length<=3?0.19:Math.min(0.13,0.7/items.length);
+    const maxShare=items.length<=3?0.60:0.48;
+    const shares=weights.map(w=>w/(weights.reduce((a,b)=>a+b,0)||1));
+    const fixed=new Array(shares.length).fill(null);
+    for(let pass=0;pass<shares.length;pass++){
+     const open=shares.map((_,i)=>i).filter(i=>fixed[i]===null);
+     if(!open.length)break;
+     const remaining=1-fixed.reduce((s,v)=>s+(v??0),0);
+     const wsum=open.reduce((s,i)=>s+weights[i],0)||1;
+     let adjusted=false;
+     for(const i of open){
+      const candidate=remaining*weights[i]/wsum;
+      if(candidate<minShare){fixed[i]=minShare;adjusted=true;break;}
+      if(candidate>maxShare){fixed[i]=maxShare;adjusted=true;break;}
+     }
+     if(!adjusted){for(const i of open)fixed[i]=remaining*weights[i]/wsum;break;}
     }
+    const start=100*fixed.slice(0,index).reduce((a,b)=>a+(b||0),0);
+    card.style.left=start+"%";card.style.top="0%";
+    card.style.width=(100*(fixed[index]||0))+"%";card.style.height="100%";
    }
-   if(treemap && card.style.height && parseFloat(card.style.height)<34)card.classList.add("exv-node-compact");
    const name=document.createElement("strong");name.textContent=item.value;
    const values=document.createElement("span");values.className="exv-node-values";
    for(const [label,value] of [["CODIFICADO",money(v.budget)],["DEVENGADO",money(v.accrued)]]){
