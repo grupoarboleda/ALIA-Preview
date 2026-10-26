@@ -1174,13 +1174,33 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
   try {
    const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-   if(!reduced)for(const path of svg.querySelectorAll("polyline[data-alia-series]")){
-    if(typeof path.animate!=="function")continue;
-    if(path.dataset.aliaSeries==="Proyección vigente"){
-     path.animate([{opacity:0},{opacity:1}],{duration:900,delay:1700,fill:"both",easing:"ease-out"});
-    }else{
+   if(!reduced){
+    const paths=[...svg.querySelectorAll("polyline[data-alia-series]")];
+    const duration=3000;
+    // La proyección empieza exclusivamente al finalizar el trazado real.
+    const realPath=paths.find(path=>path.dataset.aliaSeries==="Devengado real");
+    let realAnimation=null;
+    const animateStroke=path=>{
+     if(!path||typeof path.animate!=="function")return null;
      const len=path.getTotalLength();
-     if(Number.isFinite(len)&&len>0)path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration:3000,fill:"both",easing:"ease-in-out"});
+     if(!Number.isFinite(len)||len<=0)return null;
+     return path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration,fill:"both",easing:"ease-in-out"});
+    };
+    for(const path of paths){
+     if(path.dataset.aliaSeries==="Proyección vigente")continue;
+     const animation=animateStroke(path);
+     if(path===realPath)realAnimation=animation;
+    }
+    const projectionPath=paths.find(path=>path.dataset.aliaSeries==="Proyección vigente");
+    if(projectionPath&&typeof projectionPath.animate==="function"){
+     // Conservar el trazo discontinuo original: revelar con opacidad.
+     const projectionAnimation=projectionPath.animate([{opacity:0},{opacity:1}],{duration:900,fill:"both",easing:"ease-out"});
+     projectionAnimation.pause();
+     if(realAnimation){
+      realAnimation.finished.then(()=>{
+       if(svg.isConnected)projectionAnimation.play();
+      }).catch(()=>{if(svg.isConnected)projectionAnimation.play();});
+     }else projectionAnimation.play();
     }
    }
   }catch(error){console.warn("ALIA: animación opcional omitida",error);}
