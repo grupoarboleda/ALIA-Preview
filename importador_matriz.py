@@ -164,6 +164,22 @@ def inspect_file(path, assigned_month=None):
             if values[field] is None:
                 issues.append({"row": row_num, "code": "INVALID_NUMBER", "field": field,
                                "value": str(raw_value)[:80]})
+        # Series mensuales reales, línea base original y programación vigente.
+        # Se leen por ID de columna (fila 12), nunca por letra de Excel.
+        for key, start in (("baseline_monthly", 508), ("planned_monthly", 523), ("actual_monthly", 538)):
+            series = []
+            for identifier in range(start, start + 12):
+                column = numbered_columns.get(identifier)
+                raw = row.get(column, "") if column else ""
+                if str(raw).strip() == "":
+                    series.append(None)
+                else:
+                    parsed = amount(raw)
+                    series.append(parsed)
+                    if parsed is None:
+                        issues.append({"row": row_num, "code": "INVALID_MONTHLY_AMOUNT",
+                                       "id": identifier, "column": column, "value": str(raw)[:80]})
+            values[key] = series
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
