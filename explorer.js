@@ -1100,7 +1100,22 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  if(!valid.length){
   const msg=document.createElement("p");msg.className="exv-temporal-note";
   msg.textContent="Los reportes ya cargados no contienen todavía el detalle mensual de las columnas 508–519, 523–534 y 538–549. No se mostrarán curvas estimadas. Es necesario recuperar esas columnas de la matriz original sin modificar los importes existentes.";
-  section.append(msg);host.append(section);return;
+  section.append(msg);
+  const picker=document.createElement("input");picker.type="file";picker.accept=".xlsx";picker.hidden=true;
+  const button=document.createElement("button");button.type="button";button.className="exv-real-history-toggle";button.textContent="RECUPERAR SERIES DEL EXCEL ORIGINAL · "+String(cutMonth).padStart(2,"0")+"/2026";
+  const status=document.createElement("p");status.className="exv-temporal-note";
+  button.addEventListener("click",()=>picker.click());
+  picker.addEventListener("change",async()=>{
+   const file=picker.files?.[0];if(!file)return;
+   button.disabled=true;status.textContent="Comprobando que el archivo sea exactamente el mismo que ya está cargado…";
+   try{
+    const response=await fetch("/__alia_enrich_monthly",{method:"POST",headers:{"X-ALIA-Month":String(cutMonth),"X-ALIA-Filename":encodeURIComponent(file.name),"Content-Type":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},body:file});
+    const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||"No se pudo recuperar la serie");
+    status.textContent="Series recuperadas. Actualizando la gráfica…";
+    loadStagedCut(cutMonth);
+   }catch(e){status.textContent="No se modificó la carga: "+e.message;}finally{button.disabled=false;picker.value="";}
+  });
+  section.append(button,picker,status);host.append(section);return;
  }
  const budget=rows.reduce((n,r)=>n+(Number(r.budget)||0),0);
  const totals={baseline:Array(12).fill(0),planned:Array(12).fill(0),actual:Array(12).fill(0)};
