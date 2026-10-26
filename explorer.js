@@ -462,6 +462,45 @@ aliaStackedTreemapStyle.textContent=`
 `;
 document.head.append(aliaStackedTreemapStyle);
 
+const aliaTreemapStandardBars=document.createElement("style");
+aliaTreemapStandardBars.textContent=`
+/* Barra uniforme: porcentaje de ejecución en turquesa y saldo pendiente en azul. */
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-bar{
+ display:block!important;position:relative!important;width:100%!important;max-width:100%!important;
+ height:9px!important;min-height:9px!important;flex:0 0 9px!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+ background:#082c3e!important;overflow:hidden!important;box-sizing:border-box!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-bar>span{
+ display:block!important;height:100%!important;min-height:9px!important;margin:0!important;
+ background:#62e5d2!important;border:0!important;border-radius:0!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top,
+#explorer .exv-balanced-treemap .exv-treemap-bottom{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:32px auto auto 15px 9px auto!important;
+ align-content:center!important;align-items:center!important;
+ row-gap:5px!important;padding:10px 16px!important;overflow:hidden!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-area-bar-icon,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-area-bar-icon{grid-row:1!important}
+#explorer .exv-balanced-treemap .exv-treemap-top>strong,
+#explorer .exv-balanced-treemap .exv-treemap-bottom>strong{grid-row:2!important;line-height:1.2!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values{grid-row:3!important;min-height:0!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-summary,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-summary{grid-row:4!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-bar,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-bar{grid-row:5!important}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-foot,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-foot{grid-row:6!important}
+@media(max-width:700px){
+ #explorer .exv-balanced-treemap .exv-treemap-top,
+ #explorer .exv-balanced-treemap .exv-treemap-bottom{min-height:190px!important}
+}
+`;
+document.head.append(aliaTreemapStandardBars);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
