@@ -385,3 +385,8 @@
 - Captura del usuario: encabezado, botones y leyendas visibles, pero sin ejes ni curvas. La animación introducida ejecutaba `getTotalLength()` sobre polilíneas antes de insertar el SVG en el documento; esto puede fallar en Firefox y abortar `draw()` antes de `plot.append(svg)`.
 - Solución: primero dibujar e insertar el SVG completo; después ejecutar animaciones opcionales dentro de try/catch, respetando reducción de movimiento. Si falla la animación, la gráfica permanece visible.
 - Se conserva posición de %/USD, paleta, líneas, datos y RAMA 01. Pendiente validación visual local en Firefox.
+
+### 2026-10-26 — Animación secuencial devengado real → proyección
+- La curva real se dibuja en 3 segundos. La curva proyectada naranja permanece oculta y empieza su revelado de 900 ms solo al finalizar la animación del devengado real (promesa `Animation.finished`, sin temporizador arbitrario).
+- Respeta `prefers-reduced-motion`, filtros de leyenda y sustitución del SVG. Se conserva la proyección discontinua, las demás series y los datos.
+- Pendiente comprobación visual en ALIA Local.
