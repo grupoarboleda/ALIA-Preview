@@ -623,6 +623,13 @@ const aliaBalanceRankingHeaderStyle=document.createElement("style");
 aliaBalanceRankingHeaderStyle.textContent=`
 #explorer .exv-balance-ranking-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,42%);gap:12px;align-items:center;padding:10px 16px;margin:10px 0 6px;border-bottom:1px solid #42768d;color:#85dfe8;font-size:11px;font-weight:800;letter-spacing:.07em}
 #explorer .exv-balance-ranking-header span:last-child{text-align:right}
+#explorer .exv-balance-ranking-header{
+ position:sticky!important;top:0!important;z-index:20!important;
+ background:#081e2e!important;box-shadow:0 3px 0 #081e2e!important;
+ margin-top:0!important;margin-bottom:4px!important;
+}
+#explorer .exv-balance-table{isolation:isolate!important;scroll-padding-top:42px!important}
+
 @media(max-width:520px){#explorer .exv-balance-ranking-header{grid-template-columns:minmax(0,1fr) minmax(115px,50%);font-size:10px;padding:9px}}
 `;
 document.head.append(aliaBalanceRankingHeaderStyle);
