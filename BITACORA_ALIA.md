@@ -374,3 +374,9 @@
 - Diagnóstico: `styles.css` contenía la regla `#explorer #ex-pane-source.exv-reserved-pane button{display:none!important}`, heredada de la vista reservada, que ocultaba los controles de unidad y la leyenda del nuevo gráfico aunque el DOM los generaba.
 - Se retira `exv-reserved-pane` al construir la vista temporal real, preservando la clase `exv-temporal-pane`. No se modifican los datos ni las curvas.
 - Se actualiza versión del JS para evitar caché; validación visual pendiente en ALIA Local.
+
+### 2026-10-26 — Gráfica mensual: espacio, contraste y animación
+- Controles excluyentes %/USD trasladados al extremo superior derecho del encabezado para liberar espacio vertical; altura útil SVG ampliada.
+- Paleta diferenciada: línea base violeta, real verde turquesa, proyección naranja discontinua, codificado azul apagado. Sombreado sutil bajo devengado real.
+- Recuperada animación automática de trazado (3 segundos) al dibujar curvas continuas y aparición diferida de proyección; respeta prefers-reduced-motion. Leyenda interactiva debajo y marcador CORTE conservados.
+- No se modificaron cifras, archivos XLSX, snapshots ni RAMA 01. Pendiente verificación visual local.
