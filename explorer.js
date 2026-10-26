@@ -1247,6 +1247,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
   try {
    const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+   if(reduced){for(const marker of svg.querySelectorAll("[data-alia-projection-month]"))marker.setAttribute("opacity","1");}
    if(!reduced){
     const paths=[...svg.querySelectorAll("polyline[data-alia-series]")];
     const duration=3000;
