@@ -1147,10 +1147,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: presupuesto anual de referencia.";
- const cutReadout=document.createElement("div");
- cutReadout.className="exv-monthly-cut-readout";
- cutReadout.style.cssText="display:flex;justify-content:flex-end;align-items:center;gap:9px;margin:7px 0 0;min-height:26px;font-size:12px;color:#b7dbe4";
- chartHeader.append(controls);section.append(cutReadout,plot,legend,footer);host.append(section);
+ chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const ns="http://www.w3.org/2000/svg";
  function draw(){
   for(const [value,btn] of Object.entries(unitButtons)){const selected=unit===value;btn.setAttribute("aria-pressed",String(selected));btn.style.background=selected?"#166176":"#092b3c";btn.style.borderColor=selected?"#6fe7e0":"#4e9db2";}
@@ -1172,26 +1169,18 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
 
    for(const p of l.points){if(l.label==="Proyección vigente")continue;const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
   }
-  // Punto de corte destacado sin tapar líneas: indicador fuera del SVG.
+  // Solo el marcador visual en la gráfica; el porcentaje va en la cuarta tarjeta.
   const realLine=lines.find(line=>line.label==="Devengado real");
   const realEnd=realLine&&realLine.points.length?realLine.points[realLine.points.length-1]:null;
   let realHalo=null,realRing=null;
-  cutReadout.replaceChildren();cutReadout.style.minHeight="26px";
   if(realEnd&&active.has("Devengado real")){
    const px=x(realEnd[0]),py=y(realEnd[1]);
-   const percent=budget>0?100*realEnd[1]/budget:null;
-   const caption=unit==="%"?(percent===null?"SIN CODIFICADO":percent.toFixed(1)+"%"):money(realEnd[1]);
-   const name=document.createElement("span");name.textContent="DEVENGADO REAL AL CORTE";
-   name.style.cssText="font-size:10px;letter-spacing:.07em;font-weight:700;color:#95d6d6";
-   const value=document.createElement("strong");value.textContent=caption;
-   value.style.cssText="color:#d9fff4;font-size:16px;font-variant-numeric:tabular-nums";
-   const chip=document.createElement("span");chip.style.cssText="display:inline-flex;align-items:center;padding:4px 12px;border-radius:6px;border:1px solid #5effd8;background:#10475a";
-   chip.append(value);cutReadout.append(name,chip);
    realHalo=make("circle",{cx:px,cy:py,r:12,fill:"#25e1bd",opacity:".15","pointer-events":"none"});
    realRing=make("circle",{cx:px,cy:py,r:7.5,fill:"#082c3d",stroke:"#5effd8","stroke-width":"2.8","pointer-events":"none"});
    const core=make("circle",{cx:px,cy:py,r:4.2,fill:"#baffed","pointer-events":"none"});
-   const tip=make("title",{},core);tip.textContent="Devengado real al corte: "+caption;
-  }else cutReadout.style.minHeight="0";
+   const tip=make("title",{},core);
+   tip.textContent="Devengado al corte: "+(budget>0?(100*realEnd[1]/budget).toFixed(1)+"%":"sin codificado");
+  }
   plot.append(svg);
   // Animar solo después de insertar SVG en el DOM. En Firefox getTotalLength
   // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
@@ -1275,11 +1264,14 @@ function renderRealTemporal(rs,cutMonth){
  title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
  title.querySelector("h3").textContent=label;
  const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
- const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued]];
+ const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued],["% DEVENGADO",total.budget>0?(100*total.accrued/total.budget).toFixed(1)+"%":"—"]];
  for(const [name,value] of cards){
   const card=document.createElement("div");card.className="exv-summary-card";const small=document.createElement("small");small.textContent=name;
-  const strong=document.createElement("strong");strong.textContent=money(value);card.append(small,strong);summary.append(card);
+  const strong=document.createElement("strong");strong.textContent=typeof value==="number"?money(value):value;card.append(small,strong);summary.append(card);
  }
+ summary.style.display="grid";summary.style.gridTemplateColumns="repeat(4,minmax(0,1fr))";summary.style.gap="10px";
+ for(const card of summary.children){card.style.minWidth="0";card.style.padding="14px 12px";card.querySelector("strong").style.fontSize="clamp(15px,1.65vw,25px)";}
+ const rateCard=summary.lastElementChild;rateCard.style.borderColor="#5effd8";rateCard.querySelector("strong").style.color="#71f5dd";
  host.append(summary);
  const warning=document.createElement("p");warning.className="exv-temporal-note";
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
