@@ -395,3 +395,8 @@
 - La proyección naranja ya no aparece por desvanecimiento completo: una máscara SVG avanza horizontalmente desde el último mes real hasta diciembre, revelando el trazo discontinuo y sus puntos al alcanzar cada mes.
 - Comienza solo después de terminar la animación de devengado real (3 s); duración de recorrido proyectado: 1,8 s. Mantiene compatibilidad con movimiento reducido y no altera cifras.
 - Pendiente validación visual en ALIA Local.
+
+### 2026-10-26 — Resaltar punto final del devengado real
+- En la curva mensual, el último punto real del mes de corte tiene halo turquesa pulsante y doble marcador de alto contraste, más una etiqueta permanente con el porcentaje de devengado sobre codificado (modo %) o monto real acumulado (modo USD).
+- La etiqueta se posiciona dentro del SVG, evita desbordar el borde derecho y se recalcula al cambiar unidad o filtros. El pulso respeta `prefers-reduced-motion`.
+- Se preservan series, animación secuencial, importaciones y RAMA 01. Pendiente validación visual local.
