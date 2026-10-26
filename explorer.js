@@ -182,10 +182,18 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
   const strong=document.createElement("strong");strong.textContent=money(stats.amount);
   const counts=document.createElement("span");counts.className="exv-balance-counts";
   counts.textContent=stats.projects+" "+unit;
-  const info=document.createElement("span");info.className="exv-balance-info";info.textContent="ⓘ";info.title="Ver definición y fórmula";info.setAttribute("role","button");info.tabIndex=0;
-  info.setAttribute("aria-label","Información sobre "+label);
+  const info=document.createElement("span");info.className="exv-balance-info";info.textContent="i";info.title="¿Qué significa este saldo?";info.setAttribute("role","button");info.tabIndex=0;
+  info.setAttribute("aria-label","Explicación de "+label);info.setAttribute("aria-expanded","false");
   const explanation=document.createElement("span");explanation.className="exv-balance-explanation";explanation.hidden=true;
-  explanation.textContent=(type==="uncommitted"?"Solo procesos cuyo codificado total es positivo y cuyo compromiso total es cero. El monto mostrado corresponde al codificado del proceso. ":"Contratos con saldo positivo entre comprometido y devengado. ")+description+". El recuento utiliza entidades únicas, no filas de la matriz.";
+  const helpTitle=document.createElement("strong");helpTitle.textContent=type==="uncommitted"?"¿Qué dinero falta comprometer?":"¿Qué dinero falta devengar?";
+  const helpBody=document.createElement("span");
+  helpBody.textContent=type==="uncommitted"
+   ?"Aquí se muestra el presupuesto de los procesos que todavía no tienen ningún compromiso registrado. Si un proceso ya tiene algún compromiso, no aparece en esta lista."
+   :"Aquí se muestra cuánto falta devengar de los contratos que ya tienen dinero comprometido. Si un contrato está completamente devengado, no aparece en esta lista.";
+  const helpFooter=document.createElement("span");helpFooter.textContent=type==="uncommitted"
+   ?"El total reúne el presupuesto de esos procesos, sin contar un mismo proceso dos veces."
+   :"El total suma lo que falta devengar en esos contratos, sin contar un mismo contrato dos veces.";
+  explanation.append(helpTitle,helpBody,helpFooter);
   const toggleInfo=e=>{e.stopPropagation();explanation.hidden=!explanation.hidden;info.setAttribute("aria-expanded",String(!explanation.hidden));};
   info.addEventListener("click",toggleInfo);
   info.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleInfo(e);}});
@@ -653,6 +661,37 @@ aliaBalanceRankingHeaderStyle.textContent=`
 @media(max-width:520px){#explorer .exv-balance-ranking-header{grid-template-columns:minmax(0,1fr) minmax(115px,50%);font-size:10px;padding:9px}}
 `;
 document.head.append(aliaBalanceRankingHeaderStyle);
+
+const aliaBalanceHelpPolish=document.createElement("style");
+aliaBalanceHelpPolish.textContent=`
+#explorer .exv-balance-action .exv-balance-info{
+ display:grid!important;place-items:center!important;box-sizing:border-box!important;
+ width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important;
+ border:1px solid #8ed6e4!important;border-radius:50%!important;
+ background:rgba(4,34,50,.75)!important;color:#d9faff!important;
+ font-family:Georgia,serif!important;font-size:19px!important;font-style:italic!important;
+ font-weight:700!important;line-height:1!important;box-shadow:none!important;
+ text-shadow:none!important;outline:0!important;cursor:help!important
+}
+#explorer .exv-balance-action .exv-balance-info:hover,
+#explorer .exv-balance-action .exv-balance-info:focus-visible{
+ background:#12516a!important;border-color:#73f1e7!important;
+ outline:2px solid #73f1e7!important;outline-offset:3px!important
+}
+#explorer .exv-balance-action .exv-balance-explanation:not([hidden]){
+ display:flex!important;flex-direction:column!important;gap:9px!important;
+ padding:15px 17px!important;font-size:13px!important;line-height:1.55!important;
+ font-weight:400!important;white-space:normal!important
+}
+#explorer .exv-balance-action .exv-balance-explanation strong{
+ color:#8bf3e5!important;font-size:14px!important;line-height:1.3!important
+}
+#explorer .exv-balance-action .exv-balance-explanation span:last-child{
+ color:#a5d2de!important;border-top:1px solid #305b6c!important;
+ padding-top:8px!important
+}
+`;
+document.head.append(aliaBalanceHelpPolish);
 
 function renderPanes(){
  const focus=focusPath();
