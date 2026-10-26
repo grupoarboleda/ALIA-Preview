@@ -420,3 +420,8 @@
 - Curva de codificado USD obtenida de cada snapshot mensual realmente cargado mediante `/__alia_explorer_history`, sin inventar meses no cargados. En vista porcentual, codificado de los meses disponibles permanece al 100%.
 - El punto naranja al cierre de diciembre admite clic y teclado y muestra el USD previsto y su porcentaje respecto del codificado del corte seleccionado. Mantiene línea discontinua y animación secuencial.
 - Pendiente comprobar visualmente en ALIA Local la correspondencia de filtros de áreas/procesos entre reportes históricos; no se tocaron archivos Excel.
+
+### 2026-10-26 — Puntos mensuales visibles en la proyección
+- Se incorporan marcadores naranja discretos en cada mes posterior al corte (noviembre y diciembre en el ejemplo), sobre la línea naranja discontinua. Cada marcador aparece al alcanzarlo la animación progresiva de 1,8 segundos; el punto final permanece ligeramente mayor.
+- Se conservan las áreas de clic/teclado por mes para consultar USD y porcentaje en el panel inferior. Con movimiento reducido, los marcadores se muestran sin animación.
+- Sin cambios a cifras ni RAMA 01; pendiente validación visual en ALIA Local.
