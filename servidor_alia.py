@@ -49,6 +49,16 @@ def sync():
 class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         endpoint = self.path.split("?", 1)[0]
+        if endpoint == "/__alia_enrich_monthly":
+            try:
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= 40 * 1024 * 1024:
+                    return self._json({"ok": False, "error": "Tamaño de archivo inválido"}, 413)
+                month = self.headers.get("X-ALIA-Month", "")
+                filename = unquote(self.headers.get("X-ALIA-Filename", "matriz.xlsx"))
+                return self._json(monthly.enrich_monthly_series(self.rfile.read(size), filename, month))
+            except (ValueError, OSError, KeyError, zipfile.BadZipFile) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint in ("/__alia_import_stage", "/__alia_import_activate"):
             try:
                 if endpoint == "/__alia_import_activate":
