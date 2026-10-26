@@ -115,6 +115,14 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
   note.textContent=ranking.length+(type==="uncommitted"?" procesos":" contratos")+" con saldo · Prioridad por monto pendiente. Selecciona uno para ver su evolución.";
   detailTable.append(note);
+  const rankingHeader=document.createElement("div");
+  rankingHeader.className="exv-balance-ranking-header";
+  const entityHeader=document.createElement("span");
+  entityHeader.textContent=type==="uncommitted"?"PROCESO":"CONTRATO";
+  const amountHeader=document.createElement("span");
+  amountHeader.textContent=type==="uncommitted"?"MONTO POR COMPROMETER":"MONTO POR DEVENGAR";
+  rankingHeader.append(entityHeader,amountHeader);
+  detailTable.append(rankingHeader);
   const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
   let showAll=false;
   const paint=()=>{
@@ -610,6 +618,14 @@ aliaHideAreaCounts.textContent=`
 #explorer .exv-area-approved-total .exv-area-approved-total-identity small{display:none!important}
 `;
 document.head.append(aliaHideAreaCounts);
+
+const aliaBalanceRankingHeaderStyle=document.createElement("style");
+aliaBalanceRankingHeaderStyle.textContent=`
+#explorer .exv-balance-ranking-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,42%);gap:12px;align-items:center;padding:10px 16px;margin:10px 0 6px;border-bottom:1px solid #42768d;color:#85dfe8;font-size:11px;font-weight:800;letter-spacing:.07em}
+#explorer .exv-balance-ranking-header span:last-child{text-align:right}
+@media(max-width:520px){#explorer .exv-balance-ranking-header{grid-template-columns:minmax(0,1fr) minmax(115px,50%);font-size:10px;padding:9px}}
+`;
+document.head.append(aliaBalanceRankingHeaderStyle);
 
 function renderPanes(){
  const focus=focusPath();
