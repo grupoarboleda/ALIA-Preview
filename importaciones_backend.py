@@ -293,3 +293,45 @@ def explorer_history():
         series.append({"month": month, "date": snap.get("date"),
                        "records": rows})
     return {"mode": "REAL", "series": series}
+
+
+def enrich_monthly_series(content, filename, month):
+    """Añade únicamente series mensuales al snapshot existente; exige XLSX original idéntico."""
+    import hashlib
+    month = int(month)
+    if not 1 <= month <= 12:
+        raise ValueError("Mes inválido")
+    target = STAGING / f"{month:02d}.json"
+    snap = read_json(target, None)
+    if not snap or not snap.get("records"):
+        raise ValueError("No existe una carga previa de este mes")
+    digest = hashlib.sha256(content).hexdigest()
+    if digest != snap.get("sha256"):
+        raise ValueError("Este Excel no coincide exactamente con el archivo que ya está cargado. No se modificó ningún dato.")
+    if len(content) > 40 * 1024 * 1024 or content[:2] != b"PK":
+        raise ValueError("Archivo XLSX inválido o demasiado grande")
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as fp:
+        fp.write(content)
+        temp_path = Path(fp.name)
+    try:
+        parsed = inspect_file(temp_path, assigned_month=month)
+    finally:
+        temp_path.unlink(missing_ok=True)
+    source = {r["source_row"]: r for r in parsed["records"] if r.get("process_key")}
+    existing = snap["records"]
+    if len(source) != len(existing) or any(r.get("sourceRow") not in source for r in existing):
+        raise ValueError("Las filas de origen no coinciden con la carga previa. No se modificó ningún dato.")
+    enriched = []
+    for record in existing:
+        row = source[record["sourceRow"]]
+        if str(record.get("process") or "") != str(row.get("process_key") or ""):
+            raise ValueError("Los procesos no coinciden con el archivo original. No se modificó ningún dato.")
+        item = dict(record)
+        for dst, src in (("baselineMonthly", "baseline_monthly"), ("plannedMonthly", "planned_monthly"), ("actualMonthly", "actual_monthly")):
+            item[dst] = row[src]
+        enriched.append(item)
+    updated = dict(snap)
+    updated["records"] = enriched
+    updated["monthly_series_version"] = "2026-10-v1"
+    write_json_atomic(target, updated)
+    return {"ok": True, "month": month, "records": len(enriched), "message": "Series mensuales recuperadas sin reemplazar los demás datos"}
