@@ -380,3 +380,8 @@
 - Paleta diferenciada: línea base violeta, real verde turquesa, proyección naranja discontinua, codificado azul apagado. Sombreado sutil bajo devengado real.
 - Recuperada animación automática de trazado (3 segundos) al dibujar curvas continuas y aparición diferida de proyección; respeta prefers-reduced-motion. Leyenda interactiva debajo y marcador CORTE conservados.
 - No se modificaron cifras, archivos XLSX, snapshots ni RAMA 01. Pendiente verificación visual local.
+
+### 2026-10-26 — Reparación de gráfica desaparecida al animar SVG
+- Captura del usuario: encabezado, botones y leyendas visibles, pero sin ejes ni curvas. La animación introducida ejecutaba `getTotalLength()` sobre polilíneas antes de insertar el SVG en el documento; esto puede fallar en Firefox y abortar `draw()` antes de `plot.append(svg)`.
+- Solución: primero dibujar e insertar el SVG completo; después ejecutar animaciones opcionales dentro de try/catch, respetando reducción de movimiento. Si falla la animación, la gráfica permanece visible.
+- Se conserva posición de %/USD, paleta, líneas, datos y RAMA 01. Pendiente validación visual local en Firefox.
