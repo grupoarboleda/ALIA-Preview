@@ -1219,7 +1219,12 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
     const px=x(p[0]),py=y(p[1]);
     const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar proyección de "+monthNames[p[0]]});
     hit.style.cursor="pointer";
-    if(p[0]===11)make("circle",{cx:px,cy:py,r:4.5,fill:"#ffb443",stroke:"#ffe3a6","stroke-width":"1.4","pointer-events":"none"});
+    // Marcadores discretos en cada mes proyectado, incluidos noviembre y diciembre.
+    // Se revelan junto con la línea, no antes de la animación.
+    if(p[0]>cutMonth-1){
+     const marker=make("circle",{cx:px,cy:py,r:p[0]===11?4.6:4,fill:"#ffb443",stroke:"#ffe4ad","stroke-width":"1.5","pointer-events":"none",opacity:"0"});
+     marker.dataset.aliaProjectionMonth=String(p[0]);
+    }
     const tip=make("title",{},hit);tip.textContent="Proyección · "+monthNames[p[0]]+" · "+money(p[1]);
     hit.addEventListener("click",()=>showPoint(forecast,p));
     hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(forecast,p);}});
@@ -1297,6 +1302,14 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
       if(!svg.isConnected)return;
       if(typeof sweep.beginElement==="function")sweep.beginElement();
       else mask.setAttribute("width",String(revealWidth));
+      const markers=[...svg.querySelectorAll("[data-alia-projection-month]")];
+      for(const marker of markers){
+       const month=Number(marker.dataset.aliaProjectionMonth);
+       const delay=width>0?Math.max(0,1800*(x(month)-startX)/width):0;
+       if(typeof marker.animate==="function"){
+        marker.animate([{opacity:0},{opacity:1}],{duration:140,delay,fill:"forwards"});
+       }else marker.setAttribute("opacity","1");
+      }
      };
      if(realAnimation)realAnimation.finished.then(startProjection).catch(startProjection);
      else startProjection();
