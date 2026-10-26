@@ -85,17 +85,40 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
  const totalGap=gaps.reduce((n,g)=>n+g.gap,0),top3=gaps.slice(0,3),topGap=top3.reduce((n,g)=>n+g.gap,0);
  const insightTitle=document.createElement("h3");insightTitle.textContent=heading;
  const insightMetrics=document.createElement("div");insightMetrics.className="exv-management-metrics";
- // Independent budget gaps; a project/process can belong to both categories.
- const balanceRows=filtered.map(r=>{const v=sum([r],cut());return {...r,...v,uncommitted:Math.max(0,v.budget-v.committed),committed:Math.max(0,v.committed-v.accrued)};});
+ // Saldos gerenciales por entidad completa, nunca por fila aislada.
+ // Sin comprometer: procesos con codificado positivo y compromiso TOTAL igual a cero.
+ // Sin devengar: contratos con compromiso positivo y devengado inferior al compromiso.
+ const balanceRows=filtered.map(r=>{const v=sum([r],cut());return {...r,...v};});
+ const processGroups=new Map(),contractGroups=new Map();
+ for(const r of balanceRows){
+  const processId=String(r.process||"").trim();
+  if(processId){
+   if(!processGroups.has(processId))processGroups.set(processId,[]);
+   processGroups.get(processId).push(r);
+  }
+  const contractId=String(r.contract||r.process||"").trim();
+  if(contractId){
+   if(!contractGroups.has(contractId))contractGroups.set(contractId,[]);
+   contractGroups.get(contractId).push(r);
+  }
+ }
+ const uncommittedEntries=[...processGroups].map(([id,rows])=>{
+  const budget=rows.reduce((n,r)=>n+r.budget,0);
+  const committed=rows.reduce((n,r)=>n+r.committed,0);
+  return {id,rows,total:budget};
+ }).filter(x=>x.total>0&&Math.abs(x.rows.reduce((n,r)=>n+r.committed,0))<0.005);
+ const undevengedEntries=[...contractGroups].map(([id,rows])=>{
+  const committed=rows.reduce((n,r)=>n+r.committed,0);
+  const accrued=rows.reduce((n,r)=>n+r.accrued,0);
+  return {id,rows,total:Math.max(0,committed-accrued)};
+ }).filter(x=>x.total>0);
  const balances=[
-  {label:"SALDO SIN COMPROMETER",type:"uncommitted",description:"Codificado − Comprometido"},
+  {label:"SALDO SIN COMPROMETER",type:"uncommitted",description:"Procesos con codificado > 0 y comprometido = 0"},
   {label:"SALDO SIN DEVENGAR",type:"committed",description:"Comprometido − Devengado"}
  ];
  const balanceStats=type=>{
-  const eligible=balanceRows.filter(r=>r[type]>0);
-  return {rows:eligible,amount:eligible.reduce((v,r)=>v+r[type],0),
-   projects:new Set(eligible.map(r=>type==="uncommitted"?r.process:(r.contract||r.process))).size,
-   processes:new Set(eligible.map(r=>r.process)).size};
+  const entries=type==="uncommitted"?uncommittedEntries:undevengedEntries;
+  return {entries,amount:entries.reduce((v,r)=>v+r.total,0),projects:entries.length};
  };
 
  const detail=document.createElement("section");detail.className="exv-balance-detail";detail.hidden=true;
@@ -108,10 +131,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
  function showBalance(type,label){
   detail.hidden=false;detailTitle.textContent=label+" · TOP 5 "+(type==="uncommitted"?"PROCESOS":"CONTRATOS");detailTable.replaceChildren();
   insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
-  const entries=balanceStats(type).rows;
-  const byProject=new Map();
-  for(const r of entries){const entity=type==="uncommitted"?r.process:(r.contract||r.process);if(!byProject.has(entity))byProject.set(entity,[]);byProject.get(entity).push(r);}
-  const ranking=[...byProject].map(([project,rows])=>({project,rows,total:rows.reduce((v,r)=>v+r[type],0)})).sort((a,b)=>b.total-a.total);
+  const ranking=balanceStats(type).entries.map(({id,rows,total})=>({project:id,rows,total})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
   note.textContent=ranking.length+(type==="uncommitted"?" procesos":" contratos")+" con saldo · Prioridad por monto pendiente. Selecciona uno para ver su evolución.";
   detailTable.append(note);
@@ -165,7 +185,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
   const info=document.createElement("span");info.className="exv-balance-info";info.textContent="ⓘ";info.title="Ver definición y fórmula";info.setAttribute("role","button");info.tabIndex=0;
   info.setAttribute("aria-label","Información sobre "+label);
   const explanation=document.createElement("span");explanation.className="exv-balance-explanation";explanation.hidden=true;
-  explanation.textContent=(type==="uncommitted"?"Presupuesto codificado todavía disponible para comprometer. ":"Compromisos registrados cuyo devengado aún está pendiente. ")+description+". El recuento utiliza códigos únicos, no filas de la matriz.";
+  explanation.textContent=(type==="uncommitted"?"Solo procesos cuyo codificado total es positivo y cuyo compromiso total es cero. El monto mostrado corresponde al codificado del proceso. ":"Contratos con saldo positivo entre comprometido y devengado. ")+description+". El recuento utiliza entidades únicas, no filas de la matriz.";
   const toggleInfo=e=>{e.stopPropagation();explanation.hidden=!explanation.hidden;info.setAttribute("aria-expanded",String(!explanation.hidden));};
   info.addEventListener("click",toggleInfo);
   info.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleInfo(e);}});
