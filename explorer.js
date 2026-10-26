@@ -501,6 +501,53 @@ aliaTreemapStandardBars.textContent=`
 `;
 document.head.append(aliaTreemapStandardBars);
 
+const aliaHarmonicTreemapStyle=document.createElement("style");
+aliaHarmonicTreemapStyle.textContent=`
+/* Regla armónica: espacio legible en bloques secundarios, sin superponer datos. */
+#explorer .exv-balanced-treemap:has(.exv-treemap-main){height:535px!important}
+#explorer .exv-balanced-treemap .exv-treemap-top,
+#explorer .exv-balanced-treemap .exv-treemap-bottom{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ justify-content:flex-start!important;gap:9px!important;padding:17px 20px!important;
+ overflow:hidden!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ gap:12px!important;flex:0 0 auto!important;width:100%!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values>span,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values>span{
+ display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+ min-width:0!important;gap:5px!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-values b,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-values b{
+ font-size:clamp(12px,1.25vw,17px)!important;line-height:1.25!important;
+ white-space:nowrap!important;overflow:visible!important;word-break:normal!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-summary,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-summary{
+ position:static!important;flex:0 0 auto!important;line-height:1.2!important;
+ margin-top:2px!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-bar,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-bar{
+ position:static!important;flex:0 0 9px!important;min-height:9px!important;
+ margin:0!important;width:100%!important
+}
+#explorer .exv-balanced-treemap .exv-treemap-top .exv-node-foot,
+#explorer .exv-balanced-treemap .exv-treemap-bottom .exv-node-foot{
+ margin-top:auto!important;position:static!important;flex:0 0 auto!important
+}
+@media(max-width:700px){
+ #explorer .exv-balanced-treemap:has(.exv-treemap-main){height:auto!important}
+ #explorer .exv-balanced-treemap .exv-treemap-top,
+ #explorer .exv-balanced-treemap .exv-treemap-bottom{min-height:240px!important}
+}
+`;
+document.head.append(aliaHarmonicTreemapStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -628,7 +675,12 @@ function renderPanes(){
      const right=items.map((_,i)=>i).filter(i=>i!==main);
      const position=index===main?"main":index===right[0]?"top":"bottom";
      card.classList.add("exv-treemap-"+position);
-     const mainShare=Math.max(.55,Math.min(.63,fixed[main]||.6));
+     // Regla armónica: raíz cuarta del codificado + reserva mínima de legibilidad.
+     // Mantiene jerarquía financiera sin que el área mayor monopolice el lienzo.
+     const budgets=items.map(x=>Math.max(0,sum(x.rows,cut()).budget));
+     const harmonic=budgets.map(b=>Math.pow(b,0.25));
+     const harmonicTotal=harmonic.reduce((a,b)=>a+b,0)||1;
+     const mainShare=Math.max(.52,Math.min(.57,harmonic[main]/harmonicTotal));
      card.style.left=(position==="main"?0:mainShare*100)+"%";
      card.style.width=(position==="main"?mainShare:1-mainShare)*100+"%";
      card.style.top=position==="bottom"?"50%":"0%";
