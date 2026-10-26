@@ -1093,6 +1093,58 @@ function renderRealHistoryChart(host,cutMonth){
   draw();
  });
 }
+function renderMonthlyExecutionChart(host,rows,cutMonth){
+ const section=document.createElement("section");section.className="exv-real-history-panel";
+ const heading=document.createElement("h4");heading.textContent="CURVA DE DEVENGADO · REAL, PROYECCIÓN Y LÍNEA BASE";section.append(heading);
+ const valid=rows.filter(r=>Array.isArray(r.actualMonthly)&&Array.isArray(r.plannedMonthly)&&Array.isArray(r.baselineMonthly));
+ if(!valid.length){
+  const msg=document.createElement("p");msg.className="exv-temporal-note";
+  msg.textContent="Los reportes ya cargados no contienen todavía el detalle mensual de las columnas 508–519, 523–534 y 538–549. No se mostrarán curvas estimadas. Es necesario recuperar esas columnas de la matriz original sin modificar los importes existentes.";
+  section.append(msg);host.append(section);return;
+ }
+ const budget=rows.reduce((n,r)=>n+(Number(r.budget)||0),0);
+ const totals={baseline:Array(12).fill(0),planned:Array(12).fill(0),actual:Array(12).fill(0)};
+ for(const r of valid){
+  for(let i=0;i<12;i++){
+   for(const [field,key] of [["baseline","baselineMonthly"],["planned","plannedMonthly"],["actual","actualMonthly"]]){
+    const v=r[key][i];if(v!==null&&v!==undefined&&Number.isFinite(Number(v)))totals[field][i]+=Number(v);
+   }
+  }
+ }
+ const cumulative=arr=>{let n=0;return arr.map(v=>(n+=v));};
+ const baseline=cumulative(totals.baseline);
+ const real=cumulative(totals.actual);
+ const projection=real.slice();
+ for(let i=cutMonth;i<12;i++)projection[i]=projection[i-1]+totals.planned[i];
+ const lines=[
+  {label:"Línea base inicial",color:"#b5a0ee",points:baseline.map((v,i)=>[i,v])},
+  {label:"Devengado real",color:"#58e1d2",points:real.map((v,i)=>i<cutMonth?[i,v]:null).filter(Boolean)},
+  {label:"Proyección vigente",color:"#e9b75b",points:projection.map((v,i)=>i>=cutMonth-1?[i,v]:null).filter(Boolean)},
+  {label:"Codificado anual",color:"#71b9e7",points:Array.from({length:12},(_,i)=>[i,budget])}
+ ];
+ const active=new Set(lines.map(l=>l.label));
+ const legend=document.createElement("div");legend.className="exv-real-history-legend";
+ const plot=document.createElement("div");plot.className="exv-real-history-plot";
+ const footer=document.createElement("p");footer.className="exv-temporal-note";
+ footer.textContent="Real hasta "+cutMonth+"/2026; proyección solo para meses posteriores. Codificado: referencia anual. % devengado al corte: "+(budget>0?(100*real[Math.max(0,cutMonth-1)]/budget).toFixed(1)+"%":"sin presupuesto")+".";
+ section.append(legend,plot,footer);host.append(section);
+ const ns="http://www.w3.org/2000/svg";
+ function draw(){
+  plot.replaceChildren();const visible=lines.filter(l=>active.has(l.label));
+  const high=Math.max(1,...visible.flatMap(l=>l.points.map(p=>p[1])));
+  const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 270");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Curva acumulada mensual de línea base, devengado real, proyección y codificado");
+  const make=(tag,attrs,parent=svg)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
+  const x=i=>65+i*59,y=v=>222-190*v/high;
+  for(let k=0;k<=4;k++){const yy=222-k*47.5;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=Math.round(high*k/4000)+"k";}
+  ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:248,"text-anchor":"middle",fill:"#bbdbe8","font-size":"10"});t.textContent=m;});
+  for(const l of visible){if(!l.points.length)continue;make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:l.color,"stroke-width":"3","stroke-linejoin":"round"});
+   for(const p of l.points){const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+money(p[1]);}
+  }
+  plot.append(svg);
+ }
+ for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.color=l.color;b.textContent="● "+l.label;b.setAttribute("aria-pressed","true");b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));draw();};legend.append(b);}
+ draw();
+}
 function renderRealTemporal(rs,cutMonth){
  const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
  const heading=document.createElement("div");heading.className="exv-temporal-head";
@@ -1113,7 +1165,7 @@ function renderRealTemporal(rs,cutMonth){
  const warning=document.createElement("p");warning.className="exv-temporal-note";
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
- renderRealHistoryChart(host,cutMonth);
+ renderMonthlyExecutionChart(host,rs,cutMonth);
  if(choice&&choice.type==="committed"){
   const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
   const physical=months.map((_,i)=>{
