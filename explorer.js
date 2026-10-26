@@ -693,6 +693,19 @@ aliaBalanceHelpPolish.textContent=`
 `;
 document.head.append(aliaBalanceHelpPolish);
 
+const aliaRealHistoryStyle=document.createElement("style");
+aliaRealHistoryStyle.textContent=`
+#explorer .exv-real-history-panel{border:1px solid #31657c;background:#0a2537;padding:18px;margin-top:20px}
+#explorer .exv-real-history-panel h4{font-size:14px;letter-spacing:.08em;color:#c6f7fa;margin:0 0 12px}
+#explorer .exv-real-history-controls select{background:#0d3448;color:#d9faff;border:1px solid #43869c;padding:8px}
+#explorer .exv-real-history-legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+#explorer .exv-real-history-toggle{background:#102f41;border:1px solid #38657a;padding:7px 10px;cursor:pointer;font-weight:700}
+#explorer .exv-real-history-toggle[aria-pressed="false"]{opacity:.38;text-decoration:line-through}
+#explorer .exv-real-history-plot{width:100%;overflow-x:auto}
+#explorer .exv-real-history-plot svg{min-width:430px}
+`;
+document.head.append(aliaRealHistoryStyle);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -1005,6 +1018,81 @@ function stageMessage(stages,cutMonth){
  const i=Math.max(0,cutMonth-1),stage=stages[i];let n=0;for(let j=i;j>=0&&stages[j]===stage;j--)n++;
  return "ATENCIÓN GERENCIAL · "+stage+" durante "+n+" reporte(s) consecutivo(s); revisar próximo hito.";
 }
+let aliaHistoricalCuts=null;
+let aliaHistoryRequest=null;
+function ensureRealHistory(){
+ if(aliaHistoricalCuts)return Promise.resolve(aliaHistoricalCuts);
+ if(!aliaHistoryRequest)aliaHistoryRequest=fetch("/__alia_explorer_history",{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw Error("No se pudo consultar el historial");return r.json();})
+  .then(data=>{aliaHistoricalCuts=Array.isArray(data.series)?data.series:[];return aliaHistoricalCuts;})
+  .catch(()=>{aliaHistoryRequest=null;return [];});
+ return aliaHistoryRequest;
+}
+function renderRealHistoryChart(host,cutMonth){
+ const panel=document.createElement("section");panel.className="exv-real-history-panel";
+ const heading=document.createElement("h4");heading.textContent="EVOLUCIÓN FINANCIERA · CORTES REALES";
+ const controls=document.createElement("div");controls.className="exv-real-history-controls";
+ const mode=document.createElement("select");mode.setAttribute("aria-label","Presentación de la evolución");
+ for(const [value,label] of [["acc","Acumulado"],["delta","Variación mensual"],["pct","% del codificado"]]){const o=document.createElement("option");o.value=value;o.textContent=label;mode.append(o);}
+ controls.append(mode);panel.append(heading,controls);
+ const legend=document.createElement("div");legend.className="exv-real-history-legend";
+ const active=new Set(["budget","committed","accrued"]);
+ const series=[["budget","Codificado","#48c9e3"],["committed","Comprometido","#f1c36b"],["accrued","Devengado","#6ee2bd"]];
+ for(const [field,label,color] of series){
+  const btn=document.createElement("button");btn.type="button";btn.className="exv-real-history-toggle";btn.setAttribute("aria-pressed","true");btn.textContent="● "+label;btn.style.color=color;
+  btn.addEventListener("click",()=>{if(active.has(field))active.delete(field);else active.add(field);btn.setAttribute("aria-pressed",String(active.has(field)));draw();});legend.append(btn);
+ }
+ panel.append(legend);
+ const plot=document.createElement("div");plot.className="exv-real-history-plot";panel.append(plot);
+ const note=document.createElement("p");note.className="exv-temporal-note";panel.append(note);
+ host.append(panel);
+ let cuts=[];
+ const fmt=v=>mode.value==="pct"?v.toFixed(1)+"%":money(v);
+ const selection=selectedManagement;
+ const path=paneTrails[activePane]||[];
+ const filters={area:$("ex-area")?.value,source:$("ex-source")?.value,project:$("ex-project")?.value};
+ const selectedSource=selectedFunding;
+ const match=r=>{
+  if(path.some(p=>String(r[p.key]||"")!==String(p.value)))return false;
+  if(selectedSource&&r.source!==selectedSource)return false;
+  for(const [k,v] of Object.entries(filters))if(v&&v!=="all"&&r[k]!==v)return false;
+  if(selection&&(selection.type==="committed"?(r.contract||r.process):r.process)!==selection.id)return false;
+  return true;
+ };
+ function draw(){
+  plot.replaceChildren();
+  if(!cuts.length){note.textContent="No hay reportes mensuales disponibles para esta selección.";return;}
+  const data=cuts.map(c=>({month:c.month,values:Object.fromEntries(series.map(([key])=>[key,c[key]]))}));
+  if(mode.value==="delta")data.forEach((d,i)=>{for(const [key] of series)d.values[key]=i?cuts[i][key]-cuts[i-1][key]:null;});
+  if(mode.value==="pct")data.forEach((d,i)=>{for(const [key] of series)d.values[key]=cuts[i].budget>0?100*cuts[i][key]/cuts[i].budget:null;});
+  const nums=data.flatMap(d=>series.filter(([k])=>active.has(k)).map(([k])=>d.values[k]).filter(v=>v!==null&&Number.isFinite(v)));
+  const hi=Math.max(1,...nums,0),lo=Math.min(0,...nums);
+  const y=v=>190-(v-lo)/(hi-lo||1)*158,x=i=>55+(data.length===1?310:i*630/(data.length-1));
+  const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");chart.setAttribute("viewBox","0 0 750 240");chart.setAttribute("role","img");chart.setAttribute("aria-label","Evolución mensual de los importes financieros");chart.style.width="100%";
+  const add=(tag,attrs,parent=chart)=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4;add("line",{x1:55,x2:690,y1:y(v),y2:y(v),stroke:"#31566b","stroke-dasharray":"4 6"});const t=add("text",{x:49,y:y(v)+4,fill:"#a6c8d8","text-anchor":"end","font-size":"10"});t.textContent=mode.value==="pct"?v.toFixed(0)+"%":Math.round(v/1000)+"k";}
+  const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+  data.forEach((d,i)=>{const t=add("text",{x:x(i),y:216,fill:"#b3d7e5","text-anchor":"middle","font-size":"10"});t.textContent=months[d.month-1]||d.month;});
+  for(const [key,label,color] of series){if(!active.has(key))continue;
+   let pathText="",started=false;
+   data.forEach((d,i)=>{const v=d.values[key];if(v===null||!Number.isFinite(v)){started=false;return;}pathText+=(started?" L":" M")+x(i)+" "+y(v);started=true;});
+   if(pathText)add("path",{d:pathText,fill:"none",stroke:color,"stroke-width":"3","stroke-linejoin":"round"});
+   data.forEach((d,i)=>{const v=d.values[key];if(v===null||!Number.isFinite(v))return;const dot=add("circle",{cx:x(i),cy:y(v),r:4,fill:color});const tip=add("title",{},dot);tip.textContent=label+" · "+months[d.month-1]+": "+fmt(v);});
+  }
+  plot.append(chart);
+  note.textContent="Solo se muestran cortes realmente cargados. En variación mensual, cada punto compara dos reportes consecutivos disponibles; el primero no tiene comparación. No se estiman meses faltantes.";
+ }
+ mode.addEventListener("change",draw);
+ ensureRealHistory().then(all=>{
+  if(!panel.isConnected)return;
+  cuts=all.filter(s=>s.month<=cutMonth).map(s=>{
+   const rows=s.records.filter(match);
+   const totals=sum(rows,s.month);
+   return {month:s.month,budget:totals.budget,committed:totals.committed,accrued:totals.accrued};
+  }).sort((a,b)=>a.month-b.month);
+  draw();
+ });
+}
 function renderRealTemporal(rs,cutMonth){
  const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
  const heading=document.createElement("div");heading.className="exv-temporal-head";
@@ -1023,8 +1111,9 @@ function renderRealTemporal(rs,cutMonth){
  }
  host.append(summary);
  const warning=document.createElement("p");warning.className="exv-temporal-note";
- warning.textContent="DATOS REALES · El archivo contiene los acumulados financieros al corte, pero aún no se ha verificado una serie mensual de devengado real. No se dibujan curvas financieras ficticias ni proyecciones inventadas.";
+ warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
+ renderRealHistoryChart(host,cutMonth);
  if(choice&&choice.type==="committed"){
   const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
   const physical=months.map((_,i)=>{
