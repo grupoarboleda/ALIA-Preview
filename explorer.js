@@ -1171,7 +1171,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  draw();
 }
 function renderRealTemporal(rs,cutMonth){
- const host=$("ex-pane-source");host.replaceChildren();host.classList.add("exv-temporal-pane");
+ const host=$("ex-pane-source");host.replaceChildren();host.classList.remove("exv-reserved-pane");host.classList.add("exv-temporal-pane");
  const heading=document.createElement("div");heading.className="exv-temporal-head";
  const title=document.createElement("div");heading.append(title);host.append(heading);
  const choice=selectedManagement;
