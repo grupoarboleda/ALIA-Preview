@@ -1165,11 +1165,25 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   for(const l of visible){if(!l.points.length)continue;
    if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1])),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
-   if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches){const len=path.getTotalLength();if(l.label==="Proyección vigente"){path.animate([{opacity:0},{opacity:1}],{duration:900,delay:1700,fill:"both",easing:"ease-out"});}else{path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration:3000,fill:"both",easing:"ease-in-out"});}}
+   path.dataset.aliaSeries=l.label;
 
    for(const p of l.points){const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
   }
   plot.append(svg);
+  // Animar solo después de insertar SVG en el DOM. En Firefox getTotalLength
+  // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
+  try {
+   const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+   if(!reduced)for(const path of svg.querySelectorAll("polyline[data-alia-series]")){
+    if(typeof path.animate!=="function")continue;
+    if(path.dataset.aliaSeries==="Proyección vigente"){
+     path.animate([{opacity:0},{opacity:1}],{duration:900,delay:1700,fill:"both",easing:"ease-out"});
+    }else{
+     const len=path.getTotalLength();
+     if(Number.isFinite(len)&&len>0)path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration:3000,fill:"both",easing:"ease-in-out"});
+    }
+   }
+  }catch(error){console.warn("ALIA: animación opcional omitida",error);}
  }
  for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed","true");b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
  draw();
