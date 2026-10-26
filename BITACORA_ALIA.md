@@ -364,3 +364,8 @@
 - Nuevo botón de recuperación en RAMA 02: seleccionar una sola vez el XLSX original del corte. Se comprueba SHA256 idéntico al archivo ya cargado, número de filas y procesos; únicamente se añaden baselineMonthly/plannedMonthly/actualMonthly al snapshot existente. No se reemplazan los importes, el catálogo ni las observaciones, ni se vuelve a importar la matriz completa.
 - Endpoint local POST /__alia_enrich_monthly; rechazo sin cambios si el archivo no coincide. Tras completar, RAMA 02 se refresca.
 - La operación necesita selección explícita del XLSX porque el servidor no conserva una copia original del archivo Excel. Pendiente prueba de extremo a extremo con el archivo local real.
+
+### 2026-10-26 — Recuperación de leyendas aprobadas en curva mensual real
+- Conforme a decisiones previas de 2026-10-21: leyenda de curvas bajo el gráfico, botones excluyentes % y USD, línea vertical CORTE y mes resaltado, proyección discontinua diferenciada de devengado real.
+- Cuatro curvas visibles y conmutables: Línea base inicial (violeta), Devengado real (turquesa), Proyección vigente (naranja), Codificado anual (azul). La leyenda se construye con elementos HTML visibles y permite activar/ocultar cada serie.
+- En % el denominador es el codificado anual (ID 497), en USD se usan montos acumulados. Se preservan las series reales existentes y el treemap de RAMA 01.
