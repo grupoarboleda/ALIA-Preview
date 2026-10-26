@@ -1193,14 +1193,28 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
     }
     const projectionPath=paths.find(path=>path.dataset.aliaSeries==="Proyección vigente");
     if(projectionPath&&typeof projectionPath.animate==="function"){
-     // Conservar el trazo discontinuo original: revelar con opacidad.
-     const projectionAnimation=projectionPath.animate([{opacity:0},{opacity:1}],{duration:900,fill:"both",easing:"ease-out"});
+     // La proyección se dibuja desde el último punto real hasta diciembre.
+     // Una máscara SVG revela el trazo discontinuo sin alterar su patrón.
+     const projected=lines.find(line=>line.label==="Proyección vigente");
+     const startIndex=projected&&projected.points.length?projected.points[0][0]:Math.max(0,cutMonth-1);
+     const endIndex=projected&&projected.points.length?projected.points[projected.points.length-1][0]:11;
+     const reveal=document.createElementNS(ns,"clipPath");
+     const revealId="alia-projection-clip-"+Math.random().toString(36).slice(2);
+     reveal.setAttribute("id",revealId);
+     const mask=document.createElementNS(ns,"rect");
+     const startX=x(startIndex),width=Math.max(0,x(endIndex)-startX);
+     mask.setAttribute("x",String(startX-3));
+     mask.setAttribute("y","0");
+     mask.setAttribute("width","0");
+     mask.setAttribute("height","320");
+     reveal.append(mask);
+     svg.insertBefore(reveal,svg.firstChild);
+     projectionPath.setAttribute("clip-path","url(#"+revealId+")");
+     const projectionAnimation=mask.animate([{width:"0"},{width:String(width+9)}],{duration:1800,fill:"both",easing:"linear"});
      projectionAnimation.pause();
-     if(realAnimation){
-      realAnimation.finished.then(()=>{
-       if(svg.isConnected)projectionAnimation.play();
-      }).catch(()=>{if(svg.isConnected)projectionAnimation.play();});
-     }else projectionAnimation.play();
+     const startProjection=()=>{if(svg.isConnected)projectionAnimation.play();};
+     if(realAnimation)realAnimation.finished.then(startProjection).catch(startProjection);
+     else startProjection();
     }
    }
   }catch(error){console.warn("ALIA: animación opcional omitida",error);}
