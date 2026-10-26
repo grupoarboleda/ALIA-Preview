@@ -603,6 +603,14 @@ aliaTreemapAlignedCards.textContent=`
 `;
 document.head.append(aliaTreemapAlignedCards);
 
+const aliaHideAreaCounts=document.createElement("style");
+aliaHideAreaCounts.textContent=`
+/* Solo en el mapa de áreas y su fila TOTAL: ocultar recuentos. */
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-foot{display:none!important}
+#explorer .exv-area-approved-total .exv-area-approved-total-identity small{display:none!important}
+`;
+document.head.append(aliaHideAreaCounts);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
