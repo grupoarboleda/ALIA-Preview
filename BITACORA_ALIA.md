@@ -405,3 +405,8 @@
 - Corrección tras captura del usuario: la animación previa del ancho del rectángulo SVG con Web Animations no era fiable en Firefox, dejando visibles solo los puntos naranjas.
 - Se eliminan los puntos de la serie Proyección vigente y se conserva únicamente su línea naranja discontinua. Se revela de izquierda a derecha con SVG animate(attributeName=width), duración 1,8 s, iniciando al concluir la animación del devengado real.
 - Se conserva punto destacado del devengado real, controles y datos; no se modifica RAMA 01. Pendiente validación visual local.
+
+### 2026-10-26 — Etiqueta del devengado fuera del trazado
+- La etiqueta flotante de valor al corte tapaba las curvas naranja y violeta (captura del usuario). Se reemplazó por una banda compacta alineada a la derecha encima del área SVG: `DEVENGADO REAL AL CORTE` + valor dinámico %/USD.
+- El último punto real mantiene su halo y pulso sin texto superpuesto. Se recalcula con unidad y filtros; si se oculta la serie real también se oculta el indicador. Curvas, datos y animación secuencial sin cambios.
+- Pendiente verificación visual en ALIA Local.
