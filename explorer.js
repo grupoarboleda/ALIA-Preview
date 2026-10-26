@@ -548,6 +548,61 @@ aliaHarmonicTreemapStyle.textContent=`
 `;
 document.head.append(aliaHarmonicTreemapStyle);
 
+const aliaTreemapAlignedCards=document.createElement("style");
+aliaTreemapAlignedCards.textContent=`
+/* Todas las áreas usan una misma plantilla: título en línea y barra a la misma altura. */
+#explorer .exv-balanced-treemap .exv-area-block{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:46px 68px 18px 9px minmax(0,1fr) auto!important;
+ align-content:stretch!important;justify-content:stretch!important;
+ justify-items:stretch!important;align-items:start!important;
+ row-gap:9px!important;padding:18px!important;overflow:hidden!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-treemap-heading{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ gap:12px!important;width:100%!important;min-width:0!important;grid-row:1!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-treemap-heading>strong{
+ font-size:clamp(12px,1.1vw,18px)!important;line-height:1.15!important;
+ overflow-wrap:normal!important;word-break:normal!important;writing-mode:horizontal-tb!important;
+ white-space:normal!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-treemap-heading .exv-area-bar-icon{
+ display:grid!important;place-items:center!important;flex:0 0 42px!important;
+ width:42px!important;height:42px!important;margin:0!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values{
+ grid-row:2!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ gap:12px!important;width:100%!important;margin:0!important;min-height:0!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values>span{
+ display:flex!important;flex-direction:column!important;gap:5px!important;align-items:flex-start!important;
+ min-width:0!important;margin:0!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-values b{
+ font-size:clamp(12px,1.3vw,19px)!important;white-space:nowrap!important;line-height:1.3!important;
+ overflow-wrap:normal!important;word-break:normal!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-summary{
+ grid-row:3!important;position:static!important;margin:0!important;font-size:12px!important;
+ line-height:18px!important;align-self:center!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-bar{
+ grid-row:4!important;position:static!important;width:100%!important;max-width:100%!important;
+ height:9px!important;min-height:9px!important;margin:0!important;align-self:start!important
+}
+#explorer .exv-balanced-treemap .exv-area-block .exv-node-foot{
+ grid-row:6!important;position:static!important;align-self:end!important;
+ margin:0!important;padding-top:8px!important;border-top:1px solid #38617a!important;
+ font-size:10px!important;line-height:1.3!important
+}
+@media(max-width:700px){
+ #explorer .exv-balanced-treemap .exv-area-block{grid-template-rows:46px 68px 18px 9px minmax(12px,1fr) auto!important;min-height:215px!important}
+ #explorer .exv-balanced-treemap .exv-area-block .exv-node-values b{font-size:13px!important}
+}
+`;
+document.head.append(aliaTreemapAlignedCards);
+
 function renderPanes(){
  const focus=focusPath();
  for(const pane of ["area"]){
@@ -640,7 +695,9 @@ function renderPanes(){
      iconNode.innerHTML=`<svg viewBox="0 0 48 48" width="29" height="29" fill="currentColor" aria-hidden="true"><path d="M20.3 4h7.4l1.4 5.1a15.5 15.5 0 0 1 3.4 1.4l4.6-2.6 5.2 5.2-2.6 4.6a15.5 15.5 0 0 1 1.4 3.4L46 22.5v7.4l-5.1 1.4a15.5 15.5 0 0 1-1.4 3.4l2.6 4.6-5.2 5.2-4.6-2.6a15.5 15.5 0 0 1-3.4 1.4L27.5 48h-7.4l-1.4-5.1a15.5 15.5 0 0 1-3.4-1.4l-4.6 2.6-5.2-5.2 2.6-4.6a15.5 15.5 0 0 1-1.4-3.4L2 29.5v-7.4l5.1-1.4a15.5 15.5 0 0 1 1.4-3.4l-2.6-4.6 5.2-5.2 4.6 2.6a15.5 15.5 0 0 1 3.4-1.4L20.3 4zm3.5 12a9.8 9.8 0 1 0 0 19.6 9.8 9.8 0 0 0 0-19.6zm0 5.2a4.6 4.6 0 1 1 0 9.2 4.6 4.6 0 0 1 0-9.2z" transform="translate(0 -2) scale(.96)"/></svg>`;
      iconNode.classList.add("exv-area-icon-admin");
     }else iconNode.textContent=icon;
-    card.append(iconNode);
+    const heading=document.createElement("div");heading.className="exv-treemap-heading";
+    heading.append(iconNode);
+    card._areaHeading=heading;
    }
    if(areaMap){
     card.classList.add("exv-area-block");
@@ -712,7 +769,8 @@ function renderPanes(){
     summary.textContent=p.toFixed(1)+"%";
     card.title=item.value+" · Codificado "+money(v.budget)+" · Devengado "+money(v.accrued)+" · "+p.toFixed(1)+"% de ejecución";
    }
-   card.append(name,values,summary,bar,foot);root.append(card);
+   if(areaMap&&card._areaHeading){card._areaHeading.append(name);card.append(card._areaHeading,values,summary,bar,foot);}else card.append(name,values,summary,bar,foot);
+   root.append(card);
   }
   if(areaMap&&items.length){
    const allRows=items.flatMap(item=>item.rows);
