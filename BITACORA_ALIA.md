@@ -410,3 +410,8 @@
 - La etiqueta flotante de valor al corte tapaba las curvas naranja y violeta (captura del usuario). Se reemplazó por una banda compacta alineada a la derecha encima del área SVG: `DEVENGADO REAL AL CORTE` + valor dinámico %/USD.
 - El último punto real mantiene su halo y pulso sin texto superpuesto. Se recalcula con unidad y filtros; si se oculta la serie real también se oculta el indicador. Curvas, datos y animación secuencial sin cambios.
 - Pendiente verificación visual en ALIA Local.
+
+### 2026-10-26 — Cuarta tarjeta de porcentaje de devengado
+- A solicitud del usuario se elimina el indicador flotante encima del gráfico. Se agrega una cuarta tarjeta `% DEVENGADO` junto a Codificado, Comprometido y Devengado USD en RAMA 02.
+- Valor calculado como 100 × devengado / codificado del corte y selección vigentes, con `—` cuando el codificado es cero. Las cuatro tarjetas se distribuyen en una cuadrícula de cuatro columnas con tamaños de texto adaptables.
+- La curva conserva solo el punto final resaltado, sin etiquetas superpuestas. No se modifican datos ni RAMA 01. Pendiente verificación local.
