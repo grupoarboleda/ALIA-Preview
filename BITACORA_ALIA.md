@@ -390,3 +390,8 @@
 - La curva real se dibuja en 3 segundos. La curva proyectada naranja permanece oculta y empieza su revelado de 900 ms solo al finalizar la animación del devengado real (promesa `Animation.finished`, sin temporizador arbitrario).
 - Respeta `prefers-reduced-motion`, filtros de leyenda y sustitución del SVG. Se conserva la proyección discontinua, las demás series y los datos.
 - Pendiente comprobación visual en ALIA Local.
+
+### 2026-10-26 — Proyección dibujada progresivamente mes a mes
+- La proyección naranja ya no aparece por desvanecimiento completo: una máscara SVG avanza horizontalmente desde el último mes real hasta diciembre, revelando el trazo discontinuo y sus puntos al alcanzar cada mes.
+- Comienza solo después de terminar la animación de devengado real (3 s); duración de recorrido proyectado: 1,8 s. Mantiene compatibilidad con movimiento reducido y no altera cifras.
+- Pendiente validación visual en ALIA Local.
