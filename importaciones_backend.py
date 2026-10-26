@@ -275,3 +275,17 @@ def monthly_history():
                        "committed": sum(r["committed"] for r in rows),
                        "accrued": sum(r["accrued"] for r in rows)})
     return {"active": True, "series": series}
+
+
+def explorer_history():
+    """Series financieras de los cortes realmente cargados, sin activar ni modificar archivos."""
+    manifest = read_json(MANIFEST, {"months": {}})
+    series = []
+    for month in sorted(int(m) for m in manifest.get("months", {}) if str(m).isdigit() and 1 <= int(m) <= 12):
+        snap = read_json(STAGING / f"{month:02d}.json", None)
+        if not snap or not snap.get("records"):
+            continue
+        rows = validated_snapshot(snap)["records"]
+        series.append({"month": month, "date": snap.get("date"),
+                       "records": rows})
+    return {"mode": "REAL", "series": series}
