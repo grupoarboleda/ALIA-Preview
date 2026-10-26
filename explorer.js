@@ -1118,6 +1118,23 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   section.append(button,picker,status);host.append(section);return;
  }
  const budget=rows.reduce((n,r)=>n+(Number(r.budget)||0),0);
+ // Presupuesto codificado histórico: cada mes usa su propio reporte, no el del corte.
+ const budgetByMonth=Array(12).fill(null);
+ const budgetScope=rows.map(r=>({area:r.area,project:r.project,source:r.source,process:r.process,sourceRow:r.sourceRow}));
+ const budgetAll=rows.length===records.length;
+ const same=(a,b)=>String(a??"")===String(b??"");
+ const inScope=r=>budgetAll||budgetScope.some(k=>same(k.area,r.area)&&same(k.project,r.project)&&same(k.source,r.source)&&same(k.process,r.process)&&same(k.sourceRow,r.sourceRow));
+ const chartToken=Symbol("chart");
+ section._budgetToken=chartToken;
+ fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
+  if(section._budgetToken!==chartToken||!section.isConnected||!Array.isArray(data?.series))return;
+  for(const entry of data.series){
+   const month=Number(entry.month);
+   if(month>=1&&month<=12&&Array.isArray(entry.records))
+    budgetByMonth[month-1]=entry.records.filter(inScope).reduce((n,r)=>n+(Number(r.budget)||0),0);
+  }
+  draw();
+ }).catch(()=>{});
  const totals={baseline:Array(12).fill(0),planned:Array(12).fill(0),actual:Array(12).fill(0)};
  for(const r of valid){
   for(let i=0;i<12;i++){
@@ -1137,6 +1154,8 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   {label:"Proyección vigente",color:"#ffb443",points:projection.map((v,i)=>i>=cutMonth-1?[i,v]:null).filter(Boolean)},
   {label:"Codificado anual",color:"#6e9dce",points:Array.from({length:12},(_,i)=>[i,budget])}
  ];
+ // Los valores históricos de codificado se cargan de forma asíncrona.
+ const codedLine=lines.find(l=>l.label==="Codificado anual");
  const active=new Set(lines.map(l=>l.label));
  let unit="%";
  const controls=document.createElement("div");controls.style.cssText="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;margin:0";
@@ -1146,28 +1165,46 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  legend.style.cssText="display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 6px";
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
- footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: presupuesto anual de referencia.";
+ footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const ns="http://www.w3.org/2000/svg";
  function draw(){
   for(const [value,btn] of Object.entries(unitButtons)){const selected=unit===value;btn.setAttribute("aria-pressed",String(selected));btn.style.background=selected?"#166176":"#092b3c";btn.style.borderColor=selected?"#6fe7e0":"#4e9db2";}
-  plot.replaceChildren();const visible=lines.filter(l=>active.has(l.label));
-  const convert=v=>unit==="%"?(budget>0?v/budget*100:0):v;
+  plot.replaceChildren();codedLine.points=budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
+  const convert=(v,isBudget=false)=>unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v;
   const high=unit==="%"?100:Math.max(1,...visible.flatMap(l=>l.points.map(p=>p[1])));
   const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolución mensual real, proyectada, línea base y codificado");
   const make=(tag,attrs,parent=svg)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
-  const x=i=>65+i*59,y=v=>268-225*convert(v)/high;
+  const x=i=>65+i*59,y=(v,isBudget=false)=>268-225*convert(v,isBudget)/high;
   for(let k=0;k<=4;k++){const yy=268-k*56.25;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=unit==="%"?(25*k)+"%":Math.round(high*k/4000)+"k";}
   ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:295,"text-anchor":"middle",fill:i===cutMonth-1?"#74f5e8":"#bbdbe8","font-size":"10","font-weight":i===cutMonth-1?"bold":"normal"});t.textContent=m;});
   const cutX=x(Math.max(0,Math.min(11,cutMonth-1)));
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
-   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1])),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
+   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
-   for(const p of l.points){if(l.label==="Proyección vigente")continue;const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
+   for(const p of l.points){if(l.label==="Proyección vigente")continue;const dot=make("circle",{cx:x(p[0]),cy:y(p[1],l===codedLine),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
+  }
+  // Punto interactivo de cierre de la proyección, fuera de la animación de la línea.
+  const forecast=lines.find(l=>l.label==="Proyección vigente");
+  const finalPoint=forecast?.points?.at(-1);
+  if(finalPoint&&active.has("Proyección vigente")){
+   const cx=x(finalPoint[0]),cy=y(finalPoint[1]);
+   const hit=make("circle",{cx,cy,r:11,fill:"#ffb443",opacity:".01",tabindex:"0",role:"button","aria-label":"Consultar proyección de diciembre"});
+   make("circle",{cx,cy,r:4.5,fill:"#ffb443",stroke:"#ffe3a6","stroke-width":"1.4","pointer-events":"none"});
+   const tooltip=make("title",{},hit);tooltip.textContent="Diciembre previsto: "+money(finalPoint[1])+" · "+(budget>0?(100*finalPoint[1]/budget).toFixed(1)+"%":"sin codificado");
+   hit.style.cursor="pointer";
+   const show=()=>{
+    const pct=budget>0?(100*finalPoint[1]/budget).toFixed(1)+"%":"—";
+    let detail=section.querySelector(".exv-forecast-detail");
+    if(!detail){detail=document.createElement("div");detail.className="exv-forecast-detail";detail.style.cssText="margin:8px 0;padding:10px 14px;border:1px solid #ffb443;border-radius:6px;background:#13364a;color:#ffdf9a;font-weight:700";plot.after(detail);}
+    detail.textContent="PROYECCIÓN A DICIEMBRE · "+money(finalPoint[1])+" · "+pct+" del codificado al corte";
+   };
+   hit.addEventListener("click",show);
+   hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
   }
   // Solo el marcador visual en la gráfica; el porcentaje va en la cuarta tarjeta.
   const realLine=lines.find(line=>line.label==="Devengado real");
