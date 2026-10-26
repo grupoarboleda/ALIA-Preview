@@ -1167,7 +1167,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
-   for(const p of l.points){const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});if(l.label==="Proyección vigente")dot.setAttribute("data-alia-projection-dot",String(p[0]));const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
+   for(const p of l.points){if(l.label==="Proyección vigente")continue;const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
   }
   // Punto de corte destacado: el valor siempre corresponde al devengado real,
   // nunca a la línea base ni a la proyección.
@@ -1234,18 +1234,21 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
      reveal.append(mask);
      svg.insertBefore(reveal,svg.firstChild);
      projectionPath.setAttribute("clip-path","url(#"+revealId+")");
-     const projectionDots=[...svg.querySelectorAll("circle[data-alia-projection-dot]")];
-     projectionDots.forEach(dot=>dot.style.opacity="0");
-     const projectionAnimation=mask.animate([{width:"0"},{width:String(width+9)}],{duration:1800,fill:"both",easing:"linear"});
-     projectionAnimation.pause();
+     // SVG SMIL anima el ancho real de la máscara en Firefox; el trazo
+     // naranja permanece discontinuo y se descubre progresivamente.
+     const revealWidth=width+9;
+     const sweep=document.createElementNS(ns,"animate");
+     sweep.setAttribute("attributeName","width");
+     sweep.setAttribute("from","0");
+     sweep.setAttribute("to",String(revealWidth));
+     sweep.setAttribute("dur","1.8s");
+     sweep.setAttribute("begin","indefinite");
+     sweep.setAttribute("fill","freeze");
+     mask.append(sweep);
      const startProjection=()=>{
       if(!svg.isConnected)return;
-      projectionAnimation.play();
-      for(const dot of projectionDots){
-       const month=Number(dot.getAttribute("data-alia-projection-dot"));
-       const delay=width>0?Math.max(0,(x(month)-startX)/width*1800):0;
-       dot.animate([{opacity:0},{opacity:1}],{duration:120,delay,fill:"forwards"});
-      }
+      if(typeof sweep.beginElement==="function")sweep.beginElement();
+      else mask.setAttribute("width",String(revealWidth));
      };
      if(realAnimation)realAnimation.finished.then(startProjection).catch(startProjection);
      else startProjection();
