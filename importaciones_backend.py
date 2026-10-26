@@ -52,6 +52,10 @@ def to_explorer(row):
         "advance": row.get("advance") or 0,
         "physical": row.get("physical"),
         "physicalMonths": [row.get("physical_month_" + str(i)) for i in range(1, 13)],
+        "baselineMonthly": row.get("baseline_monthly"),
+        "plannedMonthly": row.get("planned_monthly"),
+        "actualMonthly": row.get("actual_monthly"),
+
         "reportDate": row["report_date"],
         "sourceRow": row["source_row"],
     }
