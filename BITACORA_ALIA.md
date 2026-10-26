@@ -346,3 +346,9 @@
 - Se sustituye la regla anterior (codificado menos comprometido positivo por fila) por un filtro a nivel de proceso: codificado total > 0 y comprometido total = 0, sumando todas las filas del proceso en el corte seleccionado.
 - Los procesos parcialmente comprometidos dejan de aparecer en el ranking y en el indicador de saldo sin comprometer. El monto mostrado es el codificado total de procesos sin ningún compromiso.
 - Saldo sin devengar continúa con el criterio comprometido menos devengado positivo por contrato. Sin cambios en los datos importados, treemap ni RAMA 02. Pendiente contraste con la matriz real en ALIA Local.
+
+### 2026-10-26 — RAMA 02: curvas de evolución con datos reales cargados
+- Se recupera la presentación de curvas para Codificado, Comprometido y Devengado, utilizando únicamente los snapshots mensuales realmente importados (sin activación, modificación ni reimportación).
+- Nuevo endpoint local de solo lectura `/__alia_explorer_history`; la vista filtra cada corte por área, fuente, proyecto y selección de proceso/contrato. Los meses sin archivo no se interpolan.
+- Selector Acumulado / Variación mensual / % del codificado y leyenda para activar u ocultar cada curva; los puntos muestran importes reales del corte.
+- Pendientes: validar en el equipo local que las series coincidan con las matrices; construir las curvas de etapas de contratación, avance físico y línea base cuando se verifique su historial por entidad. No se inventan etapas ni cronogramas.
