@@ -341,3 +341,8 @@
 - Iconos y nombres de las áreas se presentan en una misma línea para ganar espacio vertical.
 - Cada bloque usa la misma plantilla interna de filas para importes, porcentaje, barra de ejecución y conteos, evitando solapamientos y diferencias de posición entre Distribución, Administrativo y Comercial.
 - Sin modificaciones de cifras, snapshots ni RAMA 02. Pendiente validación visual en ALIA Local. Conteos cero continúan pendientes de revisión independiente.
+
+### 2026-10-26 — Filtro estricto de saldo sin comprometer
+- Se sustituye la regla anterior (codificado menos comprometido positivo por fila) por un filtro a nivel de proceso: codificado total > 0 y comprometido total = 0, sumando todas las filas del proceso en el corte seleccionado.
+- Los procesos parcialmente comprometidos dejan de aparecer en el ranking y en el indicador de saldo sin comprometer. El monto mostrado es el codificado total de procesos sin ningún compromiso.
+- Saldo sin devengar continúa con el criterio comprometido menos devengado positivo por contrato. Sin cambios en los datos importados, treemap ni RAMA 02. Pendiente contraste con la matriz real en ALIA Local.
