@@ -1169,6 +1169,26 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
 
    for(const p of l.points){const dot=make("circle",{cx:x(p[0]),cy:y(p[1]),r:3.5,fill:l.color});if(l.label==="Proyección vigente")dot.setAttribute("data-alia-projection-dot",String(p[0]));const title=make("title",{},dot);title.textContent=l.label+": "+(unit==="%"?(budget>0?(100*p[1]/budget).toFixed(1)+"%":"sin codificado"):money(p[1]));}
   }
+  // Punto de corte destacado: el valor siempre corresponde al devengado real,
+  // nunca a la línea base ni a la proyección.
+  const realLine=lines.find(line=>line.label==="Devengado real");
+  const realEnd=realLine&&realLine.points.length?realLine.points[realLine.points.length-1]:null;
+  let realHalo=null,realRing=null,realBadge=null;
+  if(realEnd&&active.has("Devengado real")){
+   const px=x(realEnd[0]),py=y(realEnd[1]);
+   const percent=budget>0?100*realEnd[1]/budget:null;
+   const caption=unit==="%"?(percent===null?"SIN CODIFICADO":percent.toFixed(1)+"%"):money(realEnd[1]);
+   const badgeWidth=Math.max(69,caption.length*8+18);
+   const badgeX=Math.max(66,Math.min(750-badgeWidth,px+14));
+   const badgeY=Math.max(8,Math.min(285,py-36));
+   realHalo=make("circle",{cx:px,cy:py,r:12,fill:"#25e1bd",opacity:".15","pointer-events":"none"});
+   realRing=make("circle",{cx:px,cy:py,r:7.5,fill:"#082c3d",stroke:"#5effd8","stroke-width":"2.8","pointer-events":"none"});
+   make("circle",{cx:px,cy:py,r:4.2,fill:"#baffed","pointer-events":"none"});
+   realBadge=make("g",{"aria-label":"Devengado real al corte: "+caption});
+   make("rect",{x:badgeX,y:badgeY,width:badgeWidth,height:26,rx:6,fill:"#105063",stroke:"#5effd8","stroke-width":"1.2"},realBadge);
+   const label=make("text",{x:badgeX+badgeWidth/2,y:badgeY+17,"text-anchor":"middle",fill:"#eafff9","font-size":"14","font-weight":"800"},realBadge);label.textContent=caption;
+   const tip=make("title",{},realBadge);tip.textContent="Devengado real a "+["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][realEnd[0]]+": "+caption;
+  }
   plot.append(svg);
   // Animar solo después de insertar SVG en el DOM. En Firefox getTotalLength
   // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
@@ -1190,6 +1210,10 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
      if(path.dataset.aliaSeries==="Proyección vigente")continue;
      const animation=animateStroke(path);
      if(path===realPath)realAnimation=animation;
+    }
+    if(realHalo&&realRing&&typeof realHalo.animate==="function"){
+     realHalo.animate([{r:9,opacity:.30},{r:17,opacity:.06},{r:9,opacity:.30}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
+     realRing.animate([{strokeWidth:2.8},{strokeWidth:4.2},{strokeWidth:2.8}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
     }
     const projectionPath=paths.find(path=>path.dataset.aliaSeries==="Proyección vigente");
     if(projectionPath&&typeof projectionPath.animate==="function"){
