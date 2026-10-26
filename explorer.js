@@ -777,7 +777,7 @@ function renderPanes(){
     summary.textContent=p.toFixed(1)+"%";
     card.title=item.value+" · Codificado "+money(v.budget)+" · Devengado "+money(v.accrued)+" · "+p.toFixed(1)+"% de ejecución";
    }
-   if(areaMap&&card._areaHeading){card._areaHeading.append(name);card.append(card._areaHeading,values,summary,bar,foot);}else card.append(name,values,summary,bar,foot);
+   if(areaMap&&card._areaHeading){card._areaHeading.append(name);card.append(card._areaHeading,values,summary,bar);}else card.append(name,values,summary,bar,foot);
    root.append(card);
   }
   if(areaMap&&items.length){
@@ -789,7 +789,7 @@ function renderPanes(){
    const identity=document.createElement("span");identity.className="exv-area-approved-total-identity";
    const title=document.createElement("strong");title.textContent="TOTAL";
    const meta=document.createElement("small");meta.textContent=items.length+" áreas · "+projects+" proyectos · "+processes+" procesos";
-   identity.append(title,meta);
+   identity.append(title);
    const bar=document.createElement("span");bar.className="exv-area-approved-total-bar";
    const fill=document.createElement("span");fill.style.width=Math.max(0,Math.min(100,p))+"%";bar.append(fill);
    const cod=document.createElement("strong");cod.textContent=money(v.budget);
