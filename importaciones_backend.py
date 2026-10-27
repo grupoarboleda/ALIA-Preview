@@ -390,6 +390,13 @@ def explorer_history():
         if not snap or not snap.get("records"):
             continue
         rows = validated_snapshot(snap)["records"]
+        if any(not r.get("advance_paid_date") and not r.get("contract_start_date") for r in rows):
+            recovered = recover_local_dates(snap)
+            for row in rows:
+                dates = recovered.get(row.get("sourceRow"), {})
+                for field in ("advance_paid_date", "contract_start_date"):
+                    if not row.get(field) and dates.get(field):
+                        row[field] = dates[field]
         series.append({"month": month, "date": snap.get("date"),
                        "records": rows})
     return {"mode": "REAL", "series": series}
