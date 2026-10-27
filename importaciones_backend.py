@@ -51,6 +51,8 @@ def to_explorer(row):
         "accrued": row.get("accrued") or 0,
         "advance": row.get("advance") or 0,
         "physical": row.get("physical"),
+        "advance_paid_date": row.get("advance_paid_date"),
+        "contract_start_date": row.get("contract_start_date"),
         "physicalMonths": [row.get("physical_month_" + str(i)) for i in range(1, 13)],
         "baselineMonthly": row.get("baseline_monthly"),
         "plannedMonthly": row.get("planned_monthly"),
