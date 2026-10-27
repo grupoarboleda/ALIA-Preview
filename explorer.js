@@ -1119,6 +1119,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  }
  const budget=rows.reduce((n,r)=>n+(Number(r.budget)||0),0);
  // Presupuesto codificado histórico: cada mes usa su propio reporte, no el del corte.
+ let milestoneRows=rows;
  const budgetByMonth=Array(12).fill(null);
  const physicalByMonth=Array(12).fill(null);
  const budgetScope=rows.map(r=>({area:r.area,project:r.project,source:r.source,process:r.process,sourceRow:r.sourceRow}));
@@ -1129,6 +1130,15 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  section._budgetToken=chartToken;
  fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
   if(section._budgetToken!==chartToken||!section.isConnected||!Array.isArray(data?.series))return;
+  if(physicalContract){
+   const recovered=[];
+   for(const entry of data.series){
+    for(const r of entry.records||[]){
+     if(String(r.contract||r.process)===String(physicalContract))recovered.push(r);
+    }
+   }
+   milestoneRows=recovered.length?recovered:rows;
+  }
   for(const entry of data.series){
    const month=Number(entry.month);
    if(month>=1&&month<=12&&Array.isArray(entry.records))
@@ -1221,7 +1231,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:295,"text-anchor":"middle",fill:i===cutMonth-1?"#74f5e8":"#bbdbe8","font-size":"10","font-weight":i===cutMonth-1?"bold":"normal"});t.textContent=m;});
   // Hito contractual discreto: anticipo efectivamente pagado; si no existe, inicio.
   if(physicalContract){
-   const dated=rows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
+   const dated=milestoneRows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
    const advanceDates=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort();
    const startDates=dated.filter(r=>r.start).map(r=>r.start).sort();
    const advanceDate=advanceDates[0]||null;
