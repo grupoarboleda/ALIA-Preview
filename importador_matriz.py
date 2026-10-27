@@ -194,6 +194,12 @@ def inspect_file(path, assigned_month=None):
                     issues.append({"row": row_num, "code": "INVALID_CONTRACT_DATE",
                                    "id": identifier, "column": column, "field": field,
                                    "value": str(raw)[:80]})
+        # Conservar todos los valores de la matriz sin perder la correspondencia
+        # con los identificadores oficiales de la fila 12.
+        values["raw_columns"] = {
+            str(identifier): row.get(column, "")
+            for identifier, column in numbered_columns.items()
+        }
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
