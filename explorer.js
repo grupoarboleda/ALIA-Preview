@@ -1093,7 +1093,7 @@ function renderRealHistoryChart(host,cutMonth){
   draw();
  });
 }
-function renderMonthlyExecutionChart(host,rows,cutMonth){
+function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const section=document.createElement("section");section.className="exv-real-history-panel";
  const heading=document.createElement("h4");heading.textContent="CURVA DE DEVENGADO · REAL, PROYECCIÓN Y LÍNEA BASE";const chartHeader=document.createElement("div");chartHeader.className="exv-monthly-chart-header";chartHeader.append(heading);section.append(chartHeader);
  const valid=rows.filter(r=>Array.isArray(r.actualMonthly)&&Array.isArray(r.plannedMonthly)&&Array.isArray(r.baselineMonthly));
@@ -1120,6 +1120,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
  const budget=rows.reduce((n,r)=>n+(Number(r.budget)||0),0);
  // Presupuesto codificado histórico: cada mes usa su propio reporte, no el del corte.
  const budgetByMonth=Array(12).fill(null);
+ const physicalByMonth=Array(12).fill(null);
  const budgetScope=rows.map(r=>({area:r.area,project:r.project,source:r.source,process:r.process,sourceRow:r.sourceRow}));
  const budgetAll=rows.length===records.length;
  const same=(a,b)=>String(a??"")===String(b??"");
@@ -1131,7 +1132,27 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   for(const entry of data.series){
    const month=Number(entry.month);
    if(month>=1&&month<=12&&Array.isArray(entry.records))
-    budgetByMonth[month-1]=entry.records.filter(inScope).reduce((n,r)=>n+(Number(r.budget)||0),0);
+   {
+    const matching=entry.records.filter(physicalContract
+      ?r=>String(r.contract||r.process)===String(physicalContract)
+      :inScope);
+    budgetByMonth[month-1]=matching.reduce((n,r)=>n+(Number(r.budget)||0),0);
+    if(physicalContract){
+     const measurements=matching.map(r=>{
+      const raw=r.physical;
+      if(raw===null||raw===undefined||raw==="")return null;
+      const n=Number(raw);
+      if(!Number.isFinite(n)||n<0)return null;
+      return {value:n<=1?n*100:n,weight:Math.max(0,Number(r.contractAmount)||Number(r.budget)||0)};
+     }).filter(Boolean);
+     if(measurements.length){
+      const weight=measurements.reduce((n,r)=>n+r.weight,0);
+      physicalByMonth[month-1]=weight>0
+       ?measurements.reduce((n,r)=>n+r.value*r.weight,0)/weight
+       :measurements.reduce((n,r)=>n+r.value,0)/measurements.length;
+     }
+    }
+   }
   }
   draw();
  }).catch(()=>{});
@@ -1152,7 +1173,8 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   {label:"Línea base inicial",color:"#a88bff",points:baseline.map((v,i)=>[i,v])},
   {label:"Devengado real",color:"#25e1bd",points:real.map((v,i)=>i<cutMonth?[i,v]:null).filter(Boolean)},
   {label:"Proyección vigente",color:"#ffb443",points:projection.map((v,i)=>i>=cutMonth-1?[i,v]:null).filter(Boolean)},
-  {label:"Codificado anual",color:"#6e9dce",points:Array.from({length:12},(_,i)=>[i,budget])}
+  {label:"Codificado anual",color:"#6e9dce",points:Array.from({length:12},(_,i)=>[i,budget])},
+  ...(physicalContract?[{label:"Avance físico",color:"#f4a8e8",points:[]}]:[])
  ];
  // Los valores históricos de codificado se cargan de forma asíncrona.
  const codedLine=lines.find(l=>l.label==="Codificado anual");
@@ -1177,27 +1199,30 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
   const i=point[0],value=point[1];
   const monthBudget=budgetByMonth[i];
   const reference=monthBudget!==null&&monthBudget>0?monthBudget:budget;
-  const pct=line===codedLine?"100.0%":reference>0?(100*value/reference).toFixed(1)+"%":"Sin codificado";
+  const pct=line.label==="Avance físico"?value.toFixed(1)+"%":line===codedLine?"100.0%":reference>0?(100*value/reference).toFixed(1)+"%":"Sin codificado";
   const referenceLabel=monthBudget!==null?"codificado de "+monthNames[i]:"codificado del corte (referencia)";
   pointDetail.style.display="block";
-  pointDetail.textContent=line.label.toUpperCase()+" · "+monthNames[i].toUpperCase()+" · "+money(value)+" · "+pct+" del "+referenceLabel;
+  pointDetail.textContent=line.label==="Avance físico"?"AVANCE FÍSICO · "+monthNames[i].toUpperCase()+" · "+pct+" acumulado":line.label.toUpperCase()+" · "+monthNames[i].toUpperCase()+" · "+money(value)+" · "+pct+" del "+referenceLabel;
  };
  const ns="http://www.w3.org/2000/svg";
  function draw(){
   for(const [value,btn] of Object.entries(unitButtons)){const selected=unit===value;btn.setAttribute("aria-pressed",String(selected));btn.style.background=selected?"#166176":"#092b3c";btn.style.borderColor=selected?"#6fe7e0":"#4e9db2";}
-  plot.replaceChildren();codedLine.points=unit==="%"?Array.from({length:12},(_,i)=>[i,budget]):budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
-  const convert=(v,isBudget=false)=>unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v;
+  plot.replaceChildren();
+  const physicalLine=lines.find(l=>l.label==="Avance físico");
+  if(physicalLine)physicalLine.points=physicalByMonth.map((v,i)=>v===null||i>=cutMonth?null:[i,v]).filter(Boolean);
+  codedLine.points=unit==="%"?Array.from({length:12},(_,i)=>[i,budget]):budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
+  const convert=(v,isBudget=false,isPhysical=false)=>isPhysical?v:(unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v);
   const high=unit==="%"?100:Math.max(1,...visible.flatMap(l=>l.points.map(p=>p[1])));
   const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolución mensual real, proyectada, línea base y codificado");
   const make=(tag,attrs,parent=svg)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
-  const x=i=>65+i*59,y=(v,isBudget=false)=>268-225*convert(v,isBudget)/high;
+  const x=i=>65+i*59,y=(v,isBudget=false,isPhysical=false)=>268-225*convert(v,isBudget,isPhysical)/(isPhysical?100:high);
   for(let k=0;k<=4;k++){const yy=268-k*56.25;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=unit==="%"?(25*k)+"%":Math.round(high*k/4000)+"k";}
   ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:295,"text-anchor":"middle",fill:i===cutMonth-1?"#74f5e8":"#bbdbe8","font-size":"10","font-weight":i===cutMonth-1?"bold":"normal"});t.textContent=m;});
   const cutX=x(Math.max(0,Math.min(11,cutMonth-1)));
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
-   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
+   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine)).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
@@ -1207,7 +1232,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth){
     make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none"});
     const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar "+l.label+" de "+monthNames[p[0]]});
     hit.style.cursor="pointer";
-    const tip=make("title",{},hit);tip.textContent=l.label+" · "+monthNames[p[0]]+" · "+money(p[1]);
+    const tip=make("title",{},hit);tip.textContent=l.label+" · "+monthNames[p[0]]+" · "+(l===physicalLine?p[1].toFixed(1)+"%":money(p[1]));
     hit.addEventListener("click",()=>showPoint(l,p));
     hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(l,p);}});
    }
@@ -1346,7 +1371,7 @@ function renderRealTemporal(rs,cutMonth){
  const warning=document.createElement("p");warning.className="exv-temporal-note";
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
- renderMonthlyExecutionChart(host,rows,cutMonth);
+ renderMonthlyExecutionChart(host,rows,cutMonth,choice?.type==="committed"?choice.id:null);
  if(choice&&choice.type==="committed"){
   const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
   const physical=months.map((_,i)=>{
