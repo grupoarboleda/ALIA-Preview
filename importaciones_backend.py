@@ -303,11 +303,82 @@ def monthly_history():
         if not snap:
             continue
         rows = validated_snapshot(snap)["records"]
+        if any(not r.get("advance_paid_date") and not r.get("contract_start_date") for r in rows):
+            recovered = recover_local_dates(snap)
+            for row in rows:
+                source = recovered.get(row.get("sourceRow"), {})
+                for field in ("advance_paid_date", "contract_start_date"):
+                    if not row.get(field) and source.get(field):
+                        row[field] = source[field]
         series.append({"month": month, "date": snap["date"],
                        "budget": sum(r["budget"] for r in rows),
                        "committed": sum(r["committed"] for r in rows),
                        "accrued": sum(r["accrued"] for r in rows)})
     return {"active": True, "series": series}
+
+
+# Búsqueda local acotada: no se suben archivos ni se reemplazan snapshots.
+_SOURCE_DATE_CACHE = {}
+
+def recover_local_dates(snap):
+    """Leer fechas de un Excel original local, si se encuentra por nombre y SHA256."""
+    import hashlib
+    from importador_matriz import rows_xlsx, report_date
+    filename = Path(str(snap.get("file") or "")).name
+    digest = snap.get("sha256")
+    if not filename or not digest:
+        return {}
+    roots = [Path.cwd(), Path.home() / "Downloads", Path.home() / "Documents",
+             Path.home() / "Desktop", Path.home() / "Descargas",
+             Path.home() / "Documentos", Path.home() / "Escritorio"]
+    candidates = []
+    for root in roots:
+        if not root.is_dir():
+            continue
+        direct = root / filename
+        if direct.is_file():
+            candidates.append(direct)
+        try:
+            # Subcarpetas inmediatas, sin exploración indiscriminada del disco.
+            for child in root.iterdir():
+                if child.is_dir():
+                    candidate = child / filename
+                    if candidate.is_file():
+                        candidates.append(candidate)
+        except OSError:
+            pass
+    for path in candidates:
+        try:
+            stat = path.stat()
+            cache_key = (str(path), stat.st_mtime_ns, stat.st_size, digest)
+            if cache_key in _SOURCE_DATE_CACHE:
+                return _SOURCE_DATE_CACHE[cache_key]
+            if stat.st_size > 40 * 1024 * 1024:
+                continue
+            with path.open("rb") as fp:
+                actual = hashlib.file_digest(fp, "sha256").hexdigest()
+            if actual != digest:
+                continue
+            columns = {}
+            dates = {}
+            for number, row in rows_xlsx(path):
+                if number == 12:
+                    for letter, value in row.items():
+                        try:
+                            columns[int(float(value))] = letter
+                        except (TypeError, ValueError):
+                            pass
+                elif number >= 13:
+                    dates[number] = {
+                        field: report_date(row.get(columns.get(identifier), ""))
+                        for field, identifier in (("advance_paid_date", 235),
+                                                  ("contract_start_date", 50))
+                    }
+            _SOURCE_DATE_CACHE[cache_key] = dates
+            return dates
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return {}
 
 
 def explorer_history():
