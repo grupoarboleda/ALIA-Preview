@@ -131,6 +131,14 @@ def validated_snapshot(snapshot):
         return snapshot
     result = dict(snapshot)
     result["records"] = [dict(r) for r in snapshot.get("records", [])]
+    # Recuperar fechas desde columnas crudas cuando el snapshot ya las conserva.
+    # No sobrescribir datos existentes ni modificar archivos locales.
+    from importador_matriz import report_date
+    for record in result["records"]:
+        raw = record.get("raw_columns") or {}
+        for key, identifier in (("advance_paid_date", "235"), ("contract_start_date", "50")):
+            if not record.get(key) and raw.get(identifier) not in (None, ""):
+                record[key] = report_date(raw[identifier])
     rows = {r.get("sourceRow"): r for r in result["records"]}
     issues = []
     for item in snapshot.get("issues", []):
