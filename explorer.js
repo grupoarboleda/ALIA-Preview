@@ -1212,7 +1212,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   if(physicalLine)physicalLine.points=physicalByMonth.map((v,i)=>v===null||i>=cutMonth?null:[i,v]).filter(Boolean);
   codedLine.points=unit==="%"?Array.from({length:12},(_,i)=>[i,budget]):budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
   const convert=(v,isBudget=false,isPhysical=false)=>isPhysical?v:(unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v);
-  const high=unit==="%"?100:Math.max(1,...visible.flatMap(l=>l.points.map(p=>p[1])));
+  const high=unit==="%"?100:Math.max(1,...visible.filter(l=>l.label!=="Avance físico").flatMap(l=>l.points.map(p=>p[1])));
   const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolución mensual real, proyectada, línea base y codificado");
   const make=(tag,attrs,parent=svg)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
   const x=i=>65+i*59,y=(v,isBudget=false,isPhysical=false)=>268-225*convert(v,isBudget,isPhysical)/(isPhysical?100:high);
@@ -1372,24 +1372,6 @@ function renderRealTemporal(rs,cutMonth){
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
  renderMonthlyExecutionChart(host,rows,cutMonth,choice?.type==="committed"?choice.id:null);
- if(choice&&choice.type==="committed"){
-  const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-  const physical=months.map((_,i)=>{
-   const values=rows.map(r=>r.physicalMonths?.[i]).filter(v=>typeof v==="number"&&Number.isFinite(v));
-   return values.length?Math.max(...values)*100:null;
-  });
-  const graph=document.createElement("div");graph.className="exv-temporal-chart";
-  const cap=document.createElement("h4");cap.textContent="AVANCE FÍSICO HISTÓRICO · %";graph.append(cap);
-  const chart=document.createElementNS("http://www.w3.org/2000/svg","svg");chart.setAttribute("viewBox","0 0 750 230");chart.style.width="100%";
-  const add=(tag,attrs)=>{const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));chart.append(el);return el;};
-  const x=i=>55+i*59,y=v=>185-v*1.5;
-  for(let v=0;v<=100;v+=25){add("line",{x1:55,x2:710,y1:y(v),y2:y(v),stroke:"#3e6274","stroke-dasharray":"3 6"});const t=add("text",{x:44,y:y(v)+4,fill:"#abcbd8","text-anchor":"end","font-size":11});t.textContent=v+"%";}
-  const available=physical.map((v,i)=>({v,i})).filter(p=>p.v!==null&&p.i<cutMonth);
-  if(available.length){add("polyline",{points:available.map(p=>x(p.i)+","+y(p.v)).join(" "),fill:"none",stroke:"#74a9ff","stroke-width":3});for(const p of available)add("circle",{cx:x(p.i),cy:y(p.v),r:3,fill:"#74a9ff"});}
-  months.forEach((m,i)=>{const t=add("text",{x:x(i),y:209,fill:i===9?"#fff":"#9cbecb","font-size":10,"text-anchor":"middle"});t.textContent=m;});
-  graph.append(chart);host.append(graph);
-  const note=document.createElement("p");note.className="exv-temporal-note";note.textContent="El histórico físico mensual no está disponible en los snapshots actuales. No se interpolan ni inventan valores.";host.append(note);
- }
  if(choice){host.append(button("← VOLVER A EVOLUCIÓN GENERAL",()=>{selectedManagement=null;renderTemporal(rs,cutMonth);},"exv-count-link"));}
 }
 function renderManagementTemporal(rs,cutMonth){
