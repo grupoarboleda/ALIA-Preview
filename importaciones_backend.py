@@ -51,6 +51,7 @@ def to_explorer(row):
         "accrued": row.get("accrued") or 0,
         "advance": row.get("advance") or 0,
         "physical": row.get("physical"),
+        "raw_columns": row.get("raw_columns", {}),
         "advance_paid_date": row.get("advance_paid_date"),
         "contract_start_date": row.get("contract_start_date"),
         "physicalMonths": [row.get("physical_month_" + str(i)) for i in range(1, 13)],
@@ -199,6 +200,24 @@ def audit(month):
             "issue_counts": counts, "column_catalog": snap.get("column_catalog", []),
             "totals": totals, "identical_financial_months": other,
             "validation_model": RULE_VERSION}
+
+
+def source_coverage():
+    """Diagnóstico no destructivo de los datos que ya están guardados."""
+    result = []
+    for month in range(1, 13):
+        snap = read_json(STAGING / f"{month:02d}.json", None)
+        if not snap:
+            continue
+        records = snap.get("records", [])
+        full = sum(1 for r in records if r.get("raw_columns"))
+        dates = sum(1 for r in records if r.get("advance_paid_date") or r.get("contract_start_date"))
+        result.append({"month": month, "records": len(records),
+                       "catalog_columns": len(snap.get("column_catalog", [])),
+                       "full_rows": full, "dated_rows": dates,
+                       "recovery_needed": full != len(records)})
+    return {"ok": True, "months": result,
+            "note": "No se han cambiado los archivos ni los registros históricos."}
 
 
 def status():
