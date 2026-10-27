@@ -1178,7 +1178,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  ];
  // Los valores históricos de codificado se cargan de forma asíncrona.
  const codedLine=lines.find(l=>l.label==="Codificado anual");
- const active=new Set(lines.map(l=>l.label));
+ const active=new Set(lines.filter(l=>!physicalContract||["Devengado real","Proyección vigente","Avance físico"].includes(l.label)).map(l=>l.label));
  let unit="%";
  const controls=document.createElement("div");controls.style.cssText="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;margin:0";
  const unitButtons={};
@@ -1188,7 +1188,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
- if(physicalContract)footer.textContent+=" · Avance físico: columna 226 de cada reporte mensual, en escala de 0 a 100% (también cuando el gráfico está en USD).";
+ if(physicalContract)footer.textContent+=" · Avance físico: columna 226 (0–100%). Hito dorado: fecha de anticipo pagado (235), o inicio de contrato (50) si no hay anticipo; solo cuando la fecha esté disponible en los datos cargados.";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const pointDetail=document.createElement("div");
  pointDetail.className="exv-chart-point-detail";
@@ -1219,6 +1219,28 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   const x=i=>65+i*59,y=(v,isBudget=false,isPhysical=false)=>268-225*convert(v,isBudget,isPhysical)/(isPhysical?100:high);
   for(let k=0;k<=4;k++){const yy=268-k*56.25;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=unit==="%"?(25*k)+"%":Math.round(high*k/4000)+"k";}
   ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:295,"text-anchor":"middle",fill:i===cutMonth-1?"#74f5e8":"#bbdbe8","font-size":"10","font-weight":i===cutMonth-1?"bold":"normal"});t.textContent=m;});
+  // Hito contractual discreto: anticipo efectivamente pagado; si no existe, inicio.
+  if(physicalContract){
+   const dated=rows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
+   const advanceDates=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort();
+   const startDates=dated.filter(r=>r.start).map(r=>r.start).sort();
+   const advanceDate=advanceDates[0]||null;
+   const eventDate=advanceDate||startDates[0]||null;
+   if(eventDate){
+    const dt=new Date(eventDate+"T12:00:00");
+    if(!Number.isNaN(dt.getTime())&&dt.getFullYear()===2026){
+     const m=dt.getMonth(),px=x(m);
+     make("line",{x1:px,x2:px,y1:38,y2:268,stroke:"#eac87b","stroke-width":"1.3","stroke-dasharray":"2 8",opacity:".65","pointer-events":"none"});
+     const hit=make("circle",{cx:px,cy:38,r:9,fill:"#d9b75c",stroke:"#fff1bb","stroke-width":"1.5",role:"button",tabindex:"0","aria-label":advanceDate?"Fecha de pago del anticipo":"Fecha de inicio del contrato"});
+     hit.style.cursor="pointer";
+     const eventText=(advanceDate?"ANTICIPO PAGADO":"INICIO DEL CONTRATO")+" · "+eventDate.split("-").reverse().join("/");
+     const tip=make("title",{},hit);tip.textContent=eventText;
+     const show=()=>{pointDetail.style.display="block";pointDetail.textContent=eventText;};
+     hit.addEventListener("click",show);
+     hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
+    }
+   }
+  }
   const cutX=x(Math.max(0,Math.min(11,cutMonth-1)));
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
@@ -1344,7 +1366,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    }
   }catch(error){console.warn("ALIA: animación opcional omitida",error);}
  }
- for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed","true");b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
+ for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
  draw();
 }
 
