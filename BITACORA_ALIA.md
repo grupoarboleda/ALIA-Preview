@@ -429,3 +429,8 @@
 ### 2026-10-26 — Curvas financieras por contrato/proceso
 - Corregido `renderRealTemporal`: el gráfico de RAMA 02 ahora recibe `rows` filtradas por el contrato o proceso seleccionado, en lugar de `rs` (toda el área). Se conservan la curva, cuatro indicadores, selector %/USD, proyección y marcadores interactivos.
 - No se alteraron fórmulas, importaciones ni diseño de RAMA 01. Pendiente validación local de los importes por contrato y filtros históricos.
+
+### 2026-10-26 — Avance físico en la misma curva financiera de contratos
+- Diccionario validado: ID 226 `TOTAL AVANCE FISICO (100%)`, tipo porcentaje. Para contratos seleccionados se extrae ese dato de cada snapshot mensual cargado, se normaliza a escala 0–100 y se grafica como quinta serie rosa en la curva financiera existente, con puntos mensuales consultables y leyenda para mostrar/ocultar.
+- Cuando un contrato aparece en varias filas se calcula avance físico ponderado por importe de contrato si está disponible y, si no, por codificado; cuando no hay ponderadores se promedia únicamente entre mediciones disponibles. No se rellenan meses faltantes ni se proyecta avance físico. En USD, la serie física sigue su propia escala porcentual 0–100.
+- Se elimina el gráfico físico separado, redundante y sin datos. No se modifica RAMA 01 ni archivos fuente. Pendiente comprobación en entorno local de los registros y pesos reales por contrato.
