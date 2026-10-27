@@ -144,6 +144,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(monthly.audit(month))
             except (ValueError, OSError) as exc:
                 return self._json({"ok": False, "error": str(exc)}, 422)
+        if endpoint == "/__alia_source_coverage":
+            return self._json(monthly.source_coverage())
         if endpoint == "/__alia_import_status":
             return self._json(monthly.status())
         if endpoint == "/__alia_explorer_preview":
