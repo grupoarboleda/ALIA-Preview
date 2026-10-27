@@ -1188,6 +1188,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
+ if(physicalContract)footer.textContent+=" · Avance físico: columna 226 de cada reporte mensual, en escala de 0 a 100% (también cuando el gráfico está en USD).";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const pointDetail=document.createElement("div");
  pointDetail.className="exv-chart-point-detail";
@@ -1213,7 +1214,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   codedLine.points=unit==="%"?Array.from({length:12},(_,i)=>[i,budget]):budgetByMonth.map((v,i)=>v===null?null:[i,v]).filter(Boolean);const visible=lines.filter(l=>active.has(l.label));
   const convert=(v,isBudget=false,isPhysical=false)=>isPhysical?v:(unit==="%"?(isBudget?100:(budget>0?v/budget*100:0)):v);
   const high=unit==="%"?100:Math.max(1,...visible.filter(l=>l.label!=="Avance físico").flatMap(l=>l.points.map(p=>p[1])));
-  const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Evolución mensual real, proyectada, línea base y codificado");
+  const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 760 320");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label",physicalContract?"Evolución financiera y avance físico mensual del contrato":"Evolución mensual real, proyectada, línea base y codificado");
   const make=(tag,attrs,parent=svg)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));parent.append(e);return e;};
   const x=i=>65+i*59,y=(v,isBudget=false,isPhysical=false)=>268-225*convert(v,isBudget,isPhysical)/(isPhysical?100:high);
   for(let k=0;k<=4;k++){const yy=268-k*56.25;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=unit==="%"?(25*k)+"%":Math.round(high*k/4000)+"k";}
