@@ -443,3 +443,9 @@
 - En RAMA 02, al seleccionar contrato se muestran inicialmente Devengado real, Proyección vigente y Avance físico; Línea base y Codificado permanecen disponibles pero desactivados. No se alteran los valores ni el diseño de las áreas.
 - El importador identifica fecha de pago del anticipo mediante ID 235 y fecha de inicio del contrato mediante ID 50, usando fila 12. Se preservan como `advance_paid_date` y `contract_start_date` en snapshots nuevos. El gráfico señala con un discreto hito dorado el mes del anticipo pagado; solo si no se pagó anticipo, muestra inicio contractual. Clic revela fecha completa. Sin fecha registrada no inventa hito.
 - **Limitación:** snapshots locales ya cargados no incluyen esos dos campos; la actualización del código no recupera retroactivamente fechas de archivos Excel que no fueron conservados. No se recargaron ni alteraron los archivos locales. Requiere mecanismo de enriquecimiento verificable o nueva lectura autorizada del archivo fuente para mostrar hitos históricos.
+
+### 2026-10-27 — Corrección de hito contractual que no aparecía
+- Se corrigió el historial de exploración para invocar efectivamente la recuperación de fechas desde el Excel local idéntico (SHA256) y entregar fechas de columnas 235 y 50 al navegador.
+- El gráfico de contratos ahora utiliza las fechas del historial enriquecido, no solamente las del registro reducido del corte.
+- El lector admite también fechas DD/MM/AAAA. Sin archivo original local coincidente, no se inventan fechas ni se alteran snapshots.
+- Validación pendiente en el equipo del usuario: contrato 32-2026, anticipo 10/06/2026.
