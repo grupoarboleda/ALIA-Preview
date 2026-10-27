@@ -1225,7 +1225,8 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    const advanceDates=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort();
    const startDates=dated.filter(r=>r.start).map(r=>r.start).sort();
    const advanceDate=advanceDates[0]||null;
-   const eventDate=advanceDate||startDates[0]||null;
+   const hasPaidAdvance=dated.some(r=>r.paid>0);
+   const eventDate=hasPaidAdvance?advanceDate:(startDates[0]||null);
    if(eventDate){
     const dt=new Date(eventDate+"T12:00:00");
     if(!Number.isNaN(dt.getTime())&&dt.getFullYear()===2026){
