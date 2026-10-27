@@ -438,3 +438,8 @@
 ### 2026-10-26 — Corrección de escala del avance físico
 - Corregida la curva física en RAMA 02: tanto la polilínea como sus marcadores mensuales deben llamar `y(..., ..., l===physicalLine)` para representar porcentajes sobre su eje fijo 0–100%, no sobre la magnitud financiera.
 - Caso reportado: tooltip junio 20.0% con línea pegada a 0. Se conservan los importes y la curva financiera sin cambios. Pendiente comprobación visual local tras actualizar.
+
+### 2026-10-27 — Hitos de anticipo e inicio y curvas predeterminadas en contratos
+- En RAMA 02, al seleccionar contrato se muestran inicialmente Devengado real, Proyección vigente y Avance físico; Línea base y Codificado permanecen disponibles pero desactivados. No se alteran los valores ni el diseño de las áreas.
+- El importador identifica fecha de pago del anticipo mediante ID 235 y fecha de inicio del contrato mediante ID 50, usando fila 12. Se preservan como `advance_paid_date` y `contract_start_date` en snapshots nuevos. El gráfico señala con un discreto hito dorado el mes del anticipo pagado; solo si no se pagó anticipo, muestra inicio contractual. Clic revela fecha completa. Sin fecha registrada no inventa hito.
+- **Limitación:** snapshots locales ya cargados no incluyen esos dos campos; la actualización del código no recupera retroactivamente fechas de archivos Excel que no fueron conservados. No se recargaron ni alteraron los archivos locales. Requiere mecanismo de enriquecimiento verificable o nueva lectura autorizada del archivo fuente para mostrar hitos históricos.
