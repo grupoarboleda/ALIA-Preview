@@ -79,7 +79,10 @@ def report_date(raw):
         try:
             return datetime.date.fromisoformat(str(raw)[:10]).isoformat()
         except ValueError:
-            return None
+            try:
+                return datetime.datetime.strptime(str(raw).strip().split(" ")[0], "%d/%m/%Y").date().isoformat()
+            except ValueError:
+                return None
 
 
 def inspect_file(path, assigned_month=None):
