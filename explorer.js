@@ -1346,7 +1346,7 @@ function renderRealTemporal(rs,cutMonth){
  const warning=document.createElement("p");warning.className="exv-temporal-note";
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
- renderMonthlyExecutionChart(host,rs,cutMonth);
+ renderMonthlyExecutionChart(host,rows,cutMonth);
  if(choice&&choice.type==="committed"){
   const months=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
   const physical=months.map((_,i)=>{
