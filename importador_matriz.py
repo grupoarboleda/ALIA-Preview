@@ -180,6 +180,20 @@ def inspect_file(path, assigned_month=None):
                         issues.append({"row": row_num, "code": "INVALID_MONTHLY_AMOUNT",
                                        "id": identifier, "column": column, "value": str(raw)[:80]})
             values[key] = series
+        # Fechas contractuales opcionales, identificadas por ID de la fila 12.
+        # Se conservan en los nuevos snapshots; nunca se infieren de importes.
+        for field, identifier in (("advance_paid_date", 235), ("contract_start_date", 50)):
+            column = numbered_columns.get(identifier)
+            raw = row.get(column, "") if column else ""
+            if raw is None or str(raw).strip() == "":
+                values[field] = None
+            else:
+                parsed_date = report_date(raw)
+                values[field] = parsed_date
+                if parsed_date is None:
+                    issues.append({"row": row_num, "code": "INVALID_CONTRACT_DATE",
+                                   "id": identifier, "column": column, "field": field,
+                                   "value": str(raw)[:80]})
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
