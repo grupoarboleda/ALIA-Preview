@@ -425,3 +425,7 @@
 - Se incorporan marcadores naranja discretos en cada mes posterior al corte (noviembre y diciembre en el ejemplo), sobre la línea naranja discontinua. Cada marcador aparece al alcanzarlo la animación progresiva de 1,8 segundos; el punto final permanece ligeramente mayor.
 - Se conservan las áreas de clic/teclado por mes para consultar USD y porcentaje en el panel inferior. Con movimiento reducido, los marcadores se muestran sin animación.
 - Sin cambios a cifras ni RAMA 01; pendiente validación visual en ALIA Local.
+
+### 2026-10-26 — Curvas financieras por contrato/proceso
+- Corregido `renderRealTemporal`: el gráfico de RAMA 02 ahora recibe `rows` filtradas por el contrato o proceso seleccionado, en lugar de `rs` (toda el área). Se conservan la curva, cuatro indicadores, selector %/USD, proyección y marcadores interactivos.
+- No se alteraron fórmulas, importaciones ni diseño de RAMA 01. Pendiente validación local de los importes por contrato y filtros históricos.
