@@ -1706,17 +1706,25 @@ document.head.append(aliaAreaActionsStyle);
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
 // Isolated detail table: always uses the latest staged report, never the chart's selected cut.
-let latestDetailPromise=null,latestDetailRows=null,latestDetailMonth=null,detailTableRequest=0;
+let latestDetailMonth=null,latestDetailYear=null,detailTableRequest=0;
 function latestDetailSnapshot(){
- if(!latestDetailPromise)latestDetailPromise=fetch("/__alia_explorer_preview",{cache:"no-store"})
-  .then(response=>{if(!response.ok)throw Error("Reporte no disponible");return response.json();})
-  .then(data=>{
-   if(data?.mode!=="REAL"||!Array.isArray(data.records))throw Error("No hay reporte real");
-   latestDetailRows=data.records;
-   latestDetailMonth=data.month;
-   return latestDetailRows;
-  }).catch(error=>{latestDetailPromise=null;throw error;});
- return latestDetailPromise;
+ // A fresh request on each render avoids stale snapshots after an import.
+ // The history endpoint is the authoritative collection of loaded monthly cuts.
+ return fetch("/__alia_explorer_history",{cache:"no-store"})
+  .then(response=>{if(!response.ok)throw Error("Historial no disponible");return response.json();})
+  .then(history=>{
+   const series=Array.isArray(history.series)?history.series:[];
+   const valid=series.filter(item=>Array.isArray(item.records)&&Number.isInteger(Number(item.month))&&Number(item.month)>=1&&Number(item.month)<=12);
+   if(!valid.length)throw Error("Sin reportes mensuales");
+   const period=item=>{
+    const year=Number(item.year||String(item.date||item.report_date||"").match(/^\\d{4}/)?.[0]||2026);
+    return year*12+Number(item.month);
+   };
+   const latest=valid.reduce((best,item)=>!best||period(item)>period(best)?item:best,null);
+   latestDetailMonth=Number(latest.month);
+   latestDetailYear=Number(latest.year||String(latest.date||latest.report_date||"").match(/^\\d{4}/)?.[0]||2026);
+   return latest.records;
+  });
 }
 function renderLatestDetailTable(){
  if(!realMode)return;
@@ -1730,7 +1738,7 @@ function renderLatestDetailTable(){
  latestDetailSnapshot().then(latest=>{
   if(request!==detailTableRequest||!realMode)return;
   const path=paneTrails[activePane];
-  const scopedRows=fundingScope(filterBy(latest,path)).filter(row=>!selectedManagement||[row.contract,row.process].some(value=>String(value||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase()));
+  const scopedRows=fundingScope(filterBy(latest,path)).filter(row=>!selectedManagement||(selectedManagement.type==="committed"?String(row.contract||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase():String(row.process||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase()));
   const entities=new Map();
   for(const row of scopedRows){
    const contract=String(row.contract||"").trim();
@@ -1744,7 +1752,7 @@ function renderLatestDetailTable(){
   }
   const entries=[...entities.values()].map(item=>({...item,totals:sum(item.rows,Number(latestDetailMonth)||cut())}))
    .sort((a,b)=>b.totals.budget-a.totals.budget);
-  heading.textContent="Detalle por contratos y procesos · "+String(latestDetailMonth||"").padStart(2,"0")+"/2026";
+  heading.textContent="Detalle por contratos y procesos · "+String(latestDetailMonth||"").padStart(2,"0")+"/"+latestDetailYear;
   body.replaceChildren();
   if(!entries.length){
    const tr=document.createElement("tr"),td=document.createElement("td");
