@@ -506,3 +506,6 @@
 ### 2026-10-29 — Buscador de columnas originales
 - Buscador visible sobre el selector: filtra por nombre o número, acepta varias palabras e ignora mayúsculas/tildes. Conserva la búsqueda al añadir columnas y muestra cantidad de coincidencias.
 - Sin resultados, selector y botón Añadir quedan desactivados; limpiar la búsqueda recupera las columnas disponibles. Sin consultas adicionales ni cambios en datos o cálculos.
+
+### 2026-10-29 — Búsqueda integrada en el desplegable de columnas
+- Por precisión del propietario, se reemplaza el select nativo por una lista desplegable con búsqueda DENTRO del panel al abrirlo. Selección por clic, búsqueda por texto/ID sin tildes, navegación con flechas, Enter y Escape; cierre al salir o pulsar fuera. No queda un campo de búsqueda separado encima del selector.
