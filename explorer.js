@@ -1298,7 +1298,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
-   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
+   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];const area=make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});area.dataset.aliaRealArea="1";});}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
@@ -1345,7 +1345,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    realRing=make("circle",{cx:px,cy:py,r:7.5,fill:"#082c3d",stroke:"#5effd8","stroke-width":"2.8","pointer-events":"none"});
    const core=make("circle",{cx:px,cy:py,r:4.2,fill:"#baffed","pointer-events":"none"});
    realRing.style.visibility="hidden";core.style.visibility="hidden";
-   window.setTimeout(()=>{if(svg.isConnected){realHalo.style.visibility="visible";realRing.style.visibility="visible";core.style.visibility="visible";}},3000);
+   core.dataset.aliaRealEnd="1";
    const tip=make("title",{},core);
    tip.textContent="Devengado al corte: "+(budget>0?(100*realEnd[1]/budget).toFixed(1)+"%":"sin codificado");
   }
@@ -1354,10 +1354,23 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
   try {
    const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-   if(reduced){for(const marker of svg.querySelectorAll("[data-alia-projection-month]"))marker.setAttribute("opacity","1");}
+   if(reduced){for(const marker of svg.querySelectorAll("[data-alia-projection-month]"))marker.setAttribute("opacity","1");for(const el of [realHalo,realRing,svg.querySelector("[data-alia-real-end]")])if(el)el.style.visibility="visible";}
    if(!reduced){
     const paths=[...svg.querySelectorAll("polyline[data-alia-series]")];
     const duration=3000;
+    // Las series comienzan simultáneamente; el sombreado avanza con el real.
+    const realArea=svg.querySelector("[data-alia-real-area]");
+    if(realArea){
+     const clip=document.createElementNS(ns,"clipPath");
+     const clipId="alia-real-area-"+Math.random().toString(36).slice(2);
+     clip.id=clipId;
+     const rect=document.createElementNS(ns,"rect");
+     rect.setAttribute("x","65");rect.setAttribute("y","0");rect.setAttribute("width","0");rect.setAttribute("height","320");
+     clip.append(rect);svg.insertBefore(clip,svg.firstChild);
+     realArea.setAttribute("clip-path","url(#"+clipId+")");
+     if(typeof rect.animate==="function")rect.animate([{width:0},{width:Math.max(0,cutX-65)+4}],{duration,fill:"forwards",easing:"ease-in-out"});
+     else rect.setAttribute("width",String(Math.max(0,cutX-65)+4));
+    }
     // La proyección empieza exclusivamente al finalizar el trazado real.
     const realPath=paths.find(path=>path.dataset.aliaSeries==="Devengado real");
     let realAnimation=null;
@@ -1372,6 +1385,14 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
      const animation=animateStroke(path);
      if(path===realPath)realAnimation=animation;
     }
+    const revealRealEnd=()=>{
+     if(!svg.isConnected||!realHalo||!realRing)return;
+     realHalo.style.visibility="visible";realRing.style.visibility="visible";
+     const core=svg.querySelector("[data-alia-real-end]");
+     if(core)core.style.visibility="visible";
+    };
+    if(realAnimation)realAnimation.finished.then(revealRealEnd).catch(revealRealEnd);
+    else revealRealEnd();
     if(realHalo&&realRing&&typeof realHalo.animate==="function"){
      realHalo.animate([{r:9,opacity:.30},{r:17,opacity:.06},{r:9,opacity:.30}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
      realRing.animate([{strokeWidth:2.8},{strokeWidth:4.2},{strokeWidth:2.8}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
