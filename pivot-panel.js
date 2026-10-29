@@ -55,7 +55,7 @@
    const cut=engine.latest(history.series||[]);
    if(!cut)throw Error("No existen cortes con registros");
    records=cut.records;
-   const catalog=engine.describe(records);
+   const catalog=engine.describe(records,cut.column_catalog||[]);
    const options=catalog.filter(x=>x.id!=="raw_columns").map(x=>[x.id,x.label+" ("+x.id+")"]);
    fill(dimension,options);fill(second,[["","Sin subgrupo"],...options]);fill(measure,options);
    for(const [select,candidates] of [[dimension,["area","contract","col:19","col:41"]],[measure,["budget","col:498"]]]){
