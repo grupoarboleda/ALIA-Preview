@@ -45,6 +45,8 @@ def to_explorer(row):
         "project_code": row.get("project_key") or row.get("project_code") or "",
         "process_code": row.get("process_key") or row.get("process") or "",
         "process": row["process_key"],
+        "process_name": row.get("process_name") or (row.get("raw_columns") or {}).get("17", ""),
+        "contract_administrator": row.get("contract_administrator") or (row.get("raw_columns") or {}).get("59", ""),
         "contract": row.get("contract_key") or "",
         "budget": row.get("budget") or 0,
         "committed": row.get("committed") or 0,
@@ -136,6 +138,9 @@ def validated_snapshot(snapshot):
     from importador_matriz import report_date
     for record in result["records"]:
         raw = record.get("raw_columns") or {}
+        for key, identifier in (("process_name", "17"), ("contract_administrator", "59")):
+            if not str(record.get(key) or "").strip():
+                record[key] = str(raw.get(identifier) or "").strip()
         for key, identifier in (("advance_paid_date", "235"), ("contract_start_date", "50")):
             if not record.get(key) and raw.get(identifier) not in (None, ""):
                 record[key] = report_date(raw[identifier])
