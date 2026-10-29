@@ -379,6 +379,13 @@ def recover_local_dates(snap):
                         for field, identifier in (("advance_paid_date", 235),
                                                   ("contract_start_date", 50))
                     }
+                    for field, identifier in (("process_name", 17), ("contract_administrator", 59)):
+                        value = row.get(columns.get(identifier), "")
+                        dates[number][field] = str(value).strip() if value is not None else ""
+                    dates[number]["raw_columns"] = {
+                        str(identifier): row.get(letter, "")
+                        for identifier, letter in columns.items()
+                    }
             _SOURCE_DATE_CACHE[cache_key] = dates
             return dates
         except (OSError, ValueError, KeyError, TypeError):
@@ -395,13 +402,19 @@ def explorer_history():
         if not snap or not snap.get("records"):
             continue
         rows = validated_snapshot(snap)["records"]
-        if any(not r.get("advance_paid_date") and not r.get("contract_start_date") for r in rows):
+        if any(not r.get("raw_columns") or not r.get("process_name") or
+               not r.get("contract_administrator") or
+               (not r.get("advance_paid_date") and not r.get("contract_start_date"))
+               for r in rows):
             recovered = recover_local_dates(snap)
             for row in rows:
-                dates = recovered.get(row.get("sourceRow"), {})
-                for field in ("advance_paid_date", "contract_start_date"):
-                    if not row.get(field) and dates.get(field):
-                        row[field] = dates[field]
+                source = recovered.get(row.get("sourceRow"), {})
+                for field in ("advance_paid_date", "contract_start_date",
+                              "process_name", "contract_administrator"):
+                    if not row.get(field) and source.get(field):
+                        row[field] = source[field]
+                if not row.get("raw_columns") and source.get("raw_columns"):
+                    row["raw_columns"] = source["raw_columns"]
         series.append({"month": month, "date": snap.get("date"),
                        "records": rows})
     return {"mode": "REAL", "series": series}
