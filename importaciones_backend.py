@@ -106,16 +106,27 @@ def stage(content, filename, expected_month="auto"):
     old = manifest["months"].get(str(month))
     if old and old.get("sha256") == batch["sha256"]:
         prior = read_json(STAGING / f"{month:02d}.json", {})
-        if prior.get("column_catalog") and prior.get("parser_version") == "grouped-v1":
+        # An old snapshot may have the same Excel hash but only projected fields.
+        # Never skip a re-import unless ALL saved rows retain the original columns.
+        saved = prior.get("records") or []
+        expected_ids = {str(c["id"]) for c in batch.get("column_catalog", [])}
+        complete = (len(saved) == len(records) and bool(expected_ids) and
+                    all(expected_ids.issubset(set((row.get("raw_columns") or {}).keys()))
+                        for row in saved))
+        if complete and prior.get("parser_version") == "grouped-v2":
             return {"ok": True, "month": month, "records": len(records),
-                    "warnings": len(batch["issues"]), "duplicate": True}
+                    "warnings": len(batch["issues"]), "duplicate": True,
+                    "columns": len(expected_ids), "complete": True}
     if mismatch:
         batch["issues"].append({"code": "REPORT_DATE_MONTH_MISMATCH", "internal_date": date, "assigned_month": month})
     snapshot = {"date": date, "date_origin": "ASSIGNED_MONTH_NOT_VERIFIED", "month": month, "year": YEAR,
                 "file": filename, "sha256": batch["sha256"],
                 "records": records, "issues": batch["issues"],
                 "column_catalog": batch.get("column_catalog", []),
-                "parser_version": "grouped-v1"}
+                "parser_version": "grouped-v2"}
+    expected_ids = {str(c["id"]) for c in snapshot["column_catalog"]}
+    if not expected_ids or any(not expected_ids.issubset(set((row.get("raw_columns") or {}).keys())) for row in records):
+        raise ValueError("Importación incompleta: faltan columnas originales. Se conservaron los datos anteriores.")
     write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
     manifest["months"][str(month)] = {"date": date, "file": filename,
         "sha256": batch["sha256"], "records": len(records),
@@ -123,7 +134,8 @@ def stage(content, filename, expected_month="auto"):
     manifest["active"] = False
     write_json_atomic(MANIFEST, manifest)
     return {"ok": True, "month": month, "records": len(records),
-            "warnings": len(batch["issues"]), "duplicate": False}
+            "warnings": len(batch["issues"]), "duplicate": False,
+            "columns": len(expected_ids), "complete": True}
 
 
 def validated_snapshot(snapshot):
