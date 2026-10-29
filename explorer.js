@@ -1721,7 +1721,7 @@ function latestDetailSnapshot(){
     const year=Number(item.year||String(item.date||item.report_date||"").match(/^\d{4}/)?.[0]||2026);
     return year*12+Number(item.month);
    };
-   const latest=valid.reduce((best,item)=>!best||period(item)>period(best)?item:best,null);
+   const latest=window.ALIADataEngine?.latest(valid)||valid.reduce((best,item)=>!best||period(item)>period(best)?item:best,null);
    latestDetailMonth=Number(latest.month);
    latestDetailYear=Number(latest.year||String(latest.date||latest.report_date||"").match(/^\d{4}/)?.[0]||2026);
    return latest.records;
@@ -1763,7 +1763,7 @@ function renderLatestDetailTable(){
   const tr=document.createElement("tr");
   const contract=normalize(matched[0].contract);
   const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
-  const distinctMetadata=(field,index)=>[...new Set(matched.map(row=>String(row[field]??row.raw_columns?.[index]??"").trim()).filter(Boolean))];
+  const distinctMetadata=(field,index)=>[...new Set(matched.map(row=>String(window.ALIADataEngine?.resolve(row,field)??row[field]??row.raw_columns?.[index]??"").trim()).filter(Boolean))];
   const processNames=distinctMetadata("process_name","17");
   const administrators=distinctMetadata("contract_administrator","59");
   for(const value of [label,processNames.join(" · ")||"No registrado",administrators.join(" · ")||"No registrado",money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
