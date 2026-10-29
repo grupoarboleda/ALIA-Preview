@@ -9,8 +9,6 @@ import json
 import tempfile
 import zipfile
 from urllib.parse import unquote, urlsplit, parse_qs
-import importaciones_backend as monthly
-from importador_matriz import inspect_file
 
 ROOT = Path(__file__).resolve().parent
 LOCAL_DATA = Path.home() / ".alia_local_data" / "current.json"
@@ -44,6 +42,13 @@ def sync():
         except (OSError, subprocess.TimeoutExpired) as exc:
             _status = "No se pudo sincronizar: " + str(exc)
         print("[ALIA]", _status, flush=True)
+
+
+# Synchronize Python sources before importing backend modules. A browser refresh
+# cannot reload modules already imported by the running Python interpreter.
+sync()
+import importaciones_backend as monthly
+from importador_matriz import inspect_file
 
 
 class Handler(SimpleHTTPRequestHandler):
