@@ -1454,23 +1454,36 @@ function renderRealTemporal(rs,cutMonth){
   addDetail("Nombre del proceso",processNames);
   addDetail("Administrador del contrato",admins);
   info.addEventListener("click",async()=>{
-   panel.hidden=!panel.hidden;info.setAttribute("aria-expanded",String(!panel.hidden));
+   panel.hidden=!panel.hidden;
+   info.setAttribute("aria-expanded",String(!panel.hidden));
    if(panel.hidden)return;
    const fields=panel.querySelectorAll("p");
    fields[0].textContent="Consultando último reporte cargado…";
    fields[1].textContent="Consultando último reporte cargado…";
    try{
-    const response=await fetch("/__alia_contract_info?contract="+encodeURIComponent(choice.id),{cache:"no-store"});
-    if(!response.ok)throw Error("Servidor sin endpoint actualizado");
-    const result=await response.json();
+    // Metadata-only read: no change to the selected cut, financial records or chart.
+    const response=await fetch("/__alia_explorer_history",{cache:"no-store"});
+    if(!response.ok)throw Error("Historial no disponible");
+    const history=await response.json();
+    const series=Array.isArray(history.series)?history.series:[];
+    const latest=series.reduce((best,item)=>!best||Number(item.month)>Number(best.month)?item:best,null);
+    const contract=String(choice.id||"").trim().toUpperCase();
+    const matches=(latest?.records||[]).filter(r=>{
+     const raw=r.raw_columns||{};
+     return [r.contract,raw["41"],raw["47"]].some(value=>String(value||"").trim().toUpperCase()===contract);
+    });
+    const values=(field,id)=>[...new Set(matches.map(r=>String(r[field]||r.raw_columns?.[id]||"").trim()).filter(Boolean))];
     if(panel.hidden)return;
-    fields[0].textContent=result.process_names?.length?result.process_names.join(" · "):"No disponible en el último reporte cargado";
-    fields[1].textContent=result.administrators?.length?result.administrators.join(" · "):"No disponible en el último reporte cargado";
+    const names=values("process_name","17"),admins=values("contract_administrator","59");
+    fields[0].textContent=names.length?names.join(" · "):"No disponible en el último reporte cargado";
+    fields[1].textContent=admins.length?admins.join(" · "):"No disponible en el último reporte cargado";
     let source=panel.querySelector(".exv-contract-info-source");
     if(!source){source=document.createElement("small");source.className="exv-contract-info-source";panel.append(source);}
-    source.textContent=result.month?"Fuente: "+(result.file||"reporte mensual")+" · mes "+String(result.month).padStart(2,"0"):"Contrato no encontrado en los reportes cargados";
+    source.textContent=latest?"Fuente: reporte "+String(latest.month).padStart(2,"0")+" · último mes cargado":"No hay reportes mensuales cargados";
    }catch(error){
-    if(!panel.hidden){fields[0].textContent="No se pudo consultar el último reporte";fields[1].textContent="Reinicia el servidor ALIA Local para activar la consulta";}
+    if(panel.hidden)return;
+    fields[0].textContent="No se pudo consultar el último reporte";
+    fields[1].textContent="Verifica la conexión con ALIA Local";
    }
   });
   headingLine.append(info);title.append(panel);
