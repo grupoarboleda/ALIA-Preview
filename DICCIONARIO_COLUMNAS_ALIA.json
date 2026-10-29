@@ -84,6 +84,11 @@
       "id": 504,
       "label": "DEVEN + ANTICIPO",
       "type": "money"
+    },
+    "contract_administrator": {
+      "id": 59,
+      "label": "NOMBRE DEL ADMINISTRADOR DEL CONTRATO",
+      "type": "text"
     }
   }
 }
