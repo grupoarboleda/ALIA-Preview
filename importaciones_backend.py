@@ -427,7 +427,9 @@ def explorer_history():
                         row[field] = source[field]
                 if not row.get("raw_columns") and source.get("raw_columns"):
                     row["raw_columns"] = source["raw_columns"]
-        series.append({"month": month, "date": snap.get("date"),
+        series.append({"month": month, "year": snap.get("year", YEAR),
+                       "date": snap.get("date"),
+                       "column_catalog": snap.get("column_catalog", []),
                        "records": rows})
     return {"mode": "REAL", "series": series}
 
