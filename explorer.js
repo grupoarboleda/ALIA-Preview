@@ -1447,7 +1447,7 @@ function renderRealTemporal(rs,cutMonth){
   info.textContent="i";info.setAttribute("aria-label","Información del contrato "+choice.id);
   info.setAttribute("aria-expanded","false");info.title="Nombre del proceso y administrador del contrato";
   const panel=document.createElement("div");panel.className="exv-contract-info-panel";panel.hidden=true;
-  const unique=(field)=>[...new Set(rows.map(r=>String(r[field]||"").trim()).filter(Boolean))];
+  const unique=(field)=>[...new Set(rows.map(r=>String(r[field]||r.raw_columns?.[field==="process_name"?"17":"59"]||"").trim()).filter(Boolean))];
   const processNames=unique("process_name");
   const admins=unique("contract_administrator");
   const addDetail=(name,values)=>{const line=document.createElement("div");const cap=document.createElement("strong");cap.textContent=name;const val=document.createElement("p");val.textContent=values.length?values.join(" · "):"No disponible en los datos cargados";line.append(cap,val);panel.append(line);};
