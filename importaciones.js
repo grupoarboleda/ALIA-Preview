@@ -37,6 +37,10 @@ function draw(){
  }
  if(warnings.length>20){const p=document.createElement("p");p.textContent="Y "+(warnings.length-20)+" observaciones adicionales.";issues.append(p);}
 }
+// Explicit completeness report, independent from chart financial projections.
+const coverage=document.createElement("button");coverage.type="button";coverage.className="outline";coverage.textContent="VERIFICAR ORIGINALES";
+coverage.onclick=async()=>{try{const r=await fetch("/__alia_source_coverage",{cache:"no-store"});if(!r.ok)throw Error("No se pudo verificar originales");const data=await r.json();issues.replaceChildren();for(const cut of data.months){const p=document.createElement("p");p.textContent=cut.file+" · "+cut.original_rows+"/"+cut.records+" filas originales · "+cut.catalog_columns+" columnas · "+(cut.recovery_needed?"REQUIERE RECONSTRUIR desde el Excel original idéntico":"ÍNTEGRO");issues.append(p);}}catch(e){say(e.message,true);}};
+activate.insertAdjacentElement("afterend",coverage);
 const auditPanel=document.createElement("section");
 auditPanel.id="alia-audit-panel";
 auditPanel.style.cssText="margin-top:16px;padding:18px;border:1px solid #32738b;border-radius:6px;background:#0b2332;color:#d7f4ff;overflow:auto;max-height:560px";

@@ -6,8 +6,8 @@
  const norm=v=>String(v??"").trim();
  const raw=(row,id)=>row?.raw_columns?.[String(id)];
  const resolve=(row,field)=> {
-  if(field==="process_name")return row.process_name??raw(row,17);
-  if(field==="contract_administrator")return row.contract_administrator??raw(row,59);
+  if(field==="process_name")return (norm(row.process_name)?row.process_name:raw(row,17));
+  if(field==="contract_administrator")return (norm(row.contract_administrator)?row.contract_administrator:raw(row,59));
   if(/^col:\d+$/.test(field))return raw(row,field.slice(4));
   return row?.[field];
  };
@@ -23,7 +23,7 @@
     if(!fields.has(id))fields.set(id,{id,label:"Columna "+key,source:key});
    }
    for(const key of Object.keys(row)){
-    if(key==="raw_columns")continue;
+    if(key==="raw_columns"||key==="original_cells")continue;
     if(!fields.has(key))fields.set(key,{id:key,label:key,source:key});
    }
   }

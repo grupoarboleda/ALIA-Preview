@@ -493,3 +493,10 @@
 - Se corrigió el tratamiento del año ausente y de formatos numéricos con coma/punto; el panel ahora presenta automáticamente un primer resultado y la cobertura de `raw_columns`.
 - No se modificaron los Excel, snapshots, importador Python ni los acumulados y gráficos existentes. **Pendiente:** validar en `localhost:5500` contra matrices reales, identificar posibles snapshots históricos sin `raw_columns` y cotejar cifras antes de certificar. No afirmar certificación sin esa prueba.
 - Flujo: el servidor local sincroniza `develop` al cargar la página principal; recargar navegador. Si se cambia Python en el futuro, reiniciar servidor.
+
+### 2026-10-29 — ALIA-CODEX-RESOLUCIÓN-001: originales completos y detalle independiente
+- Causa probada: snapshots398 filas/corte sin raw_columns; catálogo564. Originales SHA idéntico recuperados en repositorio separado, sin tocar snapshots/manifest/current ni Excel.
+- Confirmado en Excel: nombre17/Q, administrador59/BG; importes497/499/500. Tabla ahora usa catálogo mapped_field, no offsets498/500/501. Se preservan todas las columnas y registros fuente por SHA/fila.
+- Endpoint de originales completo y último año/mes, selección independiente del mes gráfico; añadir/quitar columnas, agrupación legítima de asignaciones, análisis dinámico y diagnóstico de reconstrucción. HTTP/1.1 elimina resets reproducidos al recibir JS/JSON grandes.
+- Pruebas: Python12 + reglas7, motorJS7, navegador29 PASS; 3980 filas fuente comparadas, 11 archivos históricos byte-idénticos y proyecciones financieras10meses iguales al baseline. Ver RESOLUCION_001.md y resultados sanitizados docs/resolucion-001. Capturas/datos privados excluidos de Git.
+- Pendiente integración remota: cuenta htpweb READ en repositorio principal; entrega por fork/PR, sin merge/main/producción. Repo adicional ALIA404, no accesible. No declarar integración por tener PR.

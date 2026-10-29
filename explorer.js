@@ -1706,13 +1706,14 @@ document.head.append(aliaAreaActionsStyle);
 
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
-// Detail V2 replaces the removed legacy table, picker and historical lookup.
+// Detail selection survives chart-cut changes; the chart state remains independent.
+let preserveDetailSelection=false;
 function renderLatestDetailTable(){
  if(!realMode)return;
  const path=paneTrails[activePane].map(p=>({...p}));
  const process=path.find(p=>p.key==="process");
  const selected=selectedManagement?{...selectedManagement}:(process?{type:"process",id:process.value}:null);
- window.ALIADetailV2?.render({selected,path,realMode,filter:(rows,trail)=>fundingScope(filterBy(rows,trail))});
+ window.ALIADetailV2?.render({selected,path,realMode,preserveSelection:preserveDetailSelection,filter:(rows,trail)=>fundingScope(filterBy(rows,trail))});
 }
 function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
 const committedRate=v.budget?100*v.committed/v.budget:0,accruedRate=percent(v),advanceRate=v.budget?100*(v.accrued+v.advance)/v.budget:0;
@@ -1773,7 +1774,7 @@ function loadStagedCut(month){
  const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
  fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
   if(request!==stagedRequest)return;
-  if(data?.mode==="REAL"&&data.records?.length){activateReal(data);return;}
+  if(data?.mode==="REAL"&&data.records?.length){preserveDetailSelection=true;try{activateReal(data);}finally{preserveDetailSelection=false;}return;}
   if(!realMode)fetch("/__alia_data",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
  }).catch(()=>{});
 }

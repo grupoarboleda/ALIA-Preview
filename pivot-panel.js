@@ -2,7 +2,7 @@
 /* ALIA configurable pivot: latest imported snapshot, read-only. */
 (function(){
  function start(){
-  const engine=window.ALIADataEngine,anchor=document.getElementById("ex-table-title");
+  const engine=window.ALIADataEngine,anchor=document.getElementById("alia-detail-v2");
   if(!engine||!anchor||document.getElementById("alia-pivot"))return;
   const panel=document.createElement("section");panel.id="alia-pivot";
   panel.style.cssText="margin:22px 0;padding:16px;border:1px solid #32687b;border-radius:12px;background:#092b3b;color:#e6faff";
@@ -24,6 +24,8 @@
   const second=field("Subgrupo",[]);
   const measure=field("Valor a calcular",[]);
   const operation=field("Operación",[["sum","Suma"],["count","Conteo"],["distinct","Recuento distinto"],["avg","Promedio"],["min","Mínimo"],["max","Máximo"]]);
+  const filterField=field("Filtrar por",[]);
+  const filterValue=document.createElement("input");filterValue.placeholder="Valor exacto del filtro";filterValue.setAttribute("aria-label","Valor exacto del filtro");controls.append(filterValue);
   const go=document.createElement("button");go.textContent="CALCULAR";go.style.cssText="padding:8px 13px;border-radius:7px;background:#167b91;color:white;border:0;cursor:pointer";controls.append(go);
   let records=[];
   const fill=(select,items)=>{select.replaceChildren();for(const [value,label] of items){const opt=document.createElement("option");opt.value=value;opt.textContent=label;select.append(opt);}};
@@ -32,7 +34,8 @@
    if(!records.length){status.textContent="El último corte no contiene registros.";return;}
    const dims=[dimension.value,second.value].filter(Boolean);
    if(!dims.length){status.textContent="Selecciona una columna de agrupación.";return;}
-   const result=engine.group(records,{dimensions:dims,measures:[{field:measure.value,op:operation.value,as:"result"}]});
+   const filtered=filterField.value?records.filter(r=>String(engine.resolve(r,filterField.value)??"").trim()===filterValue.value.trim()):records;
+   const result=engine.group(filtered,{dimensions:dims,measures:[{field:measure.value,op:operation.value,as:"result"}]});
    const table=document.createElement("table");table.style.cssText="width:100%;border-collapse:collapse;font-size:12px";
    const head=document.createElement("tr");
    for(const name of [...dims,operation.selectedOptions[0].textContent+" · "+measure.selectedOptions[0].textContent]){
@@ -47,18 +50,19 @@
     }table.append(tr);
    }
    output.append(table);
-   status.textContent=result.length+" grupo(s); "+records.length+" filas del último corte. "+(result.length>500?"Se muestran los primeros 500 grupos.":"")+" Los saldos de cortes distintos nunca se suman entre sí.";
+   status.textContent=result.length+" grupo(s); "+filtered.length+" filas del último corte. "+(result.length>500?"Se muestran los primeros 500 grupos.":"")+" Los saldos de cortes distintos nunca se suman entre sí.";
   };
   go.addEventListener("click",render);
   status.textContent="Consultando matrices existentes…";
-  fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Historial no disponible");return r.json();}).then(history=>{
-   const cut=engine.latest(history.series||[]);
+  fetch("/__alia_original_records",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Historial no disponible");return r.json();}).then(history=>{
+   const cut=history.mode==="REAL"?history:null;
    if(!cut)throw Error("No existen cortes con registros");
    records=cut.records;
    const catalog=engine.describe(records,cut.column_catalog||[]);
    const options=catalog.filter(x=>x.id!=="raw_columns").map(x=>[x.id,x.label+" ("+x.id+")"]);
+   fill(filterField,[["","Sin filtro"],...options]);
    fill(dimension,options);fill(second,[["","Sin subgrupo"],...options]);fill(measure,options);
-   for(const [select,candidates] of [[dimension,["area","contract","col:19","col:41"]],[measure,["budget","col:498"]]]){
+   for(const [select,candidates] of [[dimension,["area","contract","col:19","col:41"]],[measure,["budget","col:497"]]]){
     const found=candidates.find(key=>[...select.options].some(opt=>opt.value===key));if(found)select.value=found;
    }
    const full=records.filter(row=>row.raw_columns&&Object.keys(row.raw_columns).length).length;

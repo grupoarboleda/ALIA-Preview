@@ -1,0 +1,1 @@
+{"status": "PASS", "months_compared": 10, "legacy_files_exact": 11, "method": "Read-only execution of baseline backend and candidate against identical stored snapshots; old HTTP transport comparison failed with reset and is not counted as passed"}
