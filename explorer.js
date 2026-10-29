@@ -1306,7 +1306,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
     if(l.label==="Proyección vigente")continue;
     const px=x(p[0]),py=y(p[1],l===codedLine,l===physicalLine);
     const dot=make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none",opacity:"0"});
-    const wait=3000*Math.min(p[0],cutMonth-1)/Math.max(1,cutMonth-1);
+    const wait=3000*(p[0]-l.points[0][0])/Math.max(1,l.points[l.points.length-1][0]-l.points[0][0]);
     if(typeof dot.animate==="function")dot.animate([{opacity:0},{opacity:1}],{duration:120,delay:wait,fill:"forwards"});
     else dot.setAttribute("opacity","1");
     const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar "+l.label+" de "+monthNames[p[0]]});
@@ -1385,12 +1385,14 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    if(!realPath)revealEndpoint();
    const projection=paths.find(p=>p.dataset.aliaSeries==="Proyección vigente");
    if(projection){
+    projection.style.visibility="hidden";
     const forecast=lines.find(l=>l.label==="Proyección vigente");
     const first=forecast.points[0][0],last=forecast.points[forecast.points.length-1][0];
     const realDone=realPath?tasks[paths.filter(p=>p.dataset.aliaSeries!=="Proyección vigente").indexOf(realPath)]:Promise.resolve();
     (realDone||Promise.resolve()).then(()=>{
      if(!svg.isConnected)return;
      createClip([projection],first,last,forecastDuration);
+     projection.style.visibility="visible";
      for(const marker of svg.querySelectorAll("[data-alia-projection-month]")){
       const month=Number(marker.dataset.aliaProjectionMonth);
       const delay=forecastDuration*(month-first)/Math.max(1,last-first);
