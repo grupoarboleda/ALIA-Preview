@@ -502,3 +502,7 @@
 - Pendiente integración remota: cuenta htpweb READ en repositorio principal; entrega por fork/PR, sin merge/main/producción. Repo adicional ALIA404, no accesible. No declarar integración por tener PR.
 
 - Entrega final RESOLUCIÓN-001: implementación 2c54a2212255f686686aa869da214cf8bf9cc270; PR https://github.com/grupoarboleda/ALIA-Preview/pull/2 abierto hacia develop. Carpeta original actualizada a rama fix/alia-original-records-resolution001; servicio local5500 reiniciado y browser29 PASS allí, archivos históricos11 exactos. Merge remoto pendiente de permiso WRITE; producción sin cambios.
+
+### 2026-10-29 — Buscador de columnas originales
+- Buscador visible sobre el selector: filtra por nombre o número, acepta varias palabras e ignora mayúsculas/tildes. Conserva la búsqueda al añadir columnas y muestra cantidad de coincidencias.
+- Sin resultados, selector y botón Añadir quedan desactivados; limpiar la búsqueda recupera las columnas disponibles. Sin consultas adicionales ni cambios en datos o cálculos.

@@ -6,7 +6,7 @@
  const number=v=>{if(typeof v==="number")return Number.isFinite(v)?v:0;const t=val(v);if(!t)return 0;const n=t.includes(",")&&t.includes(".")?(t.lastIndexOf(",")>t.lastIndexOf(".")?t.replace(/\./g,"").replace(",","."):t.replace(/,/g,"")):t.replace(",",".");return Number(n)||0;};
  const format=v=>number(v).toLocaleString("es-EC",{style:"currency",currency:"USD",maximumFractionDigits:2});
  const fields=[["process_name",null,"Nombre del proceso"],["contract_administrator",null,"Administrador del contrato"],["budget",null,"Codificado"],["committed",null,"Comprometido"],["accrued",null,"Devengado"],["advance",null,"Anticipo"]];
- let extras=[],hidden=new Set();
+ let extras=[],hidden=new Set(),columnQuery="";
  function node(tag,text){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el;}
  function render({selected,path=[],filter,realMode=true,preserveSelection=false}){
   if(preserveSelection&&!selected?.id)selected=lastSelection;
@@ -32,11 +32,23 @@
    const available=new Map(catalog.map(c=>["col:"+c.id,c.label||"Columna "+c.id]));
    const read=(row,field)=>row.raw_columns?.[sourceIds.get(field)]??row[field];
    const controls=node("div");controls.className="alia-detail-controls";
-   const selector=node("select");selector.append(node("option","Seleccionar columna original"));selector.firstChild.value="";
-   for(const [id,label] of available){if(extras.includes(id))continue;const option=node("option",label+" ("+id+")");option.value=id;selector.append(option);}
-   const add=node("button","Añadir columna");add.type="button";add.onclick=()=>{if(!selector.value||extras.includes(selector.value))return;extras.push(selector.value);render({selected,path,filter,realMode});};
+   const searchLabel=node("label","Buscar columna");searchLabel.style.cssText="display:flex;flex-direction:column;gap:6px;flex:1 1 100%";
+   const search=node("input");search.type="search";search.placeholder="Buscar por nombre o número…";search.value=columnQuery;search.autocomplete="off";searchLabel.append(search);
+   const countLabel=node("span");countLabel.setAttribute("role","status");countLabel.setAttribute("aria-live","polite");countLabel.style.cssText="font-size:12px;color:#9ac4d2;flex:1 1 100%";
+   const selector=node("select");selector.setAttribute("aria-label","Columna original");
+   const add=node("button","Añadir columna");add.type="button";add.disabled=true;add.onclick=()=>{if(!selector.value||extras.includes(selector.value))return;extras.push(selector.value);render({selected,path,filter,realMode});};
+   const searchable=text=>String(text).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+   const populate=()=>{
+    const previous=selector.value,tokens=searchable(columnQuery).trim().split(/\s+/).filter(Boolean);
+    const choices=[...available].filter(([id,label])=>!extras.includes(id)&&tokens.every(token=>searchable(label+" "+id).includes(token)));
+    selector.replaceChildren();const placeholder=node("option",choices.length?"Seleccionar columna original":"Sin columnas coincidentes");placeholder.value="";selector.append(placeholder);
+    for(const [id,label] of choices){const option=node("option",label+" ("+id+")");option.value=id;selector.append(option);}
+    selector.disabled=!choices.length;if(choices.some(([id])=>id===previous))selector.value=previous;
+    add.disabled=!selector.value;countLabel.textContent=choices.length+" columna(s) disponible(s)"+(columnQuery?" para esta búsqueda":"");
+   };
+   search.addEventListener("input",()=>{columnQuery=search.value;populate();});selector.addEventListener("change",()=>{add.disabled=!selector.value;});populate();
    const clear=node("button","Quitar adicionales");clear.type="button";clear.onclick=()=>{extras=[];hidden=new Set();render({selected,path,filter,realMode});};
-   controls.append(selector,add,clear);rootEl.append(controls);
+   controls.append(searchLabel,selector,countLabel,add,clear);rootEl.append(controls);
    const columns=[["ident","Contrato / proceso"],...fields.filter(f=>!hidden.has(f[0])).map(f=>[f[0],f[2]]),...extras.map(id=>[id,available.get(id)||id])];
    const wrap=node("div");wrap.className="table-wrap";const table=node("table"),thead=node("thead"),tr=node("tr");
    for(const [id,label] of columns){const th=node("th",label);if(id!=="ident"){const remove=node("button"," ×");remove.type="button";remove.setAttribute("aria-label","Quitar "+label);remove.onclick=()=>{if(id.startsWith("col:"))extras=extras.filter(x=>x!==id);else hidden.add(id);render({selected,path,filter,realMode});};th.append(remove);}tr.append(th);}thead.append(tr);table.append(thead);
