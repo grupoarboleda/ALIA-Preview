@@ -39,3 +39,8 @@ Reproducción de pruebas: `python -m unittest discover -s tests -p 'test_*.py'`;
 Servidor de revisión en loopback, sin auto-sync de ramas de trabajo. Python se reinició para cargar el backend; Ctrl+F5 solo no recarga módulos Python. No se modifica producción, main, matrices ni los históricos financieros.
 
 La cuenta conectada `htpweb` tiene READ en `grupoarboleda/ALIA-Preview`, por lo que el código se entrega desde un fork y no puede integrarse por esta cuenta en `develop`. El repositorio adicional `grupoarboleda/ALIA` devolvió 404 con esta conexión; no se afirma haberlo revisado. La prueba funcional se hace contra el checkout real y los originales disponibles.
+
+## Entrega y estado de integración
+Implementación: commit 2c54a2212255f686686aa869da214cf8bf9cc270, rama fix/alia-original-records-resolution001 del fork htpweb/ALIA-Preview. PR contra develop: https://github.com/grupoarboleda/ALIA-Preview/pull/2 (OPEN; no fusionado).
+La carpeta local original quedó en esa rama tras verificar que no tenía modificaciones versionadas ajenas. Se reinició su servidor en http://localhost:5500/ y se repitieron allí las 29 comprobaciones de navegador: PASS, cero errores JS. Los 11 archivos históricos continúan byte-idénticos. El lanzador iniciar-alia-local.bat de esa carpeta carga la corrección; las ramas de revisión no hacen git pull automático desde develop.
+La integración remota sigue pendiente de una cuenta con permiso de escritura en grupoarboleda/ALIA-Preview. La entrega funcional local y el PR están completos; no se declara develop actualizado ni publicación productiva.

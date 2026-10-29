@@ -500,3 +500,5 @@
 - Endpoint de originales completo y último año/mes, selección independiente del mes gráfico; añadir/quitar columnas, agrupación legítima de asignaciones, análisis dinámico y diagnóstico de reconstrucción. HTTP/1.1 elimina resets reproducidos al recibir JS/JSON grandes.
 - Pruebas: Python12 + reglas7, motorJS7, navegador29 PASS; 3980 filas fuente comparadas, 11 archivos históricos byte-idénticos y proyecciones financieras10meses iguales al baseline. Ver RESOLUCION_001.md y resultados sanitizados docs/resolucion-001. Capturas/datos privados excluidos de Git.
 - Pendiente integración remota: cuenta htpweb READ en repositorio principal; entrega por fork/PR, sin merge/main/producción. Repo adicional ALIA404, no accesible. No declarar integración por tener PR.
+
+- Entrega final RESOLUCIÓN-001: implementación 2c54a2212255f686686aa869da214cf8bf9cc270; PR https://github.com/grupoarboleda/ALIA-Preview/pull/2 abierto hacia develop. Carpeta original actualizada a rama fix/alia-original-records-resolution001; servicio local5500 reiniciado y browser29 PASS allí, archivos históricos11 exactos. Merge remoto pendiente de permiso WRITE; producción sin cambios.
