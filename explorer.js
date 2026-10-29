@@ -1304,7 +1304,10 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    for(const p of l.points){
     if(l.label==="Proyección vigente")continue;
     const px=x(p[0]),py=y(p[1],l===codedLine,l===physicalLine);
-    make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none"});
+    const dot=make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none",opacity:"0"});
+    const wait=3000*Math.min(p[0],cutMonth-1)/Math.max(1,cutMonth-1);
+    if(typeof dot.animate==="function")dot.animate([{opacity:0},{opacity:1}],{duration:120,delay:wait,fill:"forwards"});
+    else dot.setAttribute("opacity","1");
     const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar "+l.label+" de "+monthNames[p[0]]});
     hit.style.cursor="pointer";
     const tip=make("title",{},hit);tip.textContent=l.label+" · "+monthNames[p[0]]+" · "+(l===physicalLine?p[1].toFixed(1)+"%":money(p[1]));
@@ -1337,8 +1340,11 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   if(realEnd&&active.has("Devengado real")){
    const px=x(realEnd[0]),py=y(realEnd[1]);
    realHalo=make("circle",{cx:px,cy:py,r:12,fill:"#25e1bd",opacity:".15","pointer-events":"none"});
+   realHalo.style.visibility="hidden";
    realRing=make("circle",{cx:px,cy:py,r:7.5,fill:"#082c3d",stroke:"#5effd8","stroke-width":"2.8","pointer-events":"none"});
    const core=make("circle",{cx:px,cy:py,r:4.2,fill:"#baffed","pointer-events":"none"});
+   realRing.style.visibility="hidden";core.style.visibility="hidden";
+   window.setTimeout(()=>{if(svg.isConnected){realHalo.style.visibility="visible";realRing.style.visibility="visible";core.style.visibility="visible";}},3000);
    const tip=make("title",{},core);
    tip.textContent="Devengado al corte: "+(budget>0?(100*realEnd[1]/budget).toFixed(1)+"%":"sin codificado");
   }
