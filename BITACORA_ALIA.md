@@ -470,3 +470,8 @@
 - Revertidos importaciones_backend.py y servidor_alia.py al estado anterior a la intervención sobre consulta contractual (commit de referencia a01d174). Se conserva íntegra la lógica de cortes, acumulados y gráficas.
 - Explorer restaurado a ese estado y modificado exclusivamente el evento del ícono (i): lee metadatos de contrato del último mes cargado mediante endpoint existente /__alia_explorer_history; IDs 17 nombre de proceso y 59 administrador. No cambia records, selectedManagement, corte, importaciones ni cálculo financiero.
 - No se modificaron archivos XLSX ni snapshots locales. Validación en localhost pendiente.
+
+### 2026-10-28 — Diagnóstico y consulta específica del ícono contractual
+- La consulta anterior descargaba todo el historial y buscaba coincidencia exacta; no permitía distinguir entre ausencia de contrato, ausencia de columnas o ausencia de valor.
+- Nuevo endpoint de solo lectura /__alia_contract_metadata consulta únicamente el snapshot mensual más reciente, compara contratos normalizando separadores y presenta cobertura raw_columns, número de coincidencias, archivo/mes y valores ID 17/59.
+- El Explorador únicamente modifica el panel (i); no modifica cortes, datos financieros acumulados, importaciones, cálculos ni snapshots. Se requiere reiniciar el servidor Python para habilitar endpoint. Comprobación local pendiente.
