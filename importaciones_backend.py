@@ -278,40 +278,6 @@ def activate():
 
 
 
-def latest_contract_info(contract_id):
-    """Contract metadata from latest loaded monthly report, regardless of selected cut."""
-    manifest = read_json(MANIFEST, {"months": {}})
-    months = sorted((int(m) for m in manifest.get("months", {})
-                     if str(m).isdigit() and 1 <= int(m) <= 12), reverse=True)
-    key = str(contract_id or "").strip().upper()
-    if not key:
-        raise ValueError("Número de contrato requerido")
-    for month in months:
-        snapshot = read_json(STAGING / f"{month:02d}.json", None)
-        if not snapshot or not snapshot.get("records"):
-            continue
-        matched = []
-        for row in snapshot["records"]:
-            raw = row.get("raw_columns") or {}
-            aliases = (row.get("contract"), raw.get("41"), raw.get("47"))
-            if key in (str(v or "").strip().upper() for v in aliases):
-                matched.append(row)
-        if not matched:
-            continue
-        def values(field, identifier):
-            return list(dict.fromkeys(
-                str(row.get(field) or (row.get("raw_columns") or {}).get(identifier) or "").strip()
-                for row in matched
-                if str(row.get(field) or (row.get("raw_columns") or {}).get(identifier) or "").strip()
-            ))
-        return {"ok": True, "contract": contract_id, "month": month,
-                "file": snapshot.get("file", ""),
-                "process_names": values("process_name", "17"),
-                "administrators": values("contract_administrator", "59")}
-    return {"ok": True, "contract": contract_id, "month": None,
-            "process_names": [], "administrators": []}
-
-
 def explorer_preview(month=None):
     """Read-only cut from staged months; no activation or file changes."""
     manifest = read_json(MANIFEST, {"months": {}})
