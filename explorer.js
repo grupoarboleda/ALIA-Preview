@@ -1729,8 +1729,10 @@ $("ex-context").textContent=["CNEL EP · ESMERALDAS",...currentPath.map(p=>p.val
 const monthLabels=["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
 $("ex-period").textContent=(realMode?"CORTE REAL · ":"CORTE DEMO · ")+(monthLabels[c-1]||"—")+" 2026";
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();{const rootCrumb=document.createElement("span");rootCrumb.className="exv-crumb";rootCrumb.textContent="◉ EMPRESA";crumbs.append(rootCrumb);}if(selectedFunding)crumbs.append(button("✕ FINANCIAMIENTO: "+selectedFunding,()=>{selectedFunding=null;render();},"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
-$("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
-const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>drillPane(activePane,level,g.value),"exv-link"));tr.append(td);body.append(tr);}
+$("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";
+const list=groups(rs,level),map=$("ex-map");
+map.replaceChildren();
+for(const g of list)map.append(tile(g,level,v.budget));
 if(realMode)renderLatestDetailTable();
  $("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
