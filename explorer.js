@@ -1789,15 +1789,23 @@ function renderLatestDetailTable(){
   if(request!==detailTableRequest||!realMode)return;
   const normalize=value=>String(value??"").trim().toUpperCase();
   const scope=fundingScope(filterBy(latest,path));
+  const identity=(row,field,index)=>normalize(row[field]??row.raw_columns?.[index]);
   const matched=scope.filter(row=>selected.type==="committed"
-   ?normalize(row.contract)===normalize(selected.id)
-   :normalize(row.process)===normalize(selected.id));
+   ?identity(row,"contract","41")===normalize(selected.id)
+   :identity(row,"process","15")===normalize(selected.id));
   heading.textContent="Detalle de "+selected.id+" · "+String(latestDetailMonth).padStart(2,"0")+"/"+latestDetailYear;
   if(!matched.length){notice("El contrato o proceso seleccionado no consta en la última matriz cargada.");return;}
   setupDetailFieldPicker(latest);
+  const rawCoverage=matched.filter(row=>row.raw_columns&&Object.keys(row.raw_columns).length>0).length;
+  let audit=document.getElementById("alia-detail-data-audit");
+  if(!audit){audit=document.createElement("small");audit.id="alia-detail-data-audit";heading.parentElement.append(audit);}
+  audit.style.cssText="display:block;color:#8cbac7;margin-top:5px";
+  audit.textContent=rawCoverage===matched.length
+   ?"Origen: "+matched.length+" fila(s), columnas originales disponibles; "+Object.keys(matched[0].raw_columns||{}).length+" campos en primera fila"
+   :"Origen incompleto: "+rawCoverage+" de "+matched.length+" filas incluyen columnas originales. Revisar respuesta del importador local.";
   const total=sum(matched,latestDetailMonth);
   const tr=document.createElement("tr");
-  const contract=normalize(matched[0].contract);
+  const contract=identity(matched[0],"contract","41");
   const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
   const distinctMetadata=(field,index)=>[...new Set(matched.map(row=>String(window.ALIADataEngine?.resolve(row,field)??row[field]??row.raw_columns?.[index]??"").trim()).filter(Boolean))];
   const processNames=distinctMetadata("process_name","17");
