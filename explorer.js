@@ -1298,7 +1298,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
-   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];const area=make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});area.dataset.aliaRealArea="1";});}
+   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];const area=make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});area.dataset.aliaRealArea="1";}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
