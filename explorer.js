@@ -1741,7 +1741,7 @@ function renderLatestDetailTable(){
  const notice=message=>{
   body.replaceChildren();
   const tr=document.createElement("tr"),td=document.createElement("td");
-  td.colSpan=7;td.textContent=message;tr.append(td);body.append(tr);
+  td.colSpan=9;td.textContent=message;tr.append(td);body.append(tr);
  };
  if(!selected){
   heading.textContent="Detalle del contrato o proceso seleccionado";
@@ -1763,7 +1763,10 @@ function renderLatestDetailTable(){
   const tr=document.createElement("tr");
   const contract=normalize(matched[0].contract);
   const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
-  for(const value of [label,money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
+  const distinctMetadata=(field,index)=>[...new Set(matched.map(row=>String(row[field]??row.raw_columns?.[index]??"").trim()).filter(Boolean))];
+  const processNames=distinctMetadata("process_name","17");
+  const administrators=distinctMetadata("contract_administrator","59");
+  for(const value of [label,processNames.join(" · ")||"No registrado",administrators.join(" · ")||"No registrado",money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
    const td=document.createElement("td");td.textContent=value;tr.append(td);
   }
   const action=document.createElement("td");
