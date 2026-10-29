@@ -1717,12 +1717,12 @@ function latestDetailSnapshot(){
    const valid=series.filter(item=>Array.isArray(item.records)&&Number.isInteger(Number(item.month))&&Number(item.month)>=1&&Number(item.month)<=12);
    if(!valid.length)throw Error("Sin reportes mensuales");
    const period=item=>{
-    const year=Number(item.year||String(item.date||item.report_date||"").match(/^\\d{4}/)?.[0]||2026);
+    const year=Number(item.year||String(item.date||item.report_date||"").match(/^\d{4}/)?.[0]||2026);
     return year*12+Number(item.month);
    };
    const latest=valid.reduce((best,item)=>!best||period(item)>period(best)?item:best,null);
    latestDetailMonth=Number(latest.month);
-   latestDetailYear=Number(latest.year||String(latest.date||latest.report_date||"").match(/^\\d{4}/)?.[0]||2026);
+   latestDetailYear=Number(latest.year||String(latest.date||latest.report_date||"").match(/^\d{4}/)?.[0]||2026);
    return latest.records;
   });
 }
