@@ -7,7 +7,7 @@
  const get=(r,field,id)=>{const a=r?.[field];return val(a)!==""?a:r?.raw_columns?.[String(id)];};
  const number=v=>{if(typeof v==="number")return Number.isFinite(v)?v:0;const t=val(v);if(!t)return 0;const n=t.includes(",")&&t.includes(".")?(t.lastIndexOf(",")>t.lastIndexOf(".")?t.replace(/\./g,"").replace(",","."):t.replace(/,/g,"")):t.replace(",",".");return Number(n)||0;};
  const format=v=>number(v).toLocaleString("es-EC",{style:"currency",currency:"USD",maximumFractionDigits:2});
- const fields=[["process_name","17","Nombre del proceso"],["contract_administrator","59","Administrador del contrato"],["budget","497","Codificado"],["committed","499","Comprometido"],["accrued","500","Devengado"],["advance","502","Anticipo"]];
+ const fields=[["process_name","17","Nombre del proceso"],["contract_administrator","59","Administrador del contrato"],["budget","498","Codificado"],["committed","500","Comprometido"],["accrued","501","Devengado"],["advance","234","Anticipo"]];
  let extras=[];
  function node(tag,text){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el;}
  function render({selected,path=[],filter,realMode=true}){
@@ -26,7 +26,7 @@
    const period=x=>{const y=Number(x.year||String(x.date||"").slice(0,4));return Number.isInteger(y)&&y>=2000?y*12+Number(x.month):-1;};
    cuts.sort((a,b)=>period(b)-period(a));
    const latest=cuts[0];if(!latest||period(latest)<0)throw Error("No hay cortes con año y mes válidos");
-   const rows=typeof filter==="function"?filter(latest.records,path):latest.records;
+   const rows=latest.records; // Selection is global to the latest cut; chart filters must not hide matching contracts.
    const isContract=selected.type==="committed"||selected.type==="contract";
    const idField=isContract?"contract":"process",rawId=isContract?"41":"15";
    const matched=rows.filter(r=>key(get(r,idField,rawId))===key(selected.id));
