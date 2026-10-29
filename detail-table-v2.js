@@ -50,7 +50,7 @@
     const choices=[...available].filter(([id,label])=>!extras.includes(id)&&tokens.every(token=>searchable(label+" "+id).includes(token)));
     list.replaceChildren();
     for(const [id,label] of choices){
-     const option=node("button",label+" ("+id+")");option.type="button";option.dataset.columnId=id;option.setAttribute("role","option");option.setAttribute("aria-selected",String(id===chosen));
+     const option=node("button",label+" ("+id+")");option.type="button";option.tabIndex=-1;option.dataset.columnId=id;option.setAttribute("role","option");option.setAttribute("aria-selected",String(id===chosen));
      option.onclick=()=>{chosen=id;trigger.textContent=label+" ("+id+") ▾";add.disabled=false;for(const item of list.children)item.setAttribute("aria-selected",String(item===option));close(true);};
      option.onkeydown=e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();(e.key==="ArrowDown"?option.nextElementSibling||list.firstElementChild:option.previousElementSibling||list.lastElementChild)?.focus();}};
      list.append(option);
