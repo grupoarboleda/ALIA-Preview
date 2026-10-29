@@ -46,7 +46,7 @@
   return [...buckets.values()].map(bucket=>{
    for(const m of measures){
     const vals=bucket.records.map(row=>resolve(row,m.field)).filter(v=>v!==null&&v!==undefined&&v!=="");
-    const numbers=vals.map(Number).filter(Number.isFinite);
+    const numbers=vals.map(v=>typeof v==="string"?Number(v.trim().replace(",", ".")):Number(v)).filter(Number.isFinite);
     const operation=m.op||"sum";
     bucket.values[m.as||m.field+"_"+operation]=operation==="count"?vals.length:operation==="distinct"?new Set(vals.map(String)).size:operation==="min"?(numbers.length?Math.min(...numbers):null):operation==="max"?(numbers.length?Math.max(...numbers):null):operation==="avg"?(numbers.length?numbers.reduce((a,b)=>a+b,0)/numbers.length:null):numbers.reduce((a,b)=>a+b,0);
    }
