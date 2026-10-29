@@ -96,6 +96,7 @@ def inspect_file(path, assigned_month=None):
     mapped = {}
     numbered_columns = {}
     column_ids = {}
+    administrator_column = None
     dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_COLUMNAS_ALIA.json").read_text(encoding="utf-8"))
     block_dictionary = json.loads((Path(__file__).resolve().parent / "DICCIONARIO_BLOQUES_ALIA.json").read_text(encoding="utf-8"))
     def group_for(identifier):
@@ -111,6 +112,11 @@ def inspect_file(path, assigned_month=None):
     for row_num, row in rows:
         if row_num == dictionary["header_row"]:
             headers = row
+            for col, header in row.items():
+                normalized = norm(header)
+                if "ADMINISTRADOR" in normalized and "CONTRATO" in normalized:
+                    administrator_column = col
+                    break
             continue
         if row_num == dictionary["id_row"]:
             for column, raw_id in row.items():
@@ -157,6 +163,7 @@ def inspect_file(path, assigned_month=None):
             if identifier is not None:
                 issues.extend(check_source_cell(identifier, row_num, column, raw))
         values = {name: row.get(col, "") if col else "" for name, col in mapped.items()}
+        values["contract_administrator"] = str(row.get(administrator_column, "") or "").strip() if administrator_column else ""
         for field in ("budget", "committed", "accrued", "advance", "accrued_advance", "physical", *(f"physical_month_{i}" for i in range(1,13))):
             raw_value = values[field]
             if field.startswith("physical_month_") and (raw_value is None or str(raw_value).strip() == ""):
