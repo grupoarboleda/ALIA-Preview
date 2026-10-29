@@ -1807,7 +1807,10 @@ function renderLatestDetailTable(){
   const tr=document.createElement("tr");
   const contract=identity(matched[0],"contract","41");
   const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
-  const distinctMetadata=(field,index)=>[...new Set(matched.map(row=>String(window.ALIADataEngine?.resolve(row,field)??row[field]??row.raw_columns?.[index]??"").trim()).filter(Boolean))];
+  const distinctMetadata=(field,index)=>{
+   const values=matched.flatMap(row=>[row[field],row.raw_columns?.[index],window.ALIADataEngine?.resolve(row,"col:"+index)]).map(value=>String(value??"").trim()).filter(Boolean);
+   return [...new Set(values)];
+  };
   const processNames=distinctMetadata("process_name","17");
   const administrators=distinctMetadata("contract_administrator","59");
   for(const value of [label,processNames.join(" · ")||"No registrado",administrators.join(" · ")||"No registrado",money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
