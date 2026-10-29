@@ -465,3 +465,8 @@
 - Causa: la ventana (i) consultaba únicamente registros del corte seleccionado; los campos podían faltar allí aunque existieran en el último corte cargado.
 - Nuevo endpoint de solo lectura /__alia_contract_info?contract=...: consulta meses del manifiesto desde el más reciente, busca coincidencia por contrato y por IDs crudos 41/47, extrae nombre del proceso ID 17 y administrador ID 59. Devuelve fuente y mes. No modifica matrices ni snapshots.
 - Explorer solicita información al abrir (i), independiente del corte visualizado. Requiere reiniciar servidor Python local para activar nuevo endpoint; pendiente prueba real en equipo del usuario.
+
+### 2026-10-28 — Reversión selectiva por instrucción del propietario
+- Revertidos importaciones_backend.py y servidor_alia.py al estado anterior a la intervención sobre consulta contractual (commit de referencia a01d174). Se conserva íntegra la lógica de cortes, acumulados y gráficas.
+- Explorer restaurado a ese estado y modificado exclusivamente el evento del ícono (i): lee metadatos de contrato del último mes cargado mediante endpoint existente /__alia_explorer_history; IDs 17 nombre de proceso y 59 administrador. No cambia records, selectedManagement, corte, importaciones ni cálculo financiero.
+- No se modificaron archivos XLSX ni snapshots locales. Validación en localhost pendiente.
