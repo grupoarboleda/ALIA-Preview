@@ -479,3 +479,9 @@
 ### 2026-10-28 — Reversión solicitada de la última intervención
 - Por reporte de alteración visual de los acumulados, se restauraron importaciones_backend.py, servidor_alia.py, explorer.js e index.html al contenido exacto del commit a0ee6b501383505447efe3868dc8134a27fb96ec, anterior al diagnóstico de metadatos.
 - No se modificaron snapshots locales ni Excel. Se suspende el trabajo del ícono (i) hasta replantear y verificar por separado los datos financieros y la procedencia de los metadatos.
+
+### 2026-10-29 — Tabla 03 por contratos y procesos, exclusivamente último reporte
+- En modo REAL, solo la tabla 03 se alimenta de /__alia_explorer_preview sin mes, que entrega el último reporte cargado. No altera records, el corte seleccionado, los KPI, el mapa ni las series históricas.
+- Agrupa las filas con contrato por número de contrato y las filas sin contrato por código de proceso; suma los montos de cada grupo del último reporte. Aplica el mismo contexto de área, proyecto y financiamiento de la vista.
+- El botón EXPLORAR selecciona el contrato/proceso en la gráfica existente, que conserva su fuente y corte original.
+- En modo DEMO se mantiene el comportamiento anterior. Validación visual y funcional en localhost pendiente.
