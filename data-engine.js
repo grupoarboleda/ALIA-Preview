@@ -8,7 +8,7 @@
  const resolve=(row,field)=> {
   if(field==="process_name")return row.process_name??raw(row,17);
   if(field==="contract_administrator")return row.contract_administrator??raw(row,59);
-  if(/^col:\\d+$/.test(field))return raw(row,field.slice(4));
+  if(/^col:\d+$/.test(field))return raw(row,field.slice(4));
   return row?.[field];
  };
  const describe=(rows,catalog=[])=>{
