@@ -1705,6 +1705,74 @@ document.head.append(aliaAreaActionsStyle);
 
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
+// Isolated detail table: always uses the latest staged report, never the chart's selected cut.
+let latestDetailPromise=null,latestDetailRows=null,latestDetailMonth=null,detailTableRequest=0;
+function latestDetailSnapshot(){
+ if(!latestDetailPromise)latestDetailPromise=fetch("/__alia_explorer_preview",{cache:"no-store"})
+  .then(response=>{if(!response.ok)throw Error("Reporte no disponible");return response.json();})
+  .then(data=>{
+   if(data?.mode!=="REAL"||!Array.isArray(data.records))throw Error("No hay reporte real");
+   latestDetailRows=data.records;
+   latestDetailMonth=data.month;
+   return latestDetailRows;
+  }).catch(error=>{latestDetailPromise=null;throw error;});
+ return latestDetailPromise;
+}
+function renderLatestDetailTable(){
+ if(!realMode)return;
+ const request=++detailTableRequest;
+ const body=$("ex-rows"),heading=$("ex-table-title"),column=$("ex-column");
+ heading.textContent="Detalle por contratos y procesos · último reporte";
+ column.textContent="Contrato / proceso";
+ body.replaceChildren();
+ const loading=document.createElement("tr"),cell=document.createElement("td");
+ cell.colSpan=7;cell.textContent="Consultando último reporte cargado…";loading.append(cell);body.append(loading);
+ latestDetailSnapshot().then(latest=>{
+  if(request!==detailTableRequest||!realMode)return;
+  const path=paneTrails[activePane];
+  const scopedRows=fundingScope(filterBy(latest,path));
+  const entities=new Map();
+  for(const row of scopedRows){
+   const contract=String(row.contract||"").trim();
+   const process=String(row.process||"").trim();
+   const type=contract?"committed":"uncommitted";
+   const id=contract||process;
+   if(!id)continue;
+   const key=type+"|"+id;
+   if(!entities.has(key))entities.set(key,{type,id,rows:[]});
+   entities.get(key).rows.push(row);
+  }
+  const entries=[...entities.values()].map(item=>({...item,totals:sum(item.rows,cut())}))
+   .sort((a,b)=>b.totals.budget-a.totals.budget);
+  heading.textContent="Detalle por contratos y procesos · "+String(latestDetailMonth||"").padStart(2,"0")+"/2026";
+  body.replaceChildren();
+  if(!entries.length){
+   const tr=document.createElement("tr"),td=document.createElement("td");
+   td.colSpan=7;td.textContent="No hay contratos o procesos en el último reporte para este filtro";tr.append(td);body.append(tr);return;
+  }
+  for(const entry of entries){
+   const a=entry.totals,tr=document.createElement("tr");
+   const label=(entry.type==="committed"?"CONTRATO ":"PROCESO ")+entry.id;
+   for(const value of [label,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){
+    const td=document.createElement("td");td.textContent=value;tr.append(td);
+   }
+   const td=document.createElement("td");
+   td.append(button("EXPLORAR →",()=>{
+    // Keep financial chart sourced from its original selected cut.
+    selectedManagement={type:entry.type,id:entry.id};
+    const current=fundingScope(filterBy(records,paneTrails[activePane]));
+    renderTemporal(current,cut());
+   },"exv-link"));
+   tr.append(td);body.append(tr);
+  }
+ }).catch(()=>{
+  if(request!==detailTableRequest)return;
+  body.replaceChildren();
+  const tr=document.createElement("tr"),td=document.createElement("td");
+  td.colSpan=7;td.textContent="No se pudo consultar el último reporte. Los indicadores financieros no se modificaron.";
+  tr.append(td);body.append(tr);
+ });
+}
 function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
 const committedRate=v.budget?100*v.committed/v.budget:0,accruedRate=percent(v),advanceRate=v.budget?100*(v.accrued+v.advance)/v.budget:0;
 $("ex-budget").textContent=money(v.budget);
@@ -1722,7 +1790,8 @@ $("ex-period").textContent=(realMode?"CORTE REAL · ":"CORTE DEMO · ")+(monthLa
 const crumbs=$("ex-breadcrumb");crumbs.replaceChildren();{const rootCrumb=document.createElement("span");rootCrumb.className="exv-crumb";rootCrumb.textContent="◉ EMPRESA";crumbs.append(rootCrumb);}if(selectedFunding)crumbs.append(button("✕ FINANCIAMIENTO: "+selectedFunding,()=>{selectedFunding=null;render();},"exv-crumb"));currentPath.forEach((p,i)=>crumbs.append(button("› "+p.value,()=>goBackTo(activePane,i+1),"exv-crumb")));
 $("ex-title").textContent=level?"Mapa jerárquico · "+names[level]:"Presupuesto total codificado";$("ex-table-title").textContent=level?"Detalle por "+names[level]:"Consolidado de empresa";$("ex-column").textContent=level?names[level]:"Empresa";
 const list=groups(rs,level),map=$("ex-map"),body=$("ex-rows");map.replaceChildren();body.replaceChildren();for(const g of list){map.append(tile(g,level,v.budget));const a=sum(g.rows,c),tr=document.createElement("tr");for(const cell of [g.value,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){const td=document.createElement("td");td.textContent=cell;tr.append(td);}const td=document.createElement("td");if(level)td.append(button("EXPLORAR →",()=>drillPane(activePane,level,g.value),"exv-link"));tr.append(td);body.append(tr);}
-$("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
+if(realMode)renderLatestDetailTable();
+ $("ex-back").disabled=!paneTrails[activePane].length&&!override;$("ex-sankey").hidden=true;$("ex-map").hidden=false;
 }
 for(const pane of ["area"]){
  $("ex-back-"+pane).addEventListener("click",()=>goBack(pane));
