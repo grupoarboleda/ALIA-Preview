@@ -475,3 +475,7 @@
 - La consulta anterior descargaba todo el historial y buscaba coincidencia exacta; no permitía distinguir entre ausencia de contrato, ausencia de columnas o ausencia de valor.
 - Nuevo endpoint de solo lectura /__alia_contract_metadata consulta únicamente el snapshot mensual más reciente, compara contratos normalizando separadores y presenta cobertura raw_columns, número de coincidencias, archivo/mes y valores ID 17/59.
 - El Explorador únicamente modifica el panel (i); no modifica cortes, datos financieros acumulados, importaciones, cálculos ni snapshots. Se requiere reiniciar el servidor Python para habilitar endpoint. Comprobación local pendiente.
+
+### 2026-10-28 — Reversión solicitada de la última intervención
+- Por reporte de alteración visual de los acumulados, se restauraron importaciones_backend.py, servidor_alia.py, explorer.js e index.html al contenido exacto del commit a0ee6b501383505447efe3868dc8134a27fb96ec, anterior al diagnóstico de metadatos.
+- No se modificaron snapshots locales ni Excel. Se suspende el trabajo del ícono (i) hasta replantear y verificar por separado los datos financieros y la procedencia de los metadatos.
