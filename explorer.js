@@ -1453,7 +1453,26 @@ function renderRealTemporal(rs,cutMonth){
   const addDetail=(name,values)=>{const line=document.createElement("div");const cap=document.createElement("strong");cap.textContent=name;const val=document.createElement("p");val.textContent=values.length?values.join(" · "):"No disponible en los datos cargados";line.append(cap,val);panel.append(line);};
   addDetail("Nombre del proceso",processNames);
   addDetail("Administrador del contrato",admins);
-  info.addEventListener("click",()=>{panel.hidden=!panel.hidden;info.setAttribute("aria-expanded",String(!panel.hidden));});
+  info.addEventListener("click",async()=>{
+   panel.hidden=!panel.hidden;info.setAttribute("aria-expanded",String(!panel.hidden));
+   if(panel.hidden)return;
+   const fields=panel.querySelectorAll("p");
+   fields[0].textContent="Consultando último reporte cargado…";
+   fields[1].textContent="Consultando último reporte cargado…";
+   try{
+    const response=await fetch("/__alia_contract_info?contract="+encodeURIComponent(choice.id),{cache:"no-store"});
+    if(!response.ok)throw Error("Servidor sin endpoint actualizado");
+    const result=await response.json();
+    if(panel.hidden)return;
+    fields[0].textContent=result.process_names?.length?result.process_names.join(" · "):"No disponible en el último reporte cargado";
+    fields[1].textContent=result.administrators?.length?result.administrators.join(" · "):"No disponible en el último reporte cargado";
+    let source=panel.querySelector(".exv-contract-info-source");
+    if(!source){source=document.createElement("small");source.className="exv-contract-info-source";panel.append(source);}
+    source.textContent=result.month?"Fuente: "+(result.file||"reporte mensual")+" · mes "+String(result.month).padStart(2,"0"):"Contrato no encontrado en los reportes cargados";
+   }catch(error){
+    if(!panel.hidden){fields[0].textContent="No se pudo consultar el último reporte";fields[1].textContent="Reinicia el servidor ALIA Local para activar la consulta";}
+   }
+  });
   headingLine.append(info);title.append(panel);
  }
  const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
