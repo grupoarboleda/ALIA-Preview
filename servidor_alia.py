@@ -20,9 +20,15 @@ _status = "Esperando primera actualización"
 
 def sync():
     global _last_sync, _status
+    if os.environ.get("ALIA_DISABLE_SYNC") == "1":
+        return
     if time.monotonic() - _last_sync < 3:
         return
     with _lock:
+        branch = subprocess.run(["git", "branch", "--show-current"], cwd=ROOT, capture_output=True, text=True).stdout.strip() if (ROOT / ".git").is_dir() else ""
+        if branch and branch != "develop":
+            _status = "Rama de revisión: sincronización automática desactivada (" + branch + ")"
+            return
         if time.monotonic() - _last_sync < 3:
             return
         _last_sync = time.monotonic()
@@ -52,6 +58,8 @@ from importador_matriz import inspect_file
 
 
 class Handler(SimpleHTTPRequestHandler):
+    # All responses have a length; keep HTTP/1.1 transport consistent for large JS/JSON.
+    protocol_version = "HTTP/1.1"
     def do_POST(self):
         endpoint = self.path.split("?", 1)[0]
         if endpoint == "/__alia_enrich_monthly":
@@ -159,6 +167,13 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(monthly.explorer_preview(month))
             except (ValueError, OSError) as exc:
                 return self._json({"ok": False, "error": str(exc)}, 422)
+        if endpoint == "/__alia_original_records":
+            try:
+                from original_records import detail
+                query = parse_qs(urlsplit(self.path).query)
+                return self._json(detail(monthly.DATA_ROOT, query.get("id", [None])[0], query.get("kind", ["contract"])[0]))
+            except (ValueError, OSError) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint == "/__alia_explorer_history":
             return self._json(monthly.explorer_history())
         if endpoint == "/__alia_monthly_history":
@@ -190,5 +205,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print("ALIA Local http://localhost:5500/ — Ctrl+F5 sincroniza develop", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", 5500), Handler).serve_forever()
+    print("ALIA Local http://localhost:" + os.environ.get("ALIA_PORT", "5500") + "/", flush=True)
+    ThreadingHTTPServer(("127.0.0.1", int(os.environ.get("ALIA_PORT", "5500"))), Handler).serve_forever()

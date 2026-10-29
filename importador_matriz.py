@@ -85,7 +85,7 @@ def report_date(raw):
                 return None
 
 
-def inspect_file(path, assigned_month=None):
+def inspect_file(path, assigned_month=None, assigned_year=2026):
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     rows = rows_xlsx(path)
@@ -154,7 +154,7 @@ def inspect_file(path, assigned_month=None):
             continue
         if not norm(row.get(mapped["process"])) and not norm(row.get(mapped["project"])):
             continue
-        date = f"2026-{int(assigned_month):02d}-01" if assigned_month else None
+        date = f"{int(assigned_year):04d}-{int(assigned_month):02d}-01" if assigned_month else None
         if date:
             dates[date] += 1
         # Validar todos los campos tipados por ID, incluidos los 25 pagos.
@@ -210,6 +210,7 @@ def inspect_file(path, assigned_month=None):
             str(identifier): row.get(column, "")
             for identifier, column in numbered_columns.items()
         }
+        values["original_cells"] = dict(row)
         values["report_date"] = date
         values["process_key"] = norm(values["process"])
         values["contract_key"] = norm(values["contract"] if norm(values["contract"]) not in ("0","") else values["contract_alt"])
@@ -224,9 +225,15 @@ def inspect_file(path, assigned_month=None):
     if header_row is None:
         raise ValueError("No se detectó la fila 12 de identificadores numéricos en MATRIZ CONSOLIDADA. Verifica que el servidor Python haya sido reiniciado y esté sincronizado con develop.")
     catalog = [{"id": identifier, "column": column, "label": str(headers.get(column, "")).strip(),
+                "type": next((definition["type"] for definition in dictionary["fields"].values() if definition["id"] == identifier), "source"),
                 "mapped_field": next((key for key, definition in dictionary["fields"].items() if definition["id"] == identifier), None)}
                | group_for(identifier)
                for identifier, column in sorted(numbered_columns.items())]
+    for column in catalog:
+        vals=[r["raw_columns"].get(str(column["id"]), "") for r in records]
+        vals=[v for v in vals if str(v).strip()]
+        numeric=[amount(v) is not None for v in vals]
+        column["observed_type"] = ("empty" if not vals else "number" if all(numeric) else "mixed" if any(numeric) else "text")
     issues.extend(check_catalog(catalog))
     return {"dictionary_version": block_dictionary["version"], "column_catalog": catalog, "schema": variant, "file": path.name, "sha256": digest, "header_row": header_row,
             "report_dates": dict(dates), "record_count": len(records),

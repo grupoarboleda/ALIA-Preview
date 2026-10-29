@@ -493,3 +493,20 @@
 - Se corrigió el tratamiento del año ausente y de formatos numéricos con coma/punto; el panel ahora presenta automáticamente un primer resultado y la cobertura de `raw_columns`.
 - No se modificaron los Excel, snapshots, importador Python ni los acumulados y gráficos existentes. **Pendiente:** validar en `localhost:5500` contra matrices reales, identificar posibles snapshots históricos sin `raw_columns` y cotejar cifras antes de certificar. No afirmar certificación sin esa prueba.
 - Flujo: el servidor local sincroniza `develop` al cargar la página principal; recargar navegador. Si se cambia Python en el futuro, reiniciar servidor.
+
+### 2026-10-29 — ALIA-CODEX-RESOLUCIÓN-001: originales completos y detalle independiente
+- Causa probada: snapshots398 filas/corte sin raw_columns; catálogo564. Originales SHA idéntico recuperados en repositorio separado, sin tocar snapshots/manifest/current ni Excel.
+- Confirmado en Excel: nombre17/Q, administrador59/BG; importes497/499/500. Tabla ahora usa catálogo mapped_field, no offsets498/500/501. Se preservan todas las columnas y registros fuente por SHA/fila.
+- Endpoint de originales completo y último año/mes, selección independiente del mes gráfico; añadir/quitar columnas, agrupación legítima de asignaciones, análisis dinámico y diagnóstico de reconstrucción. HTTP/1.1 elimina resets reproducidos al recibir JS/JSON grandes.
+- Pruebas: Python12 + reglas7, motorJS7, navegador29 PASS; 3980 filas fuente comparadas, 11 archivos históricos byte-idénticos y proyecciones financieras10meses iguales al baseline. Ver RESOLUCION_001.md y resultados sanitizados docs/resolucion-001. Capturas/datos privados excluidos de Git.
+- Pendiente integración remota: cuenta htpweb READ en repositorio principal; entrega por fork/PR, sin merge/main/producción. Repo adicional ALIA404, no accesible. No declarar integración por tener PR.
+
+- Entrega final RESOLUCIÓN-001: implementación 2c54a2212255f686686aa869da214cf8bf9cc270; PR https://github.com/grupoarboleda/ALIA-Preview/pull/2 abierto hacia develop. Carpeta original actualizada a rama fix/alia-original-records-resolution001; servicio local5500 reiniciado y browser29 PASS allí, archivos históricos11 exactos. Merge remoto pendiente de permiso WRITE; producción sin cambios.
+
+### 2026-10-29 — Buscador de columnas originales
+- Buscador visible sobre el selector: filtra por nombre o número, acepta varias palabras e ignora mayúsculas/tildes. Conserva la búsqueda al añadir columnas y muestra cantidad de coincidencias.
+- Sin resultados, selector y botón Añadir quedan desactivados; limpiar la búsqueda recupera las columnas disponibles. Sin consultas adicionales ni cambios en datos o cálculos.
+
+### 2026-10-29 — Búsqueda integrada en el desplegable de columnas
+- Por precisión del propietario, se reemplaza el select nativo por una lista desplegable con búsqueda DENTRO del panel al abrirlo. Selección por clic, búsqueda por texto/ID sin tildes, navegación con flechas, Enter y Escape; cierre al salir o pulsar fuera. No queda un campo de búsqueda separado encima del selector.
+- Verificado en localhost5500: 39 comprobaciones de navegador PASS, incluyendo búsqueda dentro de la lista, 564 columnas, selección con Enter, cierre con Escape y regresión de los dos contratos.

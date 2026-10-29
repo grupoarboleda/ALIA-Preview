@@ -6,6 +6,7 @@ import json
 import os
 import re
 import tempfile
+import threading
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -28,13 +29,16 @@ def read_json(path, default):
 
 
 def write_json_atomic(path, data):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_name(path.name + ".tmp")
-    try:
-        temp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        os.replace(temp, path)
-    finally:
-        temp.unlink(missing_ok=True)
+    from original_records import atomic
+    atomic(path, data)
+
+
+_IMPORT_LOCK = threading.RLock()
+
+def stage(content, filename, expected_month="auto"):
+    # Serializes concurrent monthly imports in the threaded local server.
+    with _IMPORT_LOCK:
+        return _stage(content, filename, expected_month)
 
 
 def to_explorer(row):
@@ -54,6 +58,7 @@ def to_explorer(row):
         "advance": row.get("advance") or 0,
         "physical": row.get("physical"),
         "raw_columns": row.get("raw_columns", {}),
+        "original_cells": row.get("original_cells", {}),
         "advance_paid_date": row.get("advance_paid_date"),
         "contract_start_date": row.get("contract_start_date"),
         "physicalMonths": [row.get("physical_month_" + str(i)) for i in range(1, 13)],
@@ -66,12 +71,12 @@ def to_explorer(row):
     }
 
 
-def stage(content, filename, expected_month="auto"):
+def _stage(content, filename, expected_month="auto"):
     if len(content) < 4 or content[:2] != b"PK":
         raise ValueError("Archivo inválido: solo XLSX")
     if len(content) > 40 * 1024 * 1024:
         raise ValueError("Límite de 40 MB por archivo")
-    prefix = re.match(r"^\\s*(0?[1-9]|1[0-2])\\s*[. _-]", filename)
+    prefix = re.match(r"^\s*(0?[1-9]|1[0-2])\s*[. _-]", filename)
     month = int(expected_month) if expected_month != "auto" else (int(prefix.group(1)) if prefix else None)
     if month is None or not 1 <= month <= 12:
         raise ValueError("No se pudo identificar el mes: utiliza prefijo 01.–12. o selecciona su casilla")
@@ -114,6 +119,9 @@ def stage(content, filename, expected_month="auto"):
                     all(expected_ids.issubset(set((row.get("raw_columns") or {}).keys()))
                         for row in saved))
         if complete and prior.get("parser_version") == "grouped-v2":
+            from original_records import seal, register_cut
+            original = seal(DATA_ROOT, content, filename, YEAR, month)
+            register_cut(DATA_ROOT, original, YEAR, month, filename)
             return {"ok": True, "month": month, "records": len(records),
                     "warnings": len(batch["issues"]), "duplicate": True,
                     "columns": len(expected_ids), "complete": True}
@@ -127,12 +135,37 @@ def stage(content, filename, expected_month="auto"):
     expected_ids = {str(c["id"]) for c in snapshot["column_catalog"]}
     if not expected_ids or any(not expected_ids.issubset(set((row.get("raw_columns") or {}).keys())) for row in records):
         raise ValueError("Importación incompleta: faltan columnas originales. Se conservaron los datos anteriores.")
-    write_json_atomic(STAGING / (f"{month:02d}.json"), snapshot)
+    from original_records import seal, register_cut
+    original = seal(DATA_ROOT, content, filename, YEAR, month)
+    snapshot["original_sha256"] = original["sha256"]
+    snapshot_path = STAGING / f"{month:02d}.json"
+    previous_manifest = MANIFEST.read_bytes() if MANIFEST.exists() else None
+    previous_bytes = snapshot_path.read_bytes() if snapshot_path.exists() else None
+    write_json_atomic(snapshot_path, snapshot)
     manifest["months"][str(month)] = {"date": date, "file": filename,
         "sha256": batch["sha256"], "records": len(records),
         "warnings": len(batch["issues"]), "columns": len(batch.get("column_catalog", []))}
     manifest["active"] = False
-    write_json_atomic(MANIFEST, manifest)
+    try:
+        write_json_atomic(MANIFEST, manifest)
+        register_cut(DATA_ROOT, original, YEAR, month, filename)
+    except Exception:
+        # Restore exact prior snapshot; failed attempts never replace prior data.
+        if previous_bytes is None:
+            snapshot_path.unlink(missing_ok=True)
+        else:
+            fd, recovery = tempfile.mkstemp(dir=snapshot_path.parent)
+            with os.fdopen(fd, "wb") as fp:
+                fp.write(previous_bytes)
+            os.replace(recovery, snapshot_path)
+        if previous_manifest is None:
+            MANIFEST.unlink(missing_ok=True)
+        else:
+            fd, recovery = tempfile.mkstemp(dir=MANIFEST.parent)
+            with os.fdopen(fd, "wb") as fp:
+                fp.write(previous_manifest)
+            os.replace(recovery, MANIFEST)
+        raise
     return {"ok": True, "month": month, "records": len(records),
             "warnings": len(batch["issues"]), "duplicate": False,
             "columns": len(expected_ids), "complete": True}
@@ -237,10 +270,16 @@ def source_coverage():
         records = snap.get("records", [])
         full = sum(1 for r in records if r.get("raw_columns"))
         dates = sum(1 for r in records if r.get("advance_paid_date") or r.get("contract_start_date"))
-        result.append({"month": month, "records": len(records),
+        from original_records import load_cut
+        try:
+            original = load_cut(DATA_ROOT, {"year":snap.get("year", YEAR), "month":month, "sha256":snap["sha256"]})
+            original_rows = len(original["records"])
+        except (ValueError, KeyError, OSError):
+            original_rows = 0
+        result.append({"month": month, "file":snap.get("file"), "original_rows":original_rows, "records": len(records),
                        "catalog_columns": len(snap.get("column_catalog", [])),
                        "full_rows": full, "dated_rows": dates,
-                       "recovery_needed": full != len(records)})
+                       "recovery_needed": original_rows != len(records)})
     return {"ok": True, "months": result,
             "note": "No se han cambiado los archivos ni los registros históricos."}
 
