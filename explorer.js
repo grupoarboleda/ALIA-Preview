@@ -1461,23 +1461,29 @@ function renderRealTemporal(rs,cutMonth){
    fields[0].textContent="Consultando último reporte cargado…";
    fields[1].textContent="Consultando último reporte cargado…";
    try{
-    const response=await fetch("/__alia_contract_metadata?contract="+encodeURIComponent(choice.id),{cache:"no-store"});
-    if(!response.ok)throw Error("Consulta no disponible");
-    const result=await response.json();
+    // Metadata-only read: no change to the selected cut, financial records or chart.
+    const response=await fetch("/__alia_explorer_history",{cache:"no-store"});
+    if(!response.ok)throw Error("Historial no disponible");
+    const history=await response.json();
+    const series=Array.isArray(history.series)?history.series:[];
+    const latest=series.reduce((best,item)=>!best||Number(item.month)>Number(best.month)?item:best,null);
+    const contract=String(choice.id||"").trim().toUpperCase();
+    const matches=(latest?.records||[]).filter(r=>{
+     const raw=r.raw_columns||{};
+     return [r.contract,raw["41"],raw["47"]].some(value=>String(value||"").trim().toUpperCase()===contract);
+    });
+    const values=(field,id)=>[...new Set(matches.map(r=>String(r[field]||r.raw_columns?.[id]||"").trim()).filter(Boolean))];
     if(panel.hidden)return;
-    const names=result.process_names||[],admins=result.administrators||[];
+    const names=values("process_name","17"),admins=values("contract_administrator","59");
     fields[0].textContent=names.length?names.join(" · "):"No disponible en el último reporte cargado";
     fields[1].textContent=admins.length?admins.join(" · "):"No disponible en el último reporte cargado";
     let source=panel.querySelector(".exv-contract-info-source");
     if(!source){source=document.createElement("small");source.className="exv-contract-info-source";panel.append(source);}
-    source.textContent=!result.month?"No hay reportes cargados":!result.contract_found
-      ?"Último reporte: "+String(result.month).padStart(2,"0")+" · contrato no encontrado; registros con columnas originales: "+result.raw_rows+"/"+result.total_rows
-      :"Fuente: "+(result.file||"reporte mensual")+" · mes "+String(result.month).padStart(2,"0")+" · "+result.matched_rows+" fila(s) del contrato";
-
+    source.textContent=latest?"Fuente: reporte "+String(latest.month).padStart(2,"0")+" · último mes cargado":"No hay reportes mensuales cargados";
    }catch(error){
     if(panel.hidden)return;
     fields[0].textContent="No se pudo consultar el último reporte";
-    fields[1].textContent="Reinicia el servidor Python de ALIA para activar esta consulta";
+    fields[1].textContent="Verifica la conexión con ALIA Local";
    }
   });
   headingLine.append(info);title.append(panel);
