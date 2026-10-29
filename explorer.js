@@ -1440,6 +1440,22 @@ function renderRealTemporal(rs,cutMonth){
  const label=choice?(choice.type==="committed"?"CONTRATO ":"PROCESO ")+choice.id:"UNIDAD / ÁREA · DATOS REALES";
  title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
  title.querySelector("h3").textContent=label;
+ if(choice?.type==="committed"){
+  const headingLine=title.querySelector("h3");
+  headingLine.style.display="flex";headingLine.style.alignItems="center";headingLine.style.gap="9px";
+  const info=document.createElement("button");info.type="button";info.className="exv-contract-info";
+  info.textContent="i";info.setAttribute("aria-label","Información del contrato "+choice.id);
+  info.setAttribute("aria-expanded","false");info.title="Nombre del proceso y administrador del contrato";
+  const panel=document.createElement("div");panel.className="exv-contract-info-panel";panel.hidden=true;
+  const unique=(field)=>[...new Set(rows.map(r=>String(r[field]||"").trim()).filter(Boolean))];
+  const processNames=unique("process_name");
+  const admins=unique("contract_administrator");
+  const addDetail=(name,values)=>{const line=document.createElement("div");const cap=document.createElement("strong");cap.textContent=name;const val=document.createElement("p");val.textContent=values.length?values.join(" · "):"No disponible en los datos cargados";line.append(cap,val);panel.append(line);};
+  addDetail("Nombre del proceso",processNames);
+  addDetail("Administrador del contrato",admins);
+  info.addEventListener("click",()=>{panel.hidden=!panel.hidden;info.setAttribute("aria-expanded",String(!panel.hidden));});
+  headingLine.append(info);title.append(panel);
+ }
  const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
  const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued],["% DEVENGADO",total.budget>0?(100*total.accrued/total.budget).toFixed(1)+"%":"—"]];
  for(const [name,value] of cards){
@@ -1719,3 +1735,9 @@ function loadStagedCut(month){
 }
 loadStagedCut();
 })();
+
+if(!document.getElementById("alia-contract-info-css")){
+ const style=document.createElement("style");style.id="alia-contract-info-css";
+ style.textContent="#explorer .exv-contract-info{width:23px;height:23px;border-radius:50%;border:1.5px solid #7ce8e4;background:#123b4b;color:#b7faff;font-size:14px;font-weight:800;cursor:pointer;padding:0;line-height:19px;flex-shrink:0}#explorer .exv-contract-info:hover,#explorer .exv-contract-info[aria-expanded=true]{background:#267d85;color:white}#explorer .exv-contract-info-panel{margin:10px 0 12px;padding:14px 16px;background:#0b2b3c;border:1px solid #32687b;border-radius:10px;max-width:680px}#explorer .exv-contract-info-panel[hidden]{display:none}#explorer .exv-contract-info-panel strong{font-size:11px;letter-spacing:.04em;color:#7fd7e6;text-transform:uppercase}#explorer .exv-contract-info-panel p{margin:5px 0 12px;font-size:14px;color:#e7f9fc;white-space:normal}#explorer .exv-contract-info-panel div:last-child p{margin-bottom:0}";
+ document.head.append(style);
+}
