@@ -61,7 +61,9 @@
    for(const [select,candidates] of [[dimension,["area","contract","col:19","col:41"]],[measure,["budget","col:498"]]]){
     const found=candidates.find(key=>[...select.options].some(opt=>opt.value===key));if(found)select.value=found;
    }
-   status.textContent="Último corte: "+String(cut.month).padStart(2,"0")+"/"+(cut.year||"año no informado")+" · "+records.length+" filas";
+   const full=records.filter(row=>row.raw_columns&&Object.keys(row.raw_columns).length).length;
+   status.textContent="Último corte: "+String(cut.month).padStart(2,"0")+"/"+(cut.year||"año no informado")+" · "+records.length+" filas · "+full+" con columnas originales";
+   render();
   }).catch(e=>{status.textContent="No se pudo construir el análisis: "+e.message;});
  }
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
