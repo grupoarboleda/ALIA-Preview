@@ -164,7 +164,7 @@ class Handler(SimpleHTTPRequestHandler):
             if not LOCAL_DATA.exists():
                 return self._json({"mode": "DEMO", "records": []})
             try:
-                return self._json(json.loads(LOCAL_DATA.read_text(encoding="utf-8")))
+                return self._json(monthly.validated_snapshot(json.loads(LOCAL_DATA.read_text(encoding="utf-8"))))
             except (OSError, ValueError) as exc:
                 return self._json({"error": str(exc)}, 500)
         if self.path.split("?", 1)[0] == "/__alia_status":
