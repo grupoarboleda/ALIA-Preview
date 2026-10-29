@@ -30,7 +30,7 @@
    const isContract=selected.type==="committed"||selected.type==="contract";
    const idField=isContract?"contract":"process",rawId=isContract?"41":"15";
    const matched=rows.filter(r=>key(get(r,idField,rawId))===key(selected.id));
-   title.textContent=(isContract?"Contrato ":"Proceso ")+selected.id+" · corte "+String(latest.month).padStart(2,"0")+"/"+Math.floor(period(latest)/12-(Number(latest.month)===12?1:0));
+   title.textContent=(isContract?"Contrato ":"Proceso ")+selected.id+" · corte "+String(latest.month).padStart(2,"0")+"/"+Number(latest.year||String(latest.date||"").slice(0,4));
    if(!matched.length){status.textContent="La selección no figura en el último corte. No se mezclaron meses anteriores.";return;}
    const catalog=latest.column_catalog||[];
    const available=new Map(catalog.map(c=>["col:"+c.id,c.label||"Columna "+c.id]));
