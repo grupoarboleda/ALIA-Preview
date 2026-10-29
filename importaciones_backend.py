@@ -278,42 +278,6 @@ def activate():
 
 
 
-def contract_metadata_latest(contract):
-    """Read-only lookup in newest locally staged snapshot; financial state untouched."""
-    manifest = read_json(MANIFEST, {"months": {}})
-    months = sorted((int(m) for m in manifest.get("months", {})
-                     if str(m).isdigit() and 1 <= int(m) <= 12), reverse=True)
-    requested = str(contract or "").strip()
-    if not requested:
-        raise ValueError("Contrato requerido")
-    def norm_contract(value):
-        return re.sub(r"[^A-Z0-9]", "", str(value or "").upper())
-    for month in months:
-        snapshot = read_json(STAGING / f"{month:02d}.json", None)
-        if not snapshot or not snapshot.get("records"):
-            continue
-        records = snapshot["records"]
-        key = norm_contract(requested)
-        matches = []
-        for row in records:
-            raw = row.get("raw_columns") or {}
-            ids = (row.get("contract"), raw.get("41"), raw.get("47"))
-            if any(norm_contract(value) == key for value in ids if value):
-                matches.append(row)
-        def field_values(field, number):
-            return list(dict.fromkeys(str(row.get(field) or (row.get("raw_columns") or {}).get(number) or "").strip()
-                       for row in matches
-                       if str(row.get(field) or (row.get("raw_columns") or {}).get(number) or "").strip()))
-        return {"ok": True, "month": month, "file": snapshot.get("file", ""),
-                "contract_found": bool(matches), "matched_rows": len(matches),
-                "raw_rows": sum(bool(r.get("raw_columns")) for r in records),
-                "total_rows": len(records),
-                "process_names": field_values("process_name", "17"),
-                "administrators": field_values("contract_administrator", "59")}
-    return {"ok": True, "month": None, "contract_found": False, "matched_rows": 0,
-            "raw_rows": 0, "total_rows": 0, "process_names": [], "administrators": []}
-
-
 def explorer_preview(month=None):
     """Read-only cut from staged months; no activation or file changes."""
     manifest = read_json(MANIFEST, {"months": {}})
