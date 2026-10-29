@@ -12,8 +12,7 @@
   const status=document.createElement("p");status.style.cssText="font-size:12px;color:#9cc5d0";
   const output=document.createElement("div");output.style.overflowX="auto";
   panel.append(title,note,controls,status,output);
-  anchor.closest("section,article")?.after(panel);
-  if(!panel.isConnected)anchor.parentElement.append(panel);
+  anchor.parentElement.append(panel);
   const field=(label,options)=>{
    const wrap=document.createElement("label");wrap.style.cssText="font-size:12px;display:flex;flex-direction:column;gap:4px";
    wrap.append(document.createTextNode(label));
