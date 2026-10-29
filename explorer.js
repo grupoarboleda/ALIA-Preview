@@ -1728,6 +1728,41 @@ function latestDetailSnapshot(){
   });
 }
 // Rebuilt detail: one selected contract/process, latest loaded snapshot only.
+const detailExtraFields=[];
+function setupDetailFieldPicker(rows){
+ const body=$("ex-rows"),table=body?.closest("table"),heading=$("ex-table-title");
+ if(!table||!heading)return;
+ let control=document.getElementById("alia-detail-field-picker");
+ if(!control){
+  control=document.createElement("div");control.id="alia-detail-field-picker";
+  control.style.cssText="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0;color:#9ed6e5;font-size:12px";
+  const label=document.createElement("label");label.textContent="AÑADIR COLUMNA ";
+  const select=document.createElement("select");select.id="alia-detail-field-select";select.style.cssText="max-width:290px;background:#0b2c3d;color:#e8fcff;padding:7px;border:1px solid #31778a";
+  const add=button("AÑADIR +",()=>{
+   if(!select.value||detailExtraFields.includes(select.value))return;
+   detailExtraFields.push(select.value);renderLatestDetailTable();
+  },"exv-link");
+  const clear=button("QUITAR ADICIONALES",()=>{detailExtraFields.length=0;renderLatestDetailTable();},"exv-link");
+  label.append(select);control.append(label,add,clear);
+  heading.parentElement.append(control);
+ }
+ const select=document.getElementById("alia-detail-field-select");
+ const catalog=window.ALIADataEngine?.describe(rows)||[];
+ const used=new Set(["contract","process_name","contract_administrator","budget","committed","accrued","advance",...detailExtraFields]);
+ select.replaceChildren();
+ const empty=document.createElement("option");empty.value="";empty.textContent="Seleccionar campo disponible";select.append(empty);
+ for(const field of catalog.filter(f=>!used.has(f.id)&&f.id!=="raw_columns")){
+  const option=document.createElement("option");option.value=field.id;option.textContent=field.label+" ("+field.id+")";select.append(option);
+ }
+ const head=table.querySelector("thead tr");
+ if(!head)return;
+ head.querySelectorAll("[data-alia-extra]").forEach(el=>el.remove());
+ const action=head.lastElementChild;
+ for(const field of detailExtraFields){
+  const th=document.createElement("th");th.dataset.aliaExtra=field;th.textContent=catalog.find(f=>f.id===field)?.label||field;
+  head.insertBefore(th,action);
+ }
+}
 function renderLatestDetailTable(){
  if(!realMode)return;
  const request=++detailTableRequest;
@@ -1741,7 +1776,7 @@ function renderLatestDetailTable(){
  const notice=message=>{
   body.replaceChildren();
   const tr=document.createElement("tr"),td=document.createElement("td");
-  td.colSpan=9;td.textContent=message;tr.append(td);body.append(tr);
+  td.colSpan=9+detailExtraFields.length;td.textContent=message;tr.append(td);body.append(tr);
  };
  if(!selected){
   heading.textContent="Detalle del contrato o proceso seleccionado";
@@ -1759,6 +1794,7 @@ function renderLatestDetailTable(){
    :normalize(row.process)===normalize(selected.id));
   heading.textContent="Detalle de "+selected.id+" · "+String(latestDetailMonth).padStart(2,"0")+"/"+latestDetailYear;
   if(!matched.length){notice("El contrato o proceso seleccionado no consta en la última matriz cargada.");return;}
+  setupDetailFieldPicker(latest);
   const total=sum(matched,latestDetailMonth);
   const tr=document.createElement("tr");
   const contract=normalize(matched[0].contract);
@@ -1768,6 +1804,10 @@ function renderLatestDetailTable(){
   const administrators=distinctMetadata("contract_administrator","59");
   for(const value of [label,processNames.join(" · ")||"No registrado",administrators.join(" · ")||"No registrado",money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
    const td=document.createElement("td");td.textContent=value;tr.append(td);
+  }
+  for(const field of detailExtraFields){
+   const values=[...new Set(matched.map(row=>window.ALIADataEngine?.resolve(row,field)).filter(value=>value!==null&&value!==undefined&&value!=="").map(String))];
+   const td=document.createElement("td");td.textContent=values.length?values.join(" · "):"No disponible en los registros recibidos";tr.append(td);
   }
   const action=document.createElement("td");
   action.textContent="SELECCIONADO";
