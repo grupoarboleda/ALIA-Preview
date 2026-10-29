@@ -152,6 +152,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
     const current=managementDemoStatus(type,project,cut());
     const item=button("",()=>{
      selectedManagement={type,id:project};
+     renderLatestDetailTable();
      renderTemporal(fundingScope(filterBy(records,paneTrails[activePane])),cut());
      rankingRoot.querySelectorAll(".exv-management-item").forEach(b=>b.setAttribute("aria-pressed",String(b===item)));
     },"exv-management-item");
@@ -1435,7 +1436,7 @@ function renderRealTemporal(rs,cutMonth){
  const heading=document.createElement("div");heading.className="exv-temporal-head";
  const title=document.createElement("div");heading.append(title);host.append(heading);
  const choice=selectedManagement;
- const rows=choice?rs.filter(r=>(choice.type==="committed"?(r.contract||r.process):r.process)===choice.id):rs;
+ const rows=choice?rs.filter(r=>(choice.type==="committed"?r.contract:r.process)===choice.id):rs;
  const total=sum(rows,cutMonth);
  const label=choice?(choice.type==="committed"?"CONTRATO ":"PROCESO ")+choice.id:"UNIDAD / ÁREA · DATOS REALES";
  title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
@@ -1726,60 +1727,52 @@ function latestDetailSnapshot(){
    return latest.records;
   });
 }
+// Rebuilt detail: one selected contract/process, latest loaded snapshot only.
 function renderLatestDetailTable(){
  if(!realMode)return;
  const request=++detailTableRequest;
  const body=$("ex-rows"),heading=$("ex-table-title"),column=$("ex-column");
- heading.textContent="Detalle por contratos y procesos · último reporte";
+ const path=paneTrails[activePane].map(p=>({...p}));
+ const choice=selectedManagement?{...selectedManagement}:null;
+ const pathProcess=path.find(p=>p.key==="process");
+ const selected=choice|| (pathProcess?{type:"process",id:pathProcess.value}:null);
  column.textContent="Contrato / proceso";
  body.replaceChildren();
- const loading=document.createElement("tr"),cell=document.createElement("td");
- cell.colSpan=7;cell.textContent="Consultando último reporte cargado…";loading.append(cell);body.append(loading);
- latestDetailSnapshot().then(latest=>{
-  if(request!==detailTableRequest||!realMode)return;
-  const path=paneTrails[activePane];
-  const scopedRows=fundingScope(filterBy(latest,path)).filter(row=>!selectedManagement||(selectedManagement.type==="committed"?String(row.contract||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase():String(row.process||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase()));
-  const entities=new Map();
-  for(const row of scopedRows){
-   const contract=String(row.contract||"").trim();
-   const process=String(row.process||"").trim();
-   const type=contract?"committed":"uncommitted";
-   const id=contract||process;
-   if(!id)continue;
-   const key=type+"|"+id;
-   if(!entities.has(key))entities.set(key,{type,id,rows:[]});
-   entities.get(key).rows.push(row);
-  }
-  const entries=[...entities.values()].map(item=>({...item,totals:sum(item.rows,Number(latestDetailMonth)||cut())}))
-   .sort((a,b)=>b.totals.budget-a.totals.budget);
-  heading.textContent="Detalle por contratos y procesos · "+String(latestDetailMonth||"").padStart(2,"0")+"/"+latestDetailYear;
-  body.replaceChildren();
-  if(!entries.length){
-   const tr=document.createElement("tr"),td=document.createElement("td");
-   td.colSpan=7;td.textContent="No hay contratos o procesos en el último reporte para este filtro";tr.append(td);body.append(tr);return;
-  }
-  for(const entry of entries){
-   const a=entry.totals,tr=document.createElement("tr");
-   const label=(entry.type==="committed"?"CONTRATO ":"PROCESO ")+entry.id;
-   for(const value of [label,money(a.budget),money(a.committed),money(a.accrued),money(a.accrued+a.advance),percent(a).toFixed(1)+"%"]){
-    const td=document.createElement("td");td.textContent=value;tr.append(td);
-   }
-   const td=document.createElement("td");
-   td.append(button("EXPLORAR →",()=>{
-    // Keep financial chart sourced from its original selected cut.
-    selectedManagement={type:entry.type,id:entry.id};
-    renderLatestDetailTable();
-    const current=fundingScope(filterBy(records,paneTrails[activePane]));
-    renderTemporal(current,cut());
-   },"exv-link"));
-   tr.append(td);body.append(tr);
-  }
- }).catch(()=>{
-  if(request!==detailTableRequest)return;
+ const notice=message=>{
   body.replaceChildren();
   const tr=document.createElement("tr"),td=document.createElement("td");
-  td.colSpan=7;td.textContent="No se pudo consultar el último reporte. Los indicadores financieros no se modificaron.";
-  tr.append(td);body.append(tr);
+  td.colSpan=7;td.textContent=message;tr.append(td);body.append(tr);
+ };
+ if(!selected){
+  heading.textContent="Detalle del contrato o proceso seleccionado";
+  notice("Selecciona un contrato o proceso para consultar su último reporte. No se muestran listados generales.");
+  return;
+ }
+ heading.textContent="Detalle de "+selected.id+" · consultando último reporte";
+ notice("Consultando la última matriz cargada…");
+ latestDetailSnapshot().then(latest=>{
+  if(request!==detailTableRequest||!realMode)return;
+  const normalize=value=>String(value??"").trim().toUpperCase();
+  const scope=fundingScope(filterBy(latest,path));
+  const matched=scope.filter(row=>selected.type==="committed"
+   ?normalize(row.contract)===normalize(selected.id)
+   :normalize(row.process)===normalize(selected.id));
+  heading.textContent="Detalle de "+selected.id+" · "+String(latestDetailMonth).padStart(2,"0")+"/"+latestDetailYear;
+  if(!matched.length){notice("El contrato o proceso seleccionado no consta en la última matriz cargada.");return;}
+  const total=sum(matched,latestDetailMonth);
+  const tr=document.createElement("tr");
+  const contract=normalize(matched[0].contract);
+  const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
+  for(const value of [label,money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
+   const td=document.createElement("td");td.textContent=value;tr.append(td);
+  }
+  const action=document.createElement("td");
+  action.textContent="SELECCIONADO";
+  tr.append(action);body.replaceChildren(tr);
+ }).catch(error=>{
+  if(request!==detailTableRequest)return;
+  heading.textContent="Detalle del contrato o proceso seleccionado";
+  notice("No se pudo verificar el último reporte: "+error.message);
  });
 }
 function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
