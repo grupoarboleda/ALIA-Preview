@@ -1706,128 +1706,13 @@ document.head.append(aliaAreaActionsStyle);
 
 function goBackTo(pane,length){selectedManagement=null;paneTrails[pane]=paneTrails[pane].slice(0,length);activePane=pane;override=null;render();}
 let override=null;
-// Isolated detail table: always uses the latest staged report, never the chart's selected cut.
-let latestDetailMonth=null,latestDetailYear=null,detailTableRequest=0;
-function latestDetailSnapshot(){
- // A fresh request on each render avoids stale snapshots after an import.
- // The history endpoint is the authoritative collection of loaded monthly cuts.
- return fetch("/__alia_explorer_history",{cache:"no-store"})
-  .then(response=>{if(!response.ok)throw Error("Historial no disponible");return response.json();})
-  .then(history=>{
-   const series=Array.isArray(history.series)?history.series:[];
-   const valid=series.filter(item=>Array.isArray(item.records)&&Number.isInteger(Number(item.month))&&Number(item.month)>=1&&Number(item.month)<=12);
-   if(!valid.length)throw Error("Sin reportes mensuales");
-   const period=item=>{
-    const year=Number(item.year||String(item.date||item.report_date||"").match(/^\d{4}/)?.[0]||2026);
-    return year*12+Number(item.month);
-   };
-   const latest=window.ALIADataEngine?.latest(valid)||valid.reduce((best,item)=>!best||period(item)>period(best)?item:best,null);
-   latestDetailMonth=Number(latest.month);
-   latestDetailYear=Number(latest.year||String(latest.date||latest.report_date||"").match(/^\d{4}/)?.[0]||2026);
-   return latest.records;
-  });
-}
-// Rebuilt detail: one selected contract/process, latest loaded snapshot only.
-const detailExtraFields=[];
-function setupDetailFieldPicker(rows){
- const body=$("ex-rows"),table=body?.closest("table"),heading=$("ex-table-title");
- if(!table||!heading)return;
- let control=document.getElementById("alia-detail-field-picker");
- if(!control){
-  control=document.createElement("div");control.id="alia-detail-field-picker";
-  control.style.cssText="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0;color:#9ed6e5;font-size:12px";
-  const label=document.createElement("label");label.textContent="AÑADIR COLUMNA ";
-  const select=document.createElement("select");select.id="alia-detail-field-select";select.style.cssText="max-width:290px;background:#0b2c3d;color:#e8fcff;padding:7px;border:1px solid #31778a";
-  const add=button("AÑADIR +",()=>{
-   if(!select.value||detailExtraFields.includes(select.value))return;
-   detailExtraFields.push(select.value);renderLatestDetailTable();
-  },"exv-link");
-  const clear=button("QUITAR ADICIONALES",()=>{detailExtraFields.length=0;renderLatestDetailTable();},"exv-link");
-  label.append(select);control.append(label,add,clear);
-  heading.parentElement.append(control);
- }
- const select=document.getElementById("alia-detail-field-select");
- const catalog=window.ALIADataEngine?.describe(rows)||[];
- const used=new Set(["contract","process_name","contract_administrator","budget","committed","accrued","advance",...detailExtraFields]);
- select.replaceChildren();
- const empty=document.createElement("option");empty.value="";empty.textContent="Seleccionar campo disponible";select.append(empty);
- for(const field of catalog.filter(f=>!used.has(f.id)&&f.id!=="raw_columns")){
-  const option=document.createElement("option");option.value=field.id;option.textContent=field.label+" ("+field.id+")";select.append(option);
- }
- const head=table.querySelector("thead tr");
- if(!head)return;
- head.querySelectorAll("[data-alia-extra]").forEach(el=>el.remove());
- const action=head.lastElementChild;
- for(const field of detailExtraFields){
-  const th=document.createElement("th");th.dataset.aliaExtra=field;th.textContent=catalog.find(f=>f.id===field)?.label||field;
-  head.insertBefore(th,action);
- }
-}
+// Detail V2 replaces the removed legacy table, picker and historical lookup.
 function renderLatestDetailTable(){
  if(!realMode)return;
- const request=++detailTableRequest;
- const body=$("ex-rows"),heading=$("ex-table-title"),column=$("ex-column");
  const path=paneTrails[activePane].map(p=>({...p}));
- const choice=selectedManagement?{...selectedManagement}:null;
- const pathProcess=path.find(p=>p.key==="process");
- const selected=choice|| (pathProcess?{type:"process",id:pathProcess.value}:null);
- column.textContent="Contrato / proceso";
- body.replaceChildren();
- const notice=message=>{
-  body.replaceChildren();
-  const tr=document.createElement("tr"),td=document.createElement("td");
-  td.colSpan=9+detailExtraFields.length;td.textContent=message;tr.append(td);body.append(tr);
- };
- if(!selected){
-  heading.textContent="Detalle del contrato o proceso seleccionado";
-  notice("Selecciona un contrato o proceso para consultar su último reporte. No se muestran listados generales.");
-  return;
- }
- heading.textContent="Detalle de "+selected.id+" · consultando último reporte";
- notice("Consultando la última matriz cargada…");
- latestDetailSnapshot().then(latest=>{
-  if(request!==detailTableRequest||!realMode)return;
-  const normalize=value=>String(value??"").trim().toUpperCase();
-  const scope=fundingScope(filterBy(latest,path));
-  const identity=(row,field,index)=>normalize(row[field]??row.raw_columns?.[index]);
-  const matched=scope.filter(row=>selected.type==="committed"
-   ?identity(row,"contract","41")===normalize(selected.id)
-   :identity(row,"process","15")===normalize(selected.id));
-  heading.textContent="Detalle de "+selected.id+" · "+String(latestDetailMonth).padStart(2,"0")+"/"+latestDetailYear;
-  if(!matched.length){notice("El contrato o proceso seleccionado no consta en la última matriz cargada.");return;}
-  setupDetailFieldPicker(latest);
-  const rawCoverage=matched.filter(row=>row.raw_columns&&Object.keys(row.raw_columns).length>0).length;
-  let audit=document.getElementById("alia-detail-data-audit");
-  if(!audit){audit=document.createElement("small");audit.id="alia-detail-data-audit";heading.parentElement.append(audit);}
-  audit.style.cssText="display:block;color:#8cbac7;margin-top:5px";
-  audit.textContent=rawCoverage===matched.length
-   ?"Origen: "+matched.length+" fila(s), columnas originales disponibles; "+Object.keys(matched[0].raw_columns||{}).length+" campos en primera fila"
-   :"Origen incompleto: "+rawCoverage+" de "+matched.length+" filas incluyen columnas originales. Revisar respuesta del importador local.";
-  const total=sum(matched,latestDetailMonth);
-  const tr=document.createElement("tr");
-  const contract=identity(matched[0],"contract","41");
-  const label=(selected.type==="committed"||contract?"CONTRATO ":"PROCESO ")+(selected.type==="committed"?selected.id:contract||selected.id);
-  const distinctMetadata=(field,index)=>{
-   const values=matched.flatMap(row=>[row[field],row.raw_columns?.[index],window.ALIADataEngine?.resolve(row,"col:"+index)]).map(value=>String(value??"").trim()).filter(Boolean);
-   return [...new Set(values)];
-  };
-  const processNames=distinctMetadata("process_name","17");
-  const administrators=distinctMetadata("contract_administrator","59");
-  for(const value of [label,processNames.join(" · ")||"No registrado",administrators.join(" · ")||"No registrado",money(total.budget),money(total.committed),money(total.accrued),money(total.accrued+total.advance),percent(total).toFixed(1)+"%"]){
-   const td=document.createElement("td");td.textContent=value;tr.append(td);
-  }
-  for(const field of detailExtraFields){
-   const values=[...new Set(matched.map(row=>window.ALIADataEngine?.resolve(row,field)).filter(value=>value!==null&&value!==undefined&&value!=="").map(String))];
-   const td=document.createElement("td");td.textContent=values.length?values.join(" · "):"No disponible en los registros recibidos";tr.append(td);
-  }
-  const action=document.createElement("td");
-  action.textContent="SELECCIONADO";
-  tr.append(action);body.replaceChildren(tr);
- }).catch(error=>{
-  if(request!==detailTableRequest)return;
-  heading.textContent="Detalle del contrato o proceso seleccionado";
-  notice("No se pudo verificar el último reporte: "+error.message);
- });
+ const process=path.find(p=>p.key==="process");
+ const selected=selectedManagement?{...selectedManagement}:(process?{type:"process",id:process.value}:null);
+ window.ALIADetailV2?.render({selected,path,realMode,filter:(rows,trail)=>fundingScope(filterBy(rows,trail))});
 }
 function render(requested){selectedManagement=null;if(requested)override=requested;syncFilters();const currentPath=paneTrails[activePane],rs=fundingScope(filterBy(records,currentPath)),c=cut(),v=sum(rs,c),level=override||paneOrder[activePane][currentPath.length];
 const committedRate=v.budget?100*v.committed/v.budget:0,accruedRate=percent(v),advanceRate=v.budget?100*(v.accrued+v.advance)/v.budget:0;
