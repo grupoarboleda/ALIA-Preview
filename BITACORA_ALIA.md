@@ -460,3 +460,8 @@
 - Causa de valores no disponibles: to_explorer descartaba process_name y contract_administrator, pese a conservar raw_columns. Se corrige proyección y recuperación de snapshots locales existentes sin reimportar, mediante validated_snapshot y lectura directa en explorer.js de raw_columns[17] y raw_columns[59].
 - Se modifica /__alia_data para enriquecer en memoria sin sobrescribir los JSON almacenados. No se altera ningún Excel ni se publica información institucional en GitHub.
 - Validación en localhost pendiente.
+
+### 2026-10-28 — Información contractual desde último reporte cargado
+- Causa: la ventana (i) consultaba únicamente registros del corte seleccionado; los campos podían faltar allí aunque existieran en el último corte cargado.
+- Nuevo endpoint de solo lectura /__alia_contract_info?contract=...: consulta meses del manifiesto desde el más reciente, busca coincidencia por contrato y por IDs crudos 41/47, extrae nombre del proceso ID 17 y administrador ID 59. Devuelve fuente y mes. No modifica matrices ni snapshots.
+- Explorer solicita información al abrir (i), independiente del corte visualizado. Requiere reiniciar servidor Python local para activar nuevo endpoint; pendiente prueba real en equipo del usuario.
