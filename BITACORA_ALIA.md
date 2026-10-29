@@ -449,3 +449,8 @@
 - El gráfico de contratos ahora utiliza las fechas del historial enriquecido, no solamente las del registro reducido del corte.
 - El lector admite también fechas DD/MM/AAAA. Sin archivo original local coincidente, no se inventan fechas ni se alteran snapshots.
 - Validación pendiente en el equipo del usuario: contrato 32-2026, anticipo 10/06/2026.
+
+### 2026-10-28 — Información contextual del contrato
+- Añadido botón (i) junto al número del contrato en Rama 02 / Datos reales. Despliega nombre del proceso y administrador del contrato; muestra no disponible cuando no existe en snapshot.
+- El importador captura el administrador a partir del encabezado de la matriz que contenga ADMINISTRADOR y CONTRATO. Para snapshots previamente importados, no se inventan nombres ni se exige volver a importar para visualizar el botón; el administrador solo aparecerá cuando el dato exista en el snapshot.
+- Commits b15a6f7, 3acf14a; falta comprobar en localhost.
