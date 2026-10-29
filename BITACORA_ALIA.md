@@ -485,3 +485,11 @@
 - Agrupa las filas con contrato por número de contrato y las filas sin contrato por código de proceso; suma los montos de cada grupo del último reporte. Aplica el mismo contexto de área, proyecto y financiamiento de la vista.
 - El botón EXPLORAR selecciona el contrato/proceso en la gráfica existente, que conserva su fuente y corte original.
 - En modo DEMO se mantiene el comportamiento anterior. Validación visual y funcional en localhost pendiente.
+
+
+### 2026-10-29 — Motor universal y tabla dinámica sobre snapshots existentes
+- Se confirmó el servidor real en `servidor_alia.py`, el historial en `importaciones_backend.py` y la captura de todas las columnas numeradas de la fila 12 en `importador_matriz.py` mediante `raw_columns`. No es necesario solicitar al usuario la carpeta ni volver a importar para cambios de interfaz.
+- Se incorporaron `data-engine.js` y `pivot-panel.js` en `develop`: catálogo dinámico, agrupación por dos dimensiones, operaciones de suma/conteo/recuento distinto/promedio/mínimo/máximo, consulta del último corte y columnas adicionales en la tabla inferior.
+- Se corrigió el tratamiento del año ausente y de formatos numéricos con coma/punto; el panel ahora presenta automáticamente un primer resultado y la cobertura de `raw_columns`.
+- No se modificaron los Excel, snapshots, importador Python ni los acumulados y gráficos existentes. **Pendiente:** validar en `localhost:5500` contra matrices reales, identificar posibles snapshots históricos sin `raw_columns` y cotejar cifras antes de certificar. No afirmar certificación sin esa prueba.
+- Flujo: el servidor local sincroniza `develop` al cargar la página principal; recargar navegador. Si se cambia Python en el futuro, reiniciar servidor.
