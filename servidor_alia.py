@@ -160,13 +160,6 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(monthly.monthly_history())
         if self.path.split("?", 1)[0] in ("/", "/index.html"):
             sync()
-        if self.path.split("?", 1)[0] == "/__alia_contract_metadata":
-            from urllib.parse import parse_qs, urlsplit
-            contract = parse_qs(urlsplit(self.path).query).get("contract", [""])[0]
-            try:
-                return self._json(monthly.contract_metadata_latest(contract))
-            except ValueError as exc:
-                return self._json({"error": str(exc)}, 400)
         if self.path.split("?", 1)[0] == "/__alia_data":
             if not LOCAL_DATA.exists():
                 return self._json({"mode": "DEMO", "records": []})
