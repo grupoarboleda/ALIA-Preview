@@ -1730,7 +1730,7 @@ function renderLatestDetailTable(){
  latestDetailSnapshot().then(latest=>{
   if(request!==detailTableRequest||!realMode)return;
   const path=paneTrails[activePane];
-  const scopedRows=fundingScope(filterBy(latest,path));
+  const scopedRows=fundingScope(filterBy(latest,path)).filter(row=>!selectedManagement||[row.contract,row.process].some(value=>String(value||"").trim().toUpperCase()===String(selectedManagement.id||"").trim().toUpperCase()));
   const entities=new Map();
   for(const row of scopedRows){
    const contract=String(row.contract||"").trim();
@@ -1742,7 +1742,7 @@ function renderLatestDetailTable(){
    if(!entities.has(key))entities.set(key,{type,id,rows:[]});
    entities.get(key).rows.push(row);
   }
-  const entries=[...entities.values()].map(item=>({...item,totals:sum(item.rows,cut())}))
+  const entries=[...entities.values()].map(item=>({...item,totals:sum(item.rows,Number(latestDetailMonth)||cut())}))
    .sort((a,b)=>b.totals.budget-a.totals.budget);
   heading.textContent="Detalle por contratos y procesos · "+String(latestDetailMonth||"").padStart(2,"0")+"/2026";
   body.replaceChildren();
@@ -1760,6 +1760,7 @@ function renderLatestDetailTable(){
    td.append(button("EXPLORAR →",()=>{
     // Keep financial chart sourced from its original selected cut.
     selectedManagement={type:entry.type,id:entry.id};
+    renderLatestDetailTable();
     const current=fundingScope(filterBy(records,paneTrails[activePane]));
     renderTemporal(current,cut());
    },"exv-link"));
