@@ -31,7 +31,7 @@
  };
  const latest=series=>{
   const valid=(series||[]).filter(s=>Array.isArray(s.records)&&Number.isInteger(Number(s.month))&&Number(s.month)>=1&&Number(s.month)<=12);
-  const year=s=>Number(s.year||String(s.report_date||s.date||"").match(/^\d{4}/)?.[0]||2026);
+  const year=s=>Number(s.year||String(s.report_date||s.date||"").match(/^\d{4}/)?.[0]||0);
   return valid.reduce((best,s)=>!best||(year(s)*12+Number(s.month)>year(best)*12+Number(best.month))?s:best,null);
  };
  const group=(rows,{dimensions=[],measures=[],filters=[]}={})=>{
