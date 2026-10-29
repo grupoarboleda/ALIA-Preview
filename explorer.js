@@ -1350,101 +1350,61 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    tip.textContent="Devengado al corte: "+(budget>0?(100*realEnd[1]/budget).toFixed(1)+"%":"sin codificado");
   }
   plot.append(svg);
-  // Animar solo después de insertar SVG en el DOM. En Firefox getTotalLength
-  // puede fallar sobre geometrías desconectadas y cancelar el gráfico entero.
+  // All non-projection series run concurrently. The real area shares the real clip.
   try {
-   const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-   if(reduced){for(const marker of svg.querySelectorAll("[data-alia-projection-month]"))marker.setAttribute("opacity","1");for(const el of [realHalo,realRing,svg.querySelector("[data-alia-real-end]")])if(el)el.style.visibility="visible";}
-   if(!reduced){
-    const paths=[...svg.querySelectorAll("polyline[data-alia-series]")];
-    const duration=3000;
-    // Las series comienzan simultáneamente; el sombreado avanza con el real.
-    const realArea=svg.querySelector("[data-alia-real-area]");
-    if(realArea){
-     const clip=document.createElementNS(ns,"clipPath");
-     const clipId="alia-real-area-"+Math.random().toString(36).slice(2);
-     clip.id=clipId;
-     const rect=document.createElementNS(ns,"rect");
-     rect.setAttribute("x","65");rect.setAttribute("y","0");rect.setAttribute("width","0");rect.setAttribute("height","320");
-     clip.append(rect);svg.insertBefore(clip,svg.firstChild);
-     realArea.setAttribute("clip-path","url(#"+clipId+")");
-     if(typeof rect.animate==="function")rect.animate([{width:0},{width:Math.max(0,cutX-65)+4}],{duration,fill:"forwards",easing:"ease-in-out"});
-     else rect.setAttribute("width",String(Math.max(0,cutX-65)+4));
-    }
-    // La proyección empieza exclusivamente al finalizar el trazado real.
-    const realPath=paths.find(path=>path.dataset.aliaSeries==="Devengado real");
-    let realAnimation=null;
-    const animateStroke=path=>{
-     if(!path||typeof path.animate!=="function")return null;
-     const len=path.getTotalLength();
-     if(!Number.isFinite(len)||len<=0)return null;
-     return path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration,fill:"both",easing:"ease-in-out"});
-    };
-    for(const path of paths){
-     if(path.dataset.aliaSeries==="Proyección vigente")continue;
-     const animation=animateStroke(path);
-     if(path===realPath)realAnimation=animation;
-    }
-    const revealRealEnd=()=>{
-     if(!svg.isConnected||!realHalo||!realRing)return;
-     realHalo.style.visibility="visible";realRing.style.visibility="visible";
-     const core=svg.querySelector("[data-alia-real-end]");
-     if(core)core.style.visibility="visible";
-    };
-    if(realAnimation)realAnimation.finished.then(revealRealEnd).catch(revealRealEnd);
-    else revealRealEnd();
-    if(realHalo&&realRing&&typeof realHalo.animate==="function"){
-     realHalo.animate([{r:9,opacity:.30},{r:17,opacity:.06},{r:9,opacity:.30}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
-     realRing.animate([{strokeWidth:2.8},{strokeWidth:4.2},{strokeWidth:2.8}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
-    }
-    const projectionPath=paths.find(path=>path.dataset.aliaSeries==="Proyección vigente");
-    if(projectionPath&&typeof projectionPath.animate==="function"){
-     // La proyección se dibuja desde el último punto real hasta diciembre.
-     // Una máscara SVG revela el trazo discontinuo sin alterar su patrón.
-     const projected=lines.find(line=>line.label==="Proyección vigente");
-     const startIndex=projected&&projected.points.length?projected.points[0][0]:Math.max(0,cutMonth-1);
-     const endIndex=projected&&projected.points.length?projected.points[projected.points.length-1][0]:11;
-     const reveal=document.createElementNS(ns,"clipPath");
-     const revealId="alia-projection-clip-"+Math.random().toString(36).slice(2);
-     reveal.setAttribute("id",revealId);
-     const mask=document.createElementNS(ns,"rect");
-     const startX=x(startIndex),width=Math.max(0,x(endIndex)-startX);
-     mask.setAttribute("x",String(startX-3));
-     mask.setAttribute("y","0");
-     mask.setAttribute("width","0");
-     mask.setAttribute("height","320");
-     reveal.append(mask);
-     svg.insertBefore(reveal,svg.firstChild);
-     projectionPath.setAttribute("clip-path","url(#"+revealId+")");
-     // SVG SMIL anima el ancho real de la máscara en Firefox; el trazo
-     // naranja permanece discontinuo y se descubre progresivamente.
-     const revealWidth=width+9;
-     const sweep=document.createElementNS(ns,"animate");
-     sweep.setAttribute("attributeName","width");
-     sweep.setAttribute("from","0");
-     sweep.setAttribute("to",String(revealWidth));
-     sweep.setAttribute("dur","1.8s");
-     sweep.setAttribute("begin","indefinite");
-     sweep.setAttribute("fill","freeze");
-     mask.append(sweep);
-     const startProjection=()=>{
-      if(!svg.isConnected)return;
-      if(typeof sweep.beginElement==="function")sweep.beginElement();
-      else mask.setAttribute("width",String(revealWidth));
-      const markers=[...svg.querySelectorAll("[data-alia-projection-month]")];
-      for(const marker of markers){
-       const month=Number(marker.dataset.aliaProjectionMonth);
-       const delay=width>0?Math.max(0,1800*(x(month)-startX)/width):0;
-       if(typeof marker.animate==="function"){
-        marker.animate([{opacity:0},{opacity:1}],{duration:140,delay,fill:"forwards"});
-       }else marker.setAttribute("opacity","1");
-      }
-     };
-     if(realAnimation)realAnimation.finished.then(startProjection).catch(startProjection);
-     else startProjection();
-    }
+   const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+   const duration=3000,forecastDuration=1800;
+   const paths=[...svg.querySelectorAll("polyline[data-alia-series]")];
+   const realPath=paths.find(p=>p.dataset.aliaSeries==="Devengado real");
+   const area=svg.querySelector("[data-alia-real-area]");
+   const core=svg.querySelector("[data-alia-real-end]");
+   const revealEndpoint=()=>{if(!svg.isConnected)return;for(const el of [realHalo,realRing,core])if(el)el.style.visibility="visible";};
+   const createClip=(elements,first,last,ms)=>{
+    if(!elements.length)return Promise.resolve();
+    const defs=make("defs",{});svg.insertBefore(defs,svg.firstChild);
+    const clip=make("clipPath",{id:"alia-reveal-"+Math.random().toString(36).slice(2)},defs);
+    const rect=make("rect",{x:x(first)-4,y:0,width:0,height:320},clip);
+    for(const el of elements)el.setAttribute("clip-path","url(#"+clip.id+")");
+    const width=Math.max(8,x(last)-x(first)+8);
+    if(reduced||typeof rect.animate!=="function"){rect.setAttribute("width",String(width));return Promise.resolve();}
+    const animation=rect.animate([{width:"0px"},{width:width+"px"}],{duration:ms,easing:"linear",fill:"forwards"});
+    return animation.finished.catch(()=>{});
+   };
+   const tasks=[];
+   for(const path of paths){
+    if(path.dataset.aliaSeries==="Proyección vigente")continue;
+    const label=path.dataset.aliaSeries;
+    const line=lines.find(l=>l.label===label);
+    if(!line?.points.length)continue;
+    const first=line.points[0][0],last=line.points[line.points.length-1][0];
+    const elements=path===realPath&&area?[path,area]:[path];
+    const task=createClip(elements,first,last,duration);
+    if(path===realPath)task.then(revealEndpoint);
+    tasks.push(task);
    }
-  }catch(error){console.warn("ALIA: animación opcional omitida",error);}
+   if(!realPath)revealEndpoint();
+   const projection=paths.find(p=>p.dataset.aliaSeries==="Proyección vigente");
+   if(projection){
+    const forecast=lines.find(l=>l.label==="Proyección vigente");
+    const first=forecast.points[0][0],last=forecast.points[forecast.points.length-1][0];
+    const realDone=realPath?tasks[paths.filter(p=>p.dataset.aliaSeries!=="Proyección vigente").indexOf(realPath)]:Promise.resolve();
+    (realDone||Promise.resolve()).then(()=>{
+     if(!svg.isConnected)return;
+     createClip([projection],first,last,forecastDuration);
+     for(const marker of svg.querySelectorAll("[data-alia-projection-month]")){
+      const month=Number(marker.dataset.aliaProjectionMonth);
+      const delay=forecastDuration*(month-first)/Math.max(1,last-first);
+      if(reduced||typeof marker.animate!=="function")marker.setAttribute("opacity","1");
+      else marker.animate([{opacity:0},{opacity:1}],{duration:120,delay,fill:"forwards"});
+     }
+    });
+   }
+   if(reduced)revealEndpoint();
+  }catch(error){console.warn("ALIA: chart animation fallback",error);
+   for(const path of svg.querySelectorAll("polyline[data-alia-series]"))path.removeAttribute("clip-path");
+   for(const el of svg.querySelectorAll("[data-alia-projection-month]"))el.setAttribute("opacity","1");
+   for(const el of [realHalo,realRing,svg.querySelector("[data-alia-real-end]")])if(el)el.style.visibility="visible";
+  }
  }
  for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
  // Dibujar inmediatamente con las series financieras disponibles.
