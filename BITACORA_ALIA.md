@@ -509,3 +509,4 @@
 
 ### 2026-10-29 — Búsqueda integrada en el desplegable de columnas
 - Por precisión del propietario, se reemplaza el select nativo por una lista desplegable con búsqueda DENTRO del panel al abrirlo. Selección por clic, búsqueda por texto/ID sin tildes, navegación con flechas, Enter y Escape; cierre al salir o pulsar fuera. No queda un campo de búsqueda separado encima del selector.
+- Verificado en localhost5500: 39 comprobaciones de navegador PASS, incluyendo búsqueda dentro de la lista, 564 columnas, selección con Enter, cierre con Escape y regresión de los dos contratos.
