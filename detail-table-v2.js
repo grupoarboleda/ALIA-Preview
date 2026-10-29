@@ -22,7 +22,7 @@
   status.textContent="Consultando último reporte…";
   fetch("/__alia_explorer_history",{cache:"no-store"}).then(res=>{if(!res.ok)throw Error("No se pudo consultar el historial");return res.json();}).then(history=>{
    if(request!==ticket)return;
-   const cuts=(history.series||[]).filter(x=>Array.isArray(x.records)&&Number(x.month)>=1&&Number(x.month)<=12);
+   const cuts=(history.series||[]).filter(x=>Array.isArray(x.records)&&Number.isInteger(Number(x.month))&&Number(x.month)>=1&&Number(x.month)<=12);
    const period=x=>{const y=Number(x.year||String(x.date||"").slice(0,4));return Number.isInteger(y)&&y>=2000?y*12+Number(x.month):-1;};
    cuts.sort((a,b)=>period(b)-period(a));
    const latest=cuts[0];if(!latest||period(latest)<0)throw Error("No hay cortes con año y mes válidos");
@@ -45,7 +45,7 @@
    const wrap=node("div");wrap.className="table-wrap";const table=node("table"),thead=node("thead"),tr=node("tr");
    for(const [,label] of columns)tr.append(node("th",label));thead.append(tr);table.append(thead);
    const tbody=node("tbody"),line=node("tr");
-   const distinct=(field,id)=>[...new Set(matched.map(r=>val(get(r,field,id))).filter(Boolean))];
+   const distinct=(field,id)=>[...new Set(matched.flatMap(r=>[r[field],r.raw_columns?.[String(id)]].map(val).filter(Boolean)))];
    const numeric=field=>matched.reduce((sum,r)=>sum+number(get(r,field,fields.find(f=>f[0]===field)?.[1])),0);
    const values=[(isContract?"CONTRATO ":"PROCESO ")+selected.id,
      distinct("process_name","17").join(" · ")||"Sin dato en origen",
