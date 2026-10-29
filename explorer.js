@@ -1126,6 +1126,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const budgetAll=rows.length===records.length;
  const same=(a,b)=>String(a??"")===String(b??"");
  const inScope=r=>budgetAll||budgetScope.some(k=>same(k.area,r.area)&&same(k.project,r.project)&&same(k.source,r.source)&&same(k.process,r.process)&&same(k.sourceRow,r.sourceRow));
+ const chartStarted=performance.now();
  const chartToken=Symbol("chart");
  section._budgetToken=chartToken;
  fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
@@ -1164,8 +1165,48 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
     }
    }
   }
-  draw();
- }).catch(()=>{if(section._budgetToken===chartToken&&section.isConnected)draw();});
+  // El primer trazado comienza de inmediato. Al llegar el historial se
+  // incorporan las capas adicionales sin borrar ni reiniciar el SVG.
+  const svg=plot.querySelector("svg");
+  if(svg&&physicalContract){
+   const ns="http://www.w3.org/2000/svg";
+   const add=(tag,attrs)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.append(e);return e;};
+   const dated=milestoneRows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
+   const advance=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort()[0];
+   const start=dated.filter(r=>r.start).map(r=>r.start).sort()[0];
+   const eventDate=dated.some(r=>r.paid>0)?advance:start;
+   if(eventDate){
+    const dt=new Date(eventDate+"T12:00:00");
+    if(!Number.isNaN(dt.getTime())&&dt.getFullYear()===2026){
+     const month=dt.getMonth(),px=65+month*59;
+     const line=add("line",{x1:px,x2:px,y1:38,y2:268,stroke:"#eac87b","stroke-width":1.3,"stroke-dasharray":"2 8",opacity:0});
+     const dot=add("circle",{cx:px,cy:38,r:9,fill:"#d9b75c",stroke:"#fff1bb","stroke-width":1.5,opacity:0,role:"button",tabindex:0});
+     const detail=(advance?"ANTICIPO PAGADO":"INICIO DEL CONTRATO")+" · "+eventDate.split("-").reverse().join("/");
+     const tip=document.createElementNS(ns,"title");tip.textContent=detail;dot.append(tip);
+     dot.style.cursor="pointer";
+     const show=()=>{pointDetail.style.display="block";pointDetail.textContent=detail;};
+     dot.addEventListener("click",show);dot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
+     const elapsed=performance.now()-chartStarted;
+     const revealAt=3000*month/Math.max(1,cutMonth-1);
+     const wait=Math.max(0,revealAt-elapsed);
+     const reveal=()=>{if(!svg.isConnected)return;line.setAttribute("opacity",".65");dot.setAttribute("opacity","1");};
+     if(wait)window.setTimeout(reveal,wait);else reveal();
+    }
+   }
+   const physical=lines.find(l=>l.label==="Avance físico");
+   if(physical&&active.has(physical.label)){
+    const points=physicalByMonth.map((v,i)=>v===null||i>=cutMonth?null:[i,v]).filter(Boolean);
+    if(points.length){
+     const poly=add("polyline",{points:points.map(p=>(65+p[0]*59)+","+(268-225*p[1]/100)).join(" "),fill:"none",stroke:physical.color,"stroke-width":3,"stroke-linecap":"round","stroke-linejoin":"round"});
+     const len=poly.getTotalLength();
+     if(len>0&&typeof poly.animate==="function"){
+      const elapsed=performance.now()-chartStarted;
+      poly.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration:3000,delay:-Math.min(3000,elapsed),fill:"both"});
+     }
+    }
+   }
+  }
+ }).catch(()=>{});
  const totals={baseline:Array(12).fill(0),planned:Array(12).fill(0),actual:Array(12).fill(0)};
  for(const r of valid){
   for(let i=0;i<12;i++){
@@ -1378,8 +1419,8 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   }catch(error){console.warn("ALIA: animación opcional omitida",error);}
  }
  for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
- // Un solo dibujo inicial: esperar las fechas y series del historial.
- // Evita reiniciar animaciones cuando llega la respuesta asíncrona.
+ // Dibujar inmediatamente con las series financieras disponibles.
+ draw();
 }
 
 if(!document.getElementById("alia-monthly-chart-polish")){const style=document.createElement("style");style.id="alia-monthly-chart-polish";style.textContent=`#explorer .exv-monthly-chart-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}#explorer .exv-monthly-chart-header h4{margin:0}#explorer .exv-monthly-chart-header button{min-width:48px;text-align:center}#explorer .exv-real-history-plot svg{min-width:0}#explorer .exv-real-history-legend{justify-content:center}#explorer .exv-real-history-panel{overflow:hidden}@keyframes aliaMonthlyReveal{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){#explorer .exv-real-history-plot *{animation:none!important}}@media(max-width:560px){#explorer .exv-monthly-chart-header{align-items:flex-start}#explorer .exv-monthly-chart-header h4{max-width:65%}}`;document.head.append(style);}
