@@ -454,3 +454,9 @@
 - Añadido botón (i) junto al número del contrato en Rama 02 / Datos reales. Despliega nombre del proceso y administrador del contrato; muestra no disponible cuando no existe en snapshot.
 - El importador captura el administrador a partir del encabezado de la matriz que contenga ADMINISTRADOR y CONTRATO. Para snapshots previamente importados, no se inventan nombres ni se exige volver a importar para visualizar el botón; el administrador solo aparecerá cuando el dato exista en el snapshot.
 - Commits b15a6f7, 3acf14a; falta comprobar en localhost.
+
+### 2026-10-28 — Recuperación de datos contractuales existentes
+- Verificado directamente en 10. Octubre.xlsx: fila 11 NOMBRE DEL PROCESO = ID 17 (columna R); NOMBRE DEL ADMINISTRADOR DEL CONTRATO = ID 59 (columna BH). El diccionario solo incluía ID 17; se incorpora ID 59.
+- Causa de valores no disponibles: to_explorer descartaba process_name y contract_administrator, pese a conservar raw_columns. Se corrige proyección y recuperación de snapshots locales existentes sin reimportar, mediante validated_snapshot y lectura directa en explorer.js de raw_columns[17] y raw_columns[59].
+- Se modifica /__alia_data para enriquecer en memoria sin sobrescribir los JSON almacenados. No se altera ningún Excel ni se publica información institucional en GitHub.
+- Validación en localhost pendiente.
