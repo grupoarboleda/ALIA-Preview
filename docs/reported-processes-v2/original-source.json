@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "checks": [
+    "complete installed process list equals latest original report classification",
+    "zero codificado processes present",
+    "all states sourced from 482",
+    "no browser errors"
+  ]
+}
