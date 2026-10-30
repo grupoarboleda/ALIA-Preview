@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "checks": [
+    "all range months visible by default",
+    "single month hides other columns",
+    "single month row shape",
+    "single month totals",
+    "planned total card filters rows",
+    "planned active indicator",
+    "executed total card filters rows",
+    "executed active indicator",
+    "non adjacent multiple months",
+    "multiple month row shape",
+    "multiple month totals",
+    "difference filters selected months",
+    "all restores every month",
+    "empty selection cannot apply",
+    "chart selection controls horizontal table months",
+    "mobile fits",
+    "no JS errors"
+  ],
+  "errors": []
+}

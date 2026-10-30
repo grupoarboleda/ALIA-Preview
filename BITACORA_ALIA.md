@@ -544,3 +544,4 @@ Verificación final: 9 comprobaciones de navegador PASS en el servidor local 550
 
 ## Selección múltiple de meses y tarjetas de totales · 2026-10-30
 Total Programado y Total Devengado filtran los contratos con importe distinto de cero en los meses elegidos. Mes para revisar ofrece casillas, Todos y Aplicar meses; por defecto muestra todo el rango. La tabla, sus totales y el resumen mensual muestran únicamente los meses seleccionados, incluso no consecutivos; las diferencias se filtran en cualquiera de esos meses. La gráfica conserva el rango como contexto y permite seleccionar un único mes. No se alteraron fuentes ni reglas de conciliación. Prueba de navegador candidata: 17 PASS.
+Verificación final instalada en localhost:5500, commit 4dcc85c: 17 comprobaciones PASS, incluyendo filtros de ambas tarjetas, selección única/múltiple/Todos, totales, columnas y móvil. Evidencia: docs/programacion-pagos/month-multi-v5/browser-active5500.json.
