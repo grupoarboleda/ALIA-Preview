@@ -6,7 +6,8 @@
  const normal=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
  const matchLabels={unique:'Pagos consecutivos coincidentes',review:'Revisar Pagos',missing:'Sin devengado registrado',zero:'Sin devengo'};
- const caseLabels={unplanned:'Devengado sin programación registrada',over_plan:'Devengado sobre lo programado',pending:'Programado sin devengo registrado'};
+ const colors={planned:'#439fff',pending:'#e59aff',executed:'#32d6ac',unplanned:'#ffb54d'};
+ const caseLabels={pending:'Programado No devengado',unplanned:'Devengado No Programado',over_plan:'Devengado sobre lo programado'};
  let config=null,data=null,request=0,initialized=false,tableResize=null,reviewMonth=null,reviewCase="";
  const hero=el('section',undefined,'pf-hero');hero.append(el('div','PROGRAMACIÓN Y DEVENGADO MENSUAL','eyebrow'),el('h2','Lo programado frente a lo devengado'),el('p','Elige un rango de meses. Compara únicamente programación y devengado, y consulta los trámites o casos que coinciden con las facturas sin IVA de cada contrato.'));
  const controls=el('div',undefined,'pf-controls');
@@ -43,9 +44,9 @@
   const comparisonTotal=(month,field)=>{const vals=rows.map(r=>r.monthly.find(m=>m.month===month)?.comparison?.[field]).filter(v=>v!==null&&v!==undefined);return vals.length?vals.reduce((a,b)=>a+b,0):null;};
   const values=data.months.map(m=>({month:m,planned:total(rows,m,'planned'),executed:total(rows,m,'executed'),covered:comparisonTotal(m,'covered'),pending:comparisonTotal(m,'pending'),unplanned:comparisonTotal(m,'unplanned'),over_plan:comparisonTotal(m,'over_plan')}));
   const tableRows=reviewCase?rows.filter(r=>(r.monthly.find(m=>m.month===reviewMonth)?.comparison?.[reviewCase]||0)>0):rows;
-  const cards=el('div',undefined,'pf-cards pf-two-cards');for(const [key,label,color] of [['planned','PROGRAMADO EN EL RANGO','#75aaf0'],['executed','DEVENGADO EN EL RANGO','#71d6bd']]){const nums=values.map(v=>v[key]).filter(v=>v!==null),card=el('article',undefined,'pf-card'),strong=el('strong',money(nums.length?nums.reduce((a,b)=>a+b,0):null));strong.style.color=color;card.append(el('small',label),strong,el('span',months[data.start_month-1]+' – '+months[data.end_month-1]+' · '+data.year,'pf-muted'));cards.append(card);}content.append(cards);
+  const cards=el('div',undefined,'pf-cards pf-two-cards');for(const [key,label,color] of [['planned','PROGRAMADO EN EL RANGO',colors.planned],['executed','DEVENGADO EN EL RANGO',colors.executed]]){const nums=values.map(v=>v[key]).filter(v=>v!==null),card=el('article',undefined,'pf-card'),strong=el('strong',money(nums.length?nums.reduce((a,b)=>a+b,0):null));strong.style.color=color;card.append(el('small',label),strong,el('span',months[data.start_month-1]+' – '+months[data.end_month-1]+' · '+data.year,'pf-muted'));cards.append(card);}content.append(cards);
   const chartPanel=el('section',undefined,'pf-panel');chartPanel.append(el('h3','Programado y devengado por mes'));
-  const legend=el('div',undefined,'pf-legend');for(const [label,color] of [['Programado','#75aaf0'],['Devengado','#71d6bd'],['Devengado sin programación / excedente','#eab66c'],['Programado sin devengar','#a99ce8']]){const item=el('span'),swatch=el('i');swatch.style.setProperty('--legend',color);item.append(swatch,document.createTextNode(label));legend.append(item);}chartPanel.append(legend);
+  const legend=el('div',undefined,'pf-legend');for(const [label,color] of [['Programado',colors.planned],['Programado No devengado',colors.pending],['Devengado',colors.executed],['Devengado No programado',colors.unplanned]]){const item=el('span'),swatch=el('i');swatch.style.setProperty('--legend',color);item.append(swatch,document.createTextNode(label));legend.append(item);}chartPanel.append(legend);
   if(rows.length)chartPanel.append(chart(values));else chartPanel.append(el('p','No hay contratos para estos filtros.','pf-empty'));
   renderReview(chartPanel,values);chartPanel.append(el('p','Devengado: columnas mensuales de pagos ejecutados de la matriz. No se utiliza el importe neto transferido ni la columna de multas. Meses posteriores al corte: sin dato.','pf-note'));content.append(chartPanel);
   const panel=el('section',undefined,'pf-panel');panel.id='pf-monthly-detail';panel.append(el('h3','Detalle mensual por contrato'),el('p',tableRows.length+' de '+rows.length+' contrato/proceso(s)'+(reviewCase?' · '+months[reviewMonth-1]+': '+caseLabels[reviewCase]+'. La gráfica conserva el grupo general.':'.')+' Desplaza la tabla para consultar los meses del rango. Pulsa un trámite para revisar las facturas coincidentes.','pf-note'));
@@ -71,7 +72,13 @@
   const controls=el('div',undefined,'pf-review-controls'),label=el('label','Mes para revisar'),select=el('select');select.id='pf-review-month';fill(select,data.months.map(m=>[m,months[m-1]]),reviewMonth);label.append(select);controls.append(label);
   const clear=el('button','Ver todos los contratos','pf-action');clear.type='button';clear.onclick=()=>{reviewCase='';render();};controls.append(clear);panel.append(controls);
   select.onchange=()=>{reviewMonth=Number(select.value);reviewCase='';render();};const selected=values.find(v=>v.month===reviewMonth),cards=el('div',undefined,'pf-review-cards');
-  for(const [key,title] of Object.entries(caseLabels)){const button=el('button',undefined,'pf-review-case');button.type='button';button.dataset.case=key;button.setAttribute('aria-pressed',String(reviewCase===key));button.disabled=reviewMonth>data.source.month;button.append(el('span',title),el('strong',money(selected?.[key])),el('small',button.disabled?'Mes aún sin observación':'Ver contratos en la tabla ↓'));button.onclick=()=>{reviewCase=key;render();document.getElementById('pf-monthly-detail')?.scrollIntoView({behavior:'smooth',block:'start'});};cards.append(button);}panel.append(cards,el('p','Los importes se comparan por contrato/proceso antes de sumarse: un exceso en un contrato no oculta lo pendiente en otro. Sin registro de devengado no equivale a confirmación bancaria de impago.','pf-note'));
+  const summary=el('div',undefined,'pf-month-summary');summary.dataset.month=String(reviewMonth);
+  const planned=selected?.planned,executed=selected?.executed;
+  const ratio=reviewMonth>data.source.month||planned===null||planned===undefined||executed===null||executed===undefined?'Sin dato':planned>0?(executed/planned*100).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':planned===0?'Sin base programada':'No aplicable';
+  for(const [key,title,value,caption] of [['planned','Total Programado',money(planned),months[reviewMonth-1]+' · '+data.year],['executed','Total Devengado',money(executed),months[reviewMonth-1]+' · '+data.year],['fulfillment','% de cumplimiento',ratio,'Devengado ÷ Programado × 100']]){
+   const item=el('article',undefined,'pf-month-metric');item.dataset.metric=key;item.append(el('small',title),el('strong',value),el('span',caption,'pf-muted'));summary.append(item);
+  }panel.append(summary);
+  for(const [key,title] of Object.entries(caseLabels)){const button=el('button',undefined,'pf-review-case');button.type='button';button.dataset.case=key;button.setAttribute('aria-pressed',String(reviewCase===key));button.disabled=reviewMonth>data.source.month;button.append(el('span',title),el('strong',money(selected?.[key])),el('small',button.disabled?'Mes aún sin observación':'Ver contratos en la tabla ↓'));button.onclick=()=>{reviewCase=key;render();document.getElementById('pf-monthly-detail')?.scrollIntoView({behavior:'smooth',block:'start'});};cards.append(button);}panel.append(cards,el('p','Los importes se comparan por contrato/proceso antes de sumarse. La franja ámbar incluye devengado sin programación y el exceso; las tarjetas los separan. El cumplimiento es Devengado ÷ Programado y puede superar el 100%.','pf-note'));
  }
  function chart(values){
   const wrap=el('div',undefined,'pf-chart-wrap'),ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.classList.add('pf-chart');svg.setAttribute('viewBox','0 0 1200 320');svg.setAttribute('role','group');svg.setAttribute('aria-label','Programado y devengado con diferencias por contrato. Selecciona un mes para revisar.');
@@ -81,14 +88,14 @@
   for(const [i,item] of values.entries()){
    const middle=L+step*(i+.5),width=Math.min(44,step*.24),group=add('g',{role:'button',tabindex:0,'aria-label':'Revisar '+months[item.month-1]});
    add('rect',{x:L+i*step+3,y:12,width:step-6,height:293,rx:5,fill:item.month===reviewMonth?'#20465a':'transparent','fill-opacity':'.35'},undefined,group);
-   for(const [j,key,color] of [[0,'planned','#75aaf0'],[1,'executed','#71d6bd']]){
+   for(const [j,key,color] of [[0,'planned',colors.planned],[1,'executed',colors.executed]]){
     const value=item[key];if(value===null)continue;const x=middle+(j===0?-width-3:3);
     const bar=add('rect',{x,y:value>=0?zero-value*scale:zero,width,height:Math.max(1,Math.abs(value)*scale),rx:3,fill:color,'data-series':key,'data-month':item.month},undefined,group);
     add('title',{},months[item.month-1]+' · '+(key==='planned'?'Programado':'Devengado')+': '+money(value),bar);
     if(value>=0&&item.month<=data.source.month){
-     if(key==='planned'&&item.pending>0){const segment=add('rect',{x,y:zero-value*scale,width,height:Math.min(value,item.pending)*scale,fill:'#a99ce8','data-difference':'pending','data-month':item.month},undefined,group);add('title',{},'Programado sin devengo registrado: '+money(item.pending),segment);}
+     if(key==='planned'&&item.pending>0){const segment=add('rect',{x,y:zero-value*scale,width,height:Math.min(value,item.pending)*scale,fill:colors.pending,'data-difference':'pending','data-month':item.month},undefined,group);add('title',{},'Programado sin devengo registrado: '+money(item.pending),segment);}
      if(key==='executed'){
-      const excess=(item.unplanned||0)+(item.over_plan||0);if(excess>0){const segment=add('rect',{x,y:zero-value*scale,width,height:Math.min(value,excess)*scale,fill:'#eab66c','data-difference':'unplanned','data-month':item.month},undefined,group);add('title',{},'Sin programación registrada: '+money(item.unplanned)+' · Sobre lo programado: '+money(item.over_plan),segment);}
+      const excess=(item.unplanned||0)+(item.over_plan||0);if(excess>0){const segment=add('rect',{x,y:zero-value*scale,width,height:Math.min(value,excess)*scale,fill:colors.unplanned,'data-difference':'unplanned','data-month':item.month},undefined,group);add('title',{},'Sin programación registrada: '+money(item.unplanned)+' · Sobre lo programado: '+money(item.over_plan),segment);}
      }
     }
    }
