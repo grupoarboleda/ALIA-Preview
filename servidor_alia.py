@@ -2,6 +2,7 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
+import socket
 import subprocess
 import threading
 import time
@@ -55,6 +56,18 @@ def sync():
 sync()
 import importaciones_backend as monthly
 from importador_matriz import inspect_file
+
+
+class ALIAHTTPServer(ThreadingHTTPServer):
+    # Windows SO_REUSEADDR permits two unrelated servers on the same endpoint.
+    # Claim the loopback port exclusively so an old interpreter cannot shadow a new API.
+    allow_reuse_address = os.name != "nt"
+    allow_reuse_port = False
+
+    def server_bind(self):
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        return super().server_bind()
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -215,4 +228,4 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     print("ALIA Local http://localhost:" + os.environ.get("ALIA_PORT", "5500") + "/", flush=True)
-    ThreadingHTTPServer(("127.0.0.1", int(os.environ.get("ALIA_PORT", "5500"))), Handler).serve_forever()
+    ALIAHTTPServer(("127.0.0.1", int(os.environ.get("ALIA_PORT", "5500"))), Handler).serve_forever()

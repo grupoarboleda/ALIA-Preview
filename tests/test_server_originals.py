@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 os.environ['ALIA_DISABLE_SYNC']='1'
-from servidor_alia import Handler, ThreadingHTTPServer
+from servidor_alia import Handler, ThreadingHTTPServer, ALIAHTTPServer
 import importaciones_backend as backend
 import original_records as repo
 from test_original_records import workbook
@@ -32,6 +32,14 @@ class ServerTests(unittest.TestCase):
             self.conn.request('GET','/explorer.js');r=self.conn.getresponse();body=r.read()
             self.assertEqual(r.version,11);self.assertEqual(r.status,200)
             self.assertEqual(int(r.getheader('Content-Length')),len(body));self.assertEqual(hashlib.sha256(body).digest(),hashlib.sha256(expected).digest())
+    def test_exclusive_local_server_refuses_duplicate_listener(self):
+        first=ALIAHTTPServer(('127.0.0.1',0),QuietHandler)
+        try:
+            with self.assertRaises(OSError):
+                second=ALIAHTTPServer(('127.0.0.1',first.server_port),QuietHandler)
+                second.server_close()
+        finally:first.server_close()
+
     def test_original_endpoint_scoped_and_invalid_kind(self):
         self.conn.request('GET','/__alia_original_records?kind=contract&id=32-2026');r=self.conn.getresponse();data=json.loads(r.read())
         self.assertEqual(r.status,200);self.assertTrue(all(x['contract']=='32-2026' for x in data['records']));self.assertTrue(data['coverage']['complete']);self.assertIn('no-store',r.getheader('Cache-Control'))
