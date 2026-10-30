@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "checks": [
+    "four requested alert categories present",
+    "execution pending contract visible",
+    "state and physical progress visible",
+    "accumulated amount",
+    "same month amount",
+    "selected month updates alert",
+    "issue includes source row and column",
+    "source warning visible",
+    "search empty state",
+    "mobile panel fits",
+    "no JS errors"
+  ],
+  "errors": []
+}

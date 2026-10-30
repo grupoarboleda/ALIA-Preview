@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checks": [
+    "full original import observations available",
+    "all six installed categories agree with current source",
+    "no browser errors with original matrix"
+  ]
+}
