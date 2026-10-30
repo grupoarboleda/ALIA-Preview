@@ -523,3 +523,8 @@
 - Se sustituye la vista por mes/cohorte por rango Desde/Hasta. Sólo dos series: programación y devengado completos de la matriz. Tabla ID/contrato/proceso/administrador, tres columnas por mes y estado482 al final; búsqueda y desplazamiento superior.
 - Verificado: septiembre531 ajustado /546 devengado;456 es multas. Trámites se buscan en237–436 por valor facturado SIN IVA238+8n, con número en columna anterior. Se admiten una o varias facturas y se señalan combinaciones ambiguas, reutilización entre meses o límites, sin inventar vínculos.
 - Candidata5503:19 verificaciones navegador PASS; Python43 + reglas7 PASS. Cotejo completo rango8–10 y ejemplo del propietario PASS;11 archivos históricos idénticos. Datos de aceptación institucionales sólo privados; evidencia pública sanitizada. Pendiente activación5500 de esta revisión.
+
+### 2026-10-30 — Cierre de rango mensual programado/devengado
+- Código 63567747b6eac3a22198761a3d0ddace84a307f9 activo en localhost5500; navegador19 PASS, Python43 + reglas7 PASS. Ejemplo privado del propietario confirmado nuevamente por API; once archivos históricos byte-idénticos.
+- Gráfica sólo Programado/Devengado; tabla por rango con tríos mensuales y estado482; factura(s) sin IVA y trámite anterior, sin asignaciones arbitrarias. Septiembre546;456 es multas. Casos ambiguos, ajustes y límites explícitos.
+- PR3 actualizado al alcance final, sin merge por READ. Entrega local completada; no producción ni escritura de matrices/históricos.

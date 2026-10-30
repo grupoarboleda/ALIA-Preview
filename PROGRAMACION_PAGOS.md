@@ -39,3 +39,9 @@ Candidata5503:19 comprobaciones de navegador PC/móvil PASS. Se verifican dos se
 Cotejo independiente de agosto–octubre:30 grupos. Ambas series coinciden con los totales completos de la matriz; todas las combinaciones devueltas suman su devengado a centavos y cada identificador está antes del importe sin IVA. El ejemplo indicado por el propietario coincide con importe y trámite esperados. Once archivos históricos byte-idénticos. Matrices, capturas e importes institucionales no se publican.
 
 Evidencia sanitizada: `docs/programacion-pagos/range-v2/`. La activación final en5500 se registra tras comprobarla. PR3 y rama `feature/alia-programacion-pagos`; sin main/producción ni escrituras a los históricos.
+
+## Cierre de la revisión — 30 octubre 2026
+
+Implementación `63567747b6eac3a22198761a3d0ddace84a307f9` activa en http://localhost:5500/ , rama local `feature/alia-programacion-pagos`. Se completaron las19 comprobaciones de navegador sobre esa instalación: PASS, PC/móvil, sin errores JS. La comprobación final de API vuelve a confirmar el ejemplo privado del propietario, y los once archivos históricos siguen byte-idénticos.
+
+PR vigente: https://github.com/grupoarboleda/ALIA-Preview/pull/3, descripción actualizada al alcance final por rango mensual. Cuenta conectada READ: no fusionado a develop, sin main/producción. La entrega funcional local está completada. Evidencia activa en `docs/programacion-pagos/range-v2/browser-active5500.json`.
