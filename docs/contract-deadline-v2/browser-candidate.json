@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "checks": [
+    "old dynamic analysis removed",
+    "deduplicates contracts and separates alerts",
+    "state visible in alert",
+    "upcoming shows calculated date",
+    "beacon pulses for alerts",
+    "past date review and excludes closed contracts",
+    "missing dates are explicit",
+    "configurable horizon",
+    "search filters alerts",
+    "strict date formats and missing fields",
+    "day appearance applied",
+    "day alert heading readable",
+    "appearance preference persists",
+    "night appearance applied",
+    "automatic uses Bogota daylight",
+    "reduced motion disables pulse",
+    "alerts fit mobile",
+    "no JS errors"
+  ],
+  "errors": []
+}

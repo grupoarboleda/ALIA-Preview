@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "checks": [
+    "waits for history before all series start",
+    "physical and real ready in first draw",
+    "real shade shares real reveal",
+    "all initial sweeps share clock",
+    "initial reveal not fully visible",
+    "advance visible once real reaches its month",
+    "future completion hidden until projection reaches month",
+    "shade progresses with real line",
+    "projection hidden during real draw",
+    "completion date uses contractual formula",
+    "completion detail accessible",
+    "projection begins after real finishes",
+    "unit change keeps milestones and synchronized layers",
+    "reduced motion shows all without clipping",
+    "no browser errors"
+  ],
+  "errors": []
+}

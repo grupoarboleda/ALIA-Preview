@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "checks": [
+    "advance credit plus contractual term",
+    "no advance uses signature plus term",
+    "signature fallback column 40",
+    "advance missing credit cannot use signature",
+    "missing term is explicit",
+    "1900 values rejected",
+    "leap year and year rollover",
+    "invalid calendar date rejected",
+    "localized advance amount",
+    "state preserved"
+  ]
+}

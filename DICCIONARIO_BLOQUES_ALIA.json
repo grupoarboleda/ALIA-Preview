@@ -344,5 +344,15 @@
     "excluded_456": "MULTAS COBRADAS (USD); no corresponde al devengado mensual",
     "matching": "Sumar pagos registrados consecutivos del último al primero, sin saltos ni subconjuntos; meses del más reciente al anterior, sin reutilizar pagos. Si no coincide: Revisar Pagos.",
     "difference_analysis": "Comparar por contrato/proceso antes de sumar: sin programación registrada, exceso sobre programación y programado sin devengo registrado; futuro sin observación."
+  },
+  "contract_deadline_rule": {
+    "advance_amount_id": 234,
+    "advance_credit_date_id": 235,
+    "signature_date_id": 48,
+    "signature_date_fallback_id": 40,
+    "term_days_id": 49,
+    "status_id": 482,
+    "rule": "Anticipo pagado > 0: acreditación + plazo; sin anticipo: suscripción + plazo. Días calendario, sin restar un día. No sustituir por inicio (50) ni fecha almacenada (51). Datos inválidos: revisar, nunca estimar.",
+    "extensions": "Prórrogas (232), suspensión (474) y fecha integral (449) se conservan como contexto, sin modificar automáticamente la fórmula autorizada."
   }
 }

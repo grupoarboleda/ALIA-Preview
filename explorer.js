@@ -1200,7 +1200,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
- if(physicalContract)footer.textContent+=" · Avance físico: columna 226 (0–100%). Hito dorado: fecha de anticipo pagado (235), o inicio de contrato (50) si no hay anticipo; Culminación: fecha original de la columna 51 (marca azul). Solo se muestran fechas disponibles en los datos cargados.";
+ if(physicalContract)footer.textContent+=" · Avance físico: columna 226 (0–100%). Hito dorado: fecha de anticipo pagado (235), o inicio de contrato (50) si no hay anticipo; Culminación calculada: anticipo acreditado + plazo; sin anticipo, suscripción + plazo (marca azul). Solo se muestran fechas disponibles en los datos cargados.";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const pointDetail=document.createElement("div");
  pointDetail.className="exv-chart-point-detail";
@@ -1242,10 +1242,10 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    if(!iso)return null;const dt=new Date(iso+'T12:00:00Z');return Number.isNaN(dt.getTime())||dt.toISOString().slice(0,10)!==iso?null:iso;
   };
   if(physicalContract){
-   const dated=milestoneRows.map(r=>({advance:dateValue(r.advance_paid_date),start:dateValue(r.contract_start_date),end:dateValue(r.contract_end_date||r.raw_columns?.['51']),paid:Number(r.advance)||0}));
+   const dated=milestoneRows.map(r=>({advance:dateValue(r.advance_paid_date),start:dateValue(r.contract_start_date),end:window.ALIAContractDates.deadline(r).date,paid:Number(r.advance)||0}));
    const paid=dated.some(r=>r.paid>0),advance=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort()[0],start=dated.filter(r=>r.start).map(r=>r.start).sort()[0];
    const completion=[...dated].reverse().find(r=>r.end)?.end;
-   for(const event of [{date:paid?advance:start,label:paid?'ANTICIPO PAGADO':'INICIO DEL CONTRATO',color:'#eac87b',key:'advance'},{date:completion,label:'CULMINACIÓN DEL CONTRATO · COLUMNA 51',color:'#a8c4ff',key:'completion'}]){
+   for(const event of [{date:paid?advance:start,label:paid?'ANTICIPO PAGADO':'INICIO DEL CONTRATO',color:'#eac87b',key:'advance'},{date:completion,label:'VENCIMIENTO CONTRACTUAL CALCULADO',color:'#a8c4ff',key:'completion'}]){
     if(!event.date)continue;const dt=new Date(event.date+'T12:00:00Z');if(dt.getUTCFullYear()!==2026)continue;
     const month=dt.getUTCMonth(),px=x(month),group=make('g',{'data-alia-milestone':event.key,'data-month':month});
     make('line',{x1:px,x2:px,y1:38,y2:268,stroke:event.color,'stroke-width':1.3,'stroke-dasharray':'2 8',opacity:'.65','pointer-events':'none'},group);
