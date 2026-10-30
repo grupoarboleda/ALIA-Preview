@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "checks": [
+    "concurrent preload uses one request",
+    "contract selections make no history request",
+    "both cached charts start within 100 ms",
+    "new data load refreshes history"
+  ],
+  "renderMilliseconds": [
+    10,
+    3
+  ]
+}

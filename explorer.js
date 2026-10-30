@@ -1021,12 +1021,13 @@ function stageMessage(stages,cutMonth){
 }
 let aliaHistoricalCuts=null;
 let aliaHistoryRequest=null;
+let aliaHistoryGeneration=0;
 function ensureRealHistory(){
  if(aliaHistoricalCuts)return Promise.resolve(aliaHistoricalCuts);
- if(!aliaHistoryRequest)aliaHistoryRequest=fetch("/__alia_explorer_history",{cache:"no-store"})
+ if(!aliaHistoryRequest){const generation=aliaHistoryGeneration;aliaHistoryRequest=fetch("/__alia_explorer_history",{cache:"no-store"})
   .then(r=>{if(!r.ok)throw Error("No se pudo consultar el historial");return r.json();})
-  .then(data=>{aliaHistoricalCuts=Array.isArray(data.series)?data.series:[];return aliaHistoricalCuts;})
-  .catch(()=>{aliaHistoryRequest=null;return [];});
+  .then(data=>{const series=Array.isArray(data.series)?data.series:[];if(generation===aliaHistoryGeneration)aliaHistoricalCuts=series;return series;})
+  .catch(()=>{if(generation===aliaHistoryGeneration)aliaHistoryRequest=null;return [];});}
  return aliaHistoryRequest;
 }
 function renderRealHistoryChart(host,cutMonth){
@@ -1130,7 +1131,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  let historyReady=false;
  const chartToken=Symbol("chart");
  section._budgetToken=chartToken;
- fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
+ ensureRealHistory().then(series=>({series})).then(data=>{
   if(section._budgetToken!==chartToken||!section.isConnected||!Array.isArray(data?.series))return;
   if(physicalContract){
    const recovered=[];
@@ -1430,10 +1431,7 @@ function renderRealTemporal(rs,cutMonth){
    fields[1].textContent="Consultando último reporte cargado…";
    try{
     // Metadata-only read: no change to the selected cut, financial records or chart.
-    const response=await fetch("/__alia_explorer_history",{cache:"no-store"});
-    if(!response.ok)throw Error("Historial no disponible");
-    const history=await response.json();
-    const series=Array.isArray(history.series)?history.series:[];
+    const series=await ensureRealHistory();
     const latest=series.reduce((best,item)=>!best||Number(item.month)>Number(best.month)?item:best,null);
     const contract=String(choice.id||"").trim().toUpperCase();
     const matches=(latest?.records||[]).filter(r=>{
@@ -1737,6 +1735,8 @@ function activateReal(data){
 
 let stagedRequest=0;
 function loadStagedCut(month){
+ // Precargar una sola vez por carga/cambio de corte, no por contrato.
+ aliaHistoryGeneration++;aliaHistoricalCuts=null;aliaHistoryRequest=null;ensureRealHistory();
  const request=++stagedRequest;
  const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
  fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
