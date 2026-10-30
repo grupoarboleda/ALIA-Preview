@@ -95,6 +95,11 @@ class FollowupTests(unittest.TestCase):
         r=self.run_analysis()['rows'][0]
         self.assertEqual(r['transferred_since_month'],0)
         self.assertIsNone(r['monthly'][10]['transferred'])
+    def test_future_scheduled_cohort_has_no_observed_cash_total(self):
+        self.data['oct']['records'][0]['raw_columns']['533']='100'
+        result=p.analyze(None,2026,11)
+        self.assertEqual(result['rows'][0]['status'],'future')
+        self.assertIsNone(result['rows'][0]['transferred_since_month'])
     def test_sources_not_mutated(self):
         before=copy.deepcopy(self.data);self.run_analysis();self.assertEqual(before,self.data)
 

@@ -147,7 +147,7 @@ def analyze(root,year,month,plan_token=None,observed_token=None,basis='adjusted'
         partial=any(c['known']<c['rows'] for c in actual_coverage[month-1:observed_month])
         row={'contract':key[0],'process_code':key[1],'process_names':names('process_name'),'administrators':names('contract_administrator'),
              'planned':dollars(amount),'execution_in_month':dollars(in_month),'execution_later':dollars(later),'later_months':later_months,
-             'transferred_since_month':dollars(sum((e['amount'] for e in window_payments),Decimal(0))),'status':status,
+             'transferred_since_month':None if month>observed_month else dollars(sum((e['amount'] for e in window_payments),Decimal(0))),'status':status,
              'review_events':review,'partial_execution':partial,'monthly_reconciliation_difference':reconciliation_difference,'plan_rows':[r['source_row'] for r in assignments], 'observed_rows':[r['source_row'] for r in execution_rows],
              'monthly':[{'month':m,'planned':dollars(planned[m-1]),'executed':dollars(actual[m-1]),'transferred':dollars(cash[m-1]),'execution_coverage':actual_coverage[m-1],'plan_coverage':plan_coverage[m-1]} for m in range(1,13)],
              'payments':[{k:(dollars(v) if k=='amount' else v) for k,v in e.items() if k!='entity'} for e in payments]}
