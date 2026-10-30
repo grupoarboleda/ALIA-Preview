@@ -1,0 +1,25 @@
+{
+  "base": "http://127.0.0.1:5500",
+  "status": "PASS",
+  "checks": [
+    "new branch navigation and four metrics",
+    "independent global filters hidden",
+    "September programming retained",
+    "observation October",
+    "real cohort contains 14 groups",
+    "later execution actually present",
+    "no ambiguous transfer automatically summed",
+    "chart above detail table",
+    "12 selectable months",
+    "contract process administrator headings",
+    "contract selector scopes cards chart and table",
+    "contract filter empty state",
+    "payment ledger dates identifiers and source",
+    "future months not falsely shown as execution",
+    "future cash total is unobserved rather than zero",
+    "mobile page fits viewport",
+    "existing explorer and filters preserved",
+    "no JS errors"
+  ],
+  "errors": []
+}

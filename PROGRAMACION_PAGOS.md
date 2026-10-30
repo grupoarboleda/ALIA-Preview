@@ -36,10 +36,18 @@ Los meses proceden del corte asignado en la importación; no se certifica fecha 
 
 ## Verificaciones
 
-29 pruebas Python de originales/HTTP/programación y7 reglas anteriores PASS. Se cubren programación de septiembre que cambia en octubre, devengo posterior, asignaciones múltiples, duplicados, sinónimos, falta de datos, ceros vacíos, anticipos separados, futuro y fuentes inmutables.
+31 pruebas Python de originales/HTTP/programación y7 reglas anteriores PASS. Se cubren programación de septiembre que cambia en octubre, devengo posterior, asignaciones múltiples, duplicados, sinónimos, falta de datos, ceros vacíos, anticipos separados, futuro y fuentes inmutables.
 
 Navegador real sobre candidata5502:17 comprobaciones PASS, incluidos PC/móvil, gráfica encima de tabla, doce meses seleccionables, contrato individual, filtros, trámites y retorno al Explorador sin errores JS. Se repetirá al activar en5500; no confundir esta prueba de candidata con despliegue productivo.
 
 Cotejo independiente contra originales:14 grupos programados en septiembre, programación del corte09 y observación10, todos los importes de programación/ejecución y pagos coinciden con sus columnas fuente.17 registros por revisar. Once archivos históricos siguen byte-idénticos. Evidencia sanitizada en `docs/programacion-pagos`; capturas con información institucional permanecen privadas, fuera de Git.
 
 Rama Git `feature/alia-programacion-pagos`, basada en la corrección de PR2 aún pendiente de integración. No main ni producción, no escrituras de matrices o históricos. Cuenta upstream READ: entrega por fork/PR, sin declarar merge a develop.
+
+## Activación local y cierre
+
+Versión funcional `ad9ad6394fc824f78fce89fc3e1490ca7b409945`, PR https://github.com/grupoarboleda/ALIA-Preview/pull/3 abierto contra develop. Instalación original en rama `feature/alia-programacion-pagos`, servidor reiniciado en http://localhost:5500/ . Prueba final allí:18 comprobaciones PC/móvil PASS, cero errores JS. Regresión de funciones anteriores:41 comprobaciones PASS en candidata. Fuente y once archivos históricos nuevamente comprobados idénticos. El merge remoto permanece pendiente de permiso WRITE.
+
+La activación encontró dos servidores ALIA en el mismo endpoint, demostrados por netstat, uno del lanzador anterior y otro de revisión. Se cerraron sólo esos servidores identificados. Ahora se usa binding exclusivo en Windows, y la prueba automatizada rechaza un segundo listener. Se confirmó una sola instancia y respuesta de la API nueva. [Referencia primaria de Microsoft sobre reutilización/exclusividad de puertos](https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse).
+
+La cifra de registros por revisar no cuenta casillas vacías/ceros como pagos. El diccionario usa caso/trámite como sinónimos por definición humana; no los trata como conceptos distintos. La evidencia pública es sanitizada; los detalles institucionales siguen locales.
