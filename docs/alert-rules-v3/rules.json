@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "checks": [
+    "upcoming with incomplete physical execution",
+    "monthly difference exact cents",
+    "later devengo clears accumulated balance",
+    "one contract excess never offsets another",
+    "missing execution not silently zero",
+    "closed contracts remain in data quality",
+    "import warnings preserved",
+    "month selector recomputes differences",
+    "future month never unpaid"
+  ]
+}

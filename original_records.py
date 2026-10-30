@@ -129,6 +129,7 @@ def detail(root, identity=None, kind='contract'):
     return {'mode':'REAL','year':cut['year'],'month':cut['month'],
             'file':cut['file'],'sha256':cut['sha256'],'source':'IMMUTABLE_ORIGINALS',
             'column_catalog':semantic_catalog(batch['column_catalog']),'records':records,
+            'issues':[dict(i) for i in batch.get('issues', []) if identity is None or i.get('row') is None or i.get('row') in {r.get('sourceRow') for r in records}],
             'coverage':{'complete':True,'columns':len(batch['column_catalog']),'rows':len(records)},
             'financial_rule':'SUM_ASSIGNMENT_ROWS_WITHIN_ONE_CUT_ONLY'}
 
