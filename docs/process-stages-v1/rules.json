@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "checks": [
+    "no dates means no invented milestones",
+    "publication actual date",
+    "award actual date",
+    "signature actual date",
+    "signature column 40 fallback",
+    "future signature not achieved",
+    "missing publication does not invent stage date",
+    "invalid date order flagged",
+    "days reflect real dates not demo reports"
+  ]
+}

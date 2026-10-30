@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "checks": [
+    "vertical bands for all four actual stages",
+    "stepped green curve visible",
+    "actual current contracted stage",
+    "milestone exposes date and original column",
+    "contract handoff callback",
+    "no financial percentages on process chart",
+    "chart fits mobile",
+    "no browser errors"
+  ],
+  "errors": []
+}
