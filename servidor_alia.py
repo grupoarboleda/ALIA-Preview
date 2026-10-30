@@ -186,6 +186,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if endpoint == "/__alia_payment_config":
                     return self._json(configuration(monthly.DATA_ROOT))
                 query = parse_qs(urlsplit(self.path).query)
+                if "start" in query or "end" in query:
+                    from payment_range import evaluate_range
+                    return self._json(evaluate_range(monthly.DATA_ROOT, query.get("year", ["2026"])[0], query.get("start", ["1"])[0], query.get("end", ["12"])[0], query.get("basis", ["adjusted"])[0], query.get("cut", [None])[0]))
                 return self._json(analyze(monthly.DATA_ROOT, query.get("year", ["2026"])[0], query.get("month", ["1"])[0], query.get("plan", [None])[0], query.get("observed", [None])[0], query.get("basis", ["adjusted"])[0], query.get("advance", ["0"])[0] == "1"))
             except (ValueError, OSError) as exc:
                 return self._json({"ok": False, "error": str(exc)}, 422)

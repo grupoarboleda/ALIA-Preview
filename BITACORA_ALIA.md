@@ -518,3 +518,8 @@
 - Candidata5502:17 comprobaciones navegador PASS; Python29 + reglas7 PASS. Cotejo fuente del grupo septiembre14,17 registros por revisar;11 archivos históricos byte-idénticos. Ver PROGRAMACION_PAGOS.md. Pendiente activación5500 y PR de esta rama.
 - Cierre local de programación/pagos: http://localhost:5500/ activo, nueva vista18 checks PASS; Python31 + reglas7 PASS; regresión anterior41 PASS. PR3 https://github.com/grupoarboleda/ALIA-Preview/pull/3, código ad9ad6394fc824f78fce89fc3e1490ca7b409945. Diccionario caso/trámite sinónimos; merge remoto pendiente por READ.
 - Se detectaron dos servidores compartiendo5500; se sustituyeron por una instancia con binding exclusivo Windows probado. Once archivos históricos permanecen byte-idénticos. Capturas privadas, sin publicación de matrices ni importes institucionales.
+
+### 2026-10-29 — Comparación mensual por rango y facturas sin IVA
+- Se sustituye la vista por mes/cohorte por rango Desde/Hasta. Sólo dos series: programación y devengado completos de la matriz. Tabla ID/contrato/proceso/administrador, tres columnas por mes y estado482 al final; búsqueda y desplazamiento superior.
+- Verificado: septiembre531 ajustado /546 devengado;456 es multas. Trámites se buscan en237–436 por valor facturado SIN IVA238+8n, con número en columna anterior. Se admiten una o varias facturas y se señalan combinaciones ambiguas, reutilización entre meses o límites, sin inventar vínculos.
+- Candidata5503:19 verificaciones navegador PASS; Python43 + reglas7 PASS. Cotejo completo rango8–10 y ejemplo del propietario PASS;11 archivos históricos idénticos. Datos de aceptación institucionales sólo privados; evidencia pública sanitizada. Pendiente activación5500 de esta revisión.

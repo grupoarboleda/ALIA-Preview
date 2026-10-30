@@ -1,0 +1,26 @@
+{
+  "base": "http://127.0.0.1:5503",
+  "status": "PASS",
+  "checks": [
+    "range defaults August through October",
+    "exactly two financial series",
+    "no transfer series or advance filter",
+    "status stays at end without covering monthly cells",
+    "September complete matrix total matches private acceptance",
+    "contract invoice matches acceptance",
+    "programmed and executed match private acceptance",
+    "top scrollbar controls monthly table",
+    "one contract filter",
+    "pivot has ID identity admin and monthly triples",
+    "status482 present",
+    "invoice breakdown available",
+    "search by procedure or case",
+    "single-month range shows one triple",
+    "full year shows all twelve triples",
+    "future execution not represented as zero",
+    "mobile fits viewport",
+    "existing explorer retained",
+    "no browser JS errors"
+  ],
+  "errors": []
+}

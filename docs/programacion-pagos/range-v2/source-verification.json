@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "range": [
+    8,
+    10
+  ],
+  "groups": 30,
+  "two_chart_series_equal_complete_matrix_totals": true,
+  "all_returned_invoice_combinations_equal_monthly_execution_to_cents": true,
+  "procedure_is_column_before_invoiced_value": true,
+  "owner_example_matches_private_acceptance": true,
+  "status_id": 482,
+  "september_execution_id": 546,
+  "id456_is_fines_not_execution": true,
+  "legacy_files_byte_identical": 11
+}
