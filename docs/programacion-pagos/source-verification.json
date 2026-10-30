@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "programmed_month": 9,
+  "plan_cut_month": 9,
+  "observed_cut_month": 10,
+  "groups": 14,
+  "all_cohort_programs_and_monthly_execution_equal_to_source": true,
+  "all_payment_amounts_equal_to_source": true,
+  "legacy_files_byte_identical": 11,
+  "case_and_procedure_are_synonyms": true,
+  "review_records": 17
+}

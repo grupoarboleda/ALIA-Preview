@@ -1,6 +1,6 @@
 {
   "schema": "ALIA_BLOQUES_2026",
-  "version": "1.0",
+  "version": "1.2",
   "column_count": 564,
   "groups": [
     {
@@ -195,5 +195,51 @@
       "start": 553,
       "end": 564
     }
-  ]
+  ],
+  "column_overrides": {
+    "261": {
+      "label": "NÚMERO DE CASO",
+      "type": "text",
+      "note": "Número de caso equivale a número de trámite por definición del propietario; encabezado literal conservado.",
+      "canonical_field": "payment_procedure_number"
+    }
+  },
+  "field_aliases": {
+    "payment_procedure_number": {
+      "preferred_label": "Número de trámite",
+      "aliases": [
+        "NÚMERO DE TRÁMITE",
+        "NÚMERO DE CASO"
+      ],
+      "column_ids": [
+        233,
+        237,
+        245,
+        253,
+        261,
+        269,
+        277,
+        285,
+        293,
+        301,
+        309,
+        317,
+        325,
+        333,
+        341,
+        349,
+        357,
+        365,
+        373,
+        381,
+        389,
+        397,
+        405,
+        413,
+        421,
+        429
+      ],
+      "rule": "Sinónimos confirmados por el propietario. Mismo campo para búsqueda, agrupación y seguimiento; conservar encabezado literal en column_catalog.label."
+    }
+  }
 }

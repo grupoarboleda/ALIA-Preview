@@ -101,6 +101,20 @@ def load_cut(root, cut):
         raise ValueError('Original column integrity failure')
     return batch
 
+def semantic_catalog(catalog):
+    """Enrich labels with current business aliases without rewriting source evidence."""
+    dictionary=read(Path(__file__).with_name('DICCIONARIO_BLOQUES_ALIA.json'),{})
+    definitions=dictionary.get('field_aliases',{})
+    enriched=[]
+    for original in catalog:
+        column=dict(original)
+        for field,definition in definitions.items():
+            if int(column['id']) in definition.get('column_ids',[]):
+                column.update(canonical_field=field,aliases=list(definition.get('aliases',[])))
+        enriched.append(column)
+    return enriched
+
+
 def detail(root, identity=None, kind='contract'):
     if kind not in ('contract','process'):
         raise ValueError('Invalid entity kind')
@@ -114,7 +128,7 @@ def detail(root, identity=None, kind='contract'):
         records=[r for r in records if norm(r.get(field))==norm(identity)]
     return {'mode':'REAL','year':cut['year'],'month':cut['month'],
             'file':cut['file'],'sha256':cut['sha256'],'source':'IMMUTABLE_ORIGINALS',
-            'column_catalog':batch['column_catalog'],'records':records,
+            'column_catalog':semantic_catalog(batch['column_catalog']),'records':records,
             'coverage':{'complete':True,'columns':len(batch['column_catalog']),'rows':len(records)},
             'financial_rule':'SUM_ASSIGNMENT_ROWS_WITHIN_ONE_CUT_ONLY'}
 

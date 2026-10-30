@@ -106,7 +106,9 @@ def inspect_file(path, assigned_month=None, assigned_year=2026):
                     payment = (identifier - group["start"]) // group["step"] + 1
                     field_index = (identifier - group["start"]) % group["step"]
                     return {"block": group["name"], "subblock": f"Pago {payment} contra factura",
-                            "field_in_subblock": group["fields"][field_index], "payment_number": payment}
+                            "canonical_field": "payment_procedure_number" if field_index == 0 else None,
+                            "aliases": block_dictionary.get("field_aliases", {}).get("payment_procedure_number", {}).get("aliases", []) if field_index == 0 else [],
+                            "field_in_subblock": block_dictionary.get("column_overrides", {}).get(str(identifier), {}).get("label", group["fields"][field_index]), "payment_number": payment}
                 return {"block": group["name"], "subblock": None}
         return {"block": "Otros campos de la matriz", "subblock": None}
     for row_num, row in rows:

@@ -31,6 +31,7 @@
    const catalog=latest.column_catalog||[];
    const sourceIds=new Map(catalog.filter(c=>c.mapped_field).map(c=>[c.mapped_field,String(c.id)]));
    const available=new Map(catalog.map(c=>["col:"+c.id,c.label||"Columna "+c.id]));
+   const aliases=new Map(catalog.map(c=>["col:"+c.id,(c.aliases||[]).join(" ")]));
    const read=(row,field)=>row.raw_columns?.[sourceIds.get(field)]??row[field];
    const controls=node("div");controls.className="alia-detail-controls";
    const picker=node("div");picker.className="alia-column-picker";
@@ -47,7 +48,7 @@
    const searchable=text=>String(text).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
    const populate=()=>{
     const tokens=searchable(columnQuery).trim().split(/\s+/).filter(Boolean);
-    const choices=[...available].filter(([id,label])=>!extras.includes(id)&&tokens.every(token=>searchable(label+" "+id).includes(token)));
+    const choices=[...available].filter(([id,label])=>!extras.includes(id)&&tokens.every(token=>searchable(label+" "+id+" "+(aliases.get(id)||"")).includes(token)));
     list.replaceChildren();
     for(const [id,label] of choices){
      const option=node("button",label+" ("+id+")");option.type="button";option.tabIndex=-1;option.dataset.columnId=id;option.setAttribute("role","option");option.setAttribute("aria-selected",String(id===chosen));

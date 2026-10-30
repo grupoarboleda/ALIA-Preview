@@ -167,6 +167,15 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(monthly.explorer_preview(month))
             except (ValueError, OSError) as exc:
                 return self._json({"ok": False, "error": str(exc)}, 422)
+        if endpoint in ("/__alia_payment_config", "/__alia_payment_followup"):
+            try:
+                from payment_followup import configuration, analyze
+                if endpoint == "/__alia_payment_config":
+                    return self._json(configuration(monthly.DATA_ROOT))
+                query = parse_qs(urlsplit(self.path).query)
+                return self._json(analyze(monthly.DATA_ROOT, query.get("year", ["2026"])[0], query.get("month", ["1"])[0], query.get("plan", [None])[0], query.get("observed", [None])[0], query.get("basis", ["adjusted"])[0], query.get("advance", ["0"])[0] == "1"))
+            except (ValueError, OSError) as exc:
+                return self._json({"ok": False, "error": str(exc)}, 422)
         if endpoint == "/__alia_original_records":
             try:
                 from original_records import detail

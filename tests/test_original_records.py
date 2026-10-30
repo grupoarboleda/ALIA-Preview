@@ -41,6 +41,12 @@ class OriginalsTest(unittest.TestCase):
         content=content or workbook();batch=repo.seal(self.root,content,'test.xlsx',year,month)
         repo.register_cut(self.root,batch,year,month,'test.xlsx')
         return batch
+    def test_case_and_procedure_aliases_do_not_rewrite_original_label(self):
+        original=[{'id':261,'label':'NÚMERO DE CASO'}]
+        result=repo.semantic_catalog(original)
+        self.assertEqual(original,[{'id':261,'label':'NÚMERO DE CASO'}])
+        self.assertEqual(result[0]['canonical_field'],'payment_procedure_number')
+        self.assertIn('NÚMERO DE TRÁMITE',result[0]['aliases'])
     def test_all_columns_and_exact_source(self):
         data=workbook();b=self.seed(content=data);out=repo.detail(self.root,'32-2026')
         self.assertEqual(out['records'][0]['raw_columns']['601'],'original text')

@@ -510,3 +510,9 @@
 ### 2026-10-29 — Búsqueda integrada en el desplegable de columnas
 - Por precisión del propietario, se reemplaza el select nativo por una lista desplegable con búsqueda DENTRO del panel al abrirlo. Selección por clic, búsqueda por texto/ID sin tildes, navegación con flechas, Enter y Escape; cierre al salir o pulsar fuera. No queda un campo de búsqueda separado encima del selector.
 - Verificado en localhost5500: 39 comprobaciones de navegador PASS, incluyendo búsqueda dentro de la lista, 564 columnas, selección con Enter, cierre con Escape y regresión de los dos contratos.
+
+### 2026-10-29 — Nueva rama: programación y pagos
+- Mes programado y corte de programación conservado, seguimiento hasta otro corte; gráfica anual y tabla por contrato/proceso/administrador, ejecución del mes/posterior y fechas/trámites por factura. Selección de contrato para gráfica individual; no depende del mes del Explorador.
+- Diccionario1.2: número de caso y trámite son sinónimos por definición expresa del propietario; mismo campo canónico, búsqueda y detección de duplicados. Fuente literal intacta.
+- Pagos repetidos o incompletos se muestran para conciliar sin contarlos automáticamente; no hay asociación cuota–factura inventada ni suma de cortes. Ceros vacíos no crean pagos. Anticipos separados/opcionales.
+- Candidata5502:17 comprobaciones navegador PASS; Python29 + reglas7 PASS. Cotejo fuente del grupo septiembre14,17 registros por revisar;11 archivos históricos byte-idénticos. Ver PROGRAMACION_PAGOS.md. Pendiente activación5500 y PR de esta rama.
