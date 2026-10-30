@@ -1044,7 +1044,7 @@ function renderRealHistoryChart(host,cutMonth){
   btn.addEventListener("click",()=>{if(active.has(field))active.delete(field);else active.add(field);btn.setAttribute("aria-pressed",String(active.has(field)));draw();});legend.append(btn);
  }
  panel.append(legend);
- const plot=document.createElement("div");plot.className="exv-real-history-plot";panel.append(plot);
+ const plot=document.createElement("div");plot.className="exv-real-history-plot";plot.textContent="Cargando series e hitos del contrato…";panel.append(plot);
  const note=document.createElement("p");note.className="exv-temporal-note";panel.append(note);
  host.append(panel);
  let cuts=[];
@@ -1127,14 +1127,14 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const budgetAll=rows.length===records.length;
  const same=(a,b)=>String(a??"")===String(b??"");
  const inScope=r=>budgetAll||budgetScope.some(k=>same(k.area,r.area)&&same(k.project,r.project)&&same(k.source,r.source)&&same(k.process,r.process)&&same(k.sourceRow,r.sourceRow));
- const chartStarted=performance.now();
+ let historyReady=false;
  const chartToken=Symbol("chart");
  section._budgetToken=chartToken;
  fetch("/__alia_explorer_history",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
   if(section._budgetToken!==chartToken||!section.isConnected||!Array.isArray(data?.series))return;
   if(physicalContract){
    const recovered=[];
-   for(const entry of data.series){
+   for(const entry of [...data.series].filter(e=>Number(e.month)<=cutMonth).sort((a,b)=>Number(a.month)-Number(b.month))){
     for(const r of entry.records||[]){
      if(String(r.contract||r.process)===String(physicalContract))recovered.push(r);
     }
@@ -1166,48 +1166,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
     }
    }
   }
-  // El primer trazado comienza de inmediato. Al llegar el historial se
-  // incorporan las capas adicionales sin borrar ni reiniciar el SVG.
-  const svg=plot.querySelector("svg");
-  if(svg&&physicalContract){
-   const ns="http://www.w3.org/2000/svg";
-   const add=(tag,attrs)=>{const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.append(e);return e;};
-   const dated=milestoneRows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
-   const advance=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort()[0];
-   const start=dated.filter(r=>r.start).map(r=>r.start).sort()[0];
-   const eventDate=dated.some(r=>r.paid>0)?advance:start;
-   if(eventDate){
-    const dt=new Date(eventDate+"T12:00:00");
-    if(!Number.isNaN(dt.getTime())&&dt.getFullYear()===2026){
-     const month=dt.getMonth(),px=65+month*59;
-     const line=add("line",{x1:px,x2:px,y1:38,y2:268,stroke:"#eac87b","stroke-width":1.3,"stroke-dasharray":"2 8",opacity:0});
-     const dot=add("circle",{cx:px,cy:38,r:9,fill:"#d9b75c",stroke:"#fff1bb","stroke-width":1.5,opacity:0,role:"button",tabindex:0});
-     const detail=(advance?"ANTICIPO PAGADO":"INICIO DEL CONTRATO")+" · "+eventDate.split("-").reverse().join("/");
-     const tip=document.createElementNS(ns,"title");tip.textContent=detail;dot.append(tip);
-     dot.style.cursor="pointer";
-     const show=()=>{pointDetail.style.display="block";pointDetail.textContent=detail;};
-     dot.addEventListener("click",show);dot.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
-     const elapsed=performance.now()-chartStarted;
-     const revealAt=3000*month/Math.max(1,cutMonth-1);
-     const wait=Math.max(0,revealAt-elapsed);
-     const reveal=()=>{if(!svg.isConnected)return;line.setAttribute("opacity",".65");dot.setAttribute("opacity","1");};
-     if(wait)window.setTimeout(reveal,wait);else reveal();
-    }
-   }
-   const physical=lines.find(l=>l.label==="Avance físico");
-   if(physical&&active.has(physical.label)){
-    const points=physicalByMonth.map((v,i)=>v===null||i>=cutMonth?null:[i,v]).filter(Boolean);
-    if(points.length){
-     const poly=add("polyline",{points:points.map(p=>(65+p[0]*59)+","+(268-225*p[1]/100)).join(" "),fill:"none",stroke:physical.color,"stroke-width":3,"stroke-linecap":"round","stroke-linejoin":"round"});
-     const len=poly.getTotalLength();
-     if(len>0&&typeof poly.animate==="function"){
-      const elapsed=performance.now()-chartStarted;
-      poly.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration:3000,delay:-Math.min(3000,elapsed),fill:"both"});
-     }
-    }
-   }
-  }
- }).catch(()=>{});
+ }).catch(()=>{}).finally(()=>{historyReady=true;if(section.isConnected)draw();});
  const totals={baseline:Array(12).fill(0),planned:Array(12).fill(0),actual:Array(12).fill(0)};
  for(const r of valid){
   for(let i=0;i<12;i++){
@@ -1240,7 +1199,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  const plot=document.createElement("div");plot.className="exv-real-history-plot";
  const footer=document.createElement("p");footer.className="exv-temporal-note";
  footer.textContent="Línea base: programación inicial · Real: pagos registrados hasta el corte · Proyección: programación de meses pendientes · Codificado: valor de cada reporte mensual en USD y referencia del 100% en porcentaje.";
- if(physicalContract)footer.textContent+=" · Avance físico: columna 226 (0–100%). Hito dorado: fecha de anticipo pagado (235), o inicio de contrato (50) si no hay anticipo; solo cuando la fecha esté disponible en los datos cargados.";
+ if(physicalContract)footer.textContent+=" · Avance físico: columna 226 (0–100%). Hito dorado: fecha de anticipo pagado (235), o inicio de contrato (50) si no hay anticipo; Culminación: fecha original de la columna 51 (marca azul). Solo se muestran fechas disponibles en los datos cargados.";
  chartHeader.append(controls);section.append(plot,legend,footer);host.append(section);
  const pointDetail=document.createElement("div");
  pointDetail.className="exv-chart-point-detail";
@@ -1259,6 +1218,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
  };
  const ns="http://www.w3.org/2000/svg";
  function draw(){
+  if(!historyReady)return;
   for(const [value,btn] of Object.entries(unitButtons)){const selected=unit===value;btn.setAttribute("aria-pressed",String(selected));btn.style.background=selected?"#166176":"#092b3c";btn.style.borderColor=selected?"#6fe7e0":"#4e9db2";}
   plot.replaceChildren();
   const physicalLine=lines.find(l=>l.label==="Avance físico");
@@ -1271,34 +1231,33 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
   const x=i=>65+i*59,y=(v,isBudget=false,isPhysical=false)=>268-225*convert(v,isBudget,isPhysical)/(isPhysical?100:high);
   for(let k=0;k<=4;k++){const yy=268-k*56.25;make("line",{x1:65,x2:714,y1:yy,y2:yy,stroke:"#31536b","stroke-dasharray":"3 5"});const t=make("text",{x:58,y:yy+3,"text-anchor":"end",fill:"#aacbd9","font-size":"11"});t.textContent=unit==="%"?(25*k)+"%":Math.round(high*k/4000)+"k";}
   ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"].forEach((m,i)=>{const t=make("text",{x:x(i),y:295,"text-anchor":"middle",fill:i===cutMonth-1?"#74f5e8":"#bbdbe8","font-size":"10","font-weight":i===cutMonth-1?"bold":"normal"});t.textContent=m;});
-  // Hito contractual discreto: anticipo efectivamente pagado; si no existe, inicio.
+  // Fechas originales: sin estimaciones ni modificaciones del historial.
+  const dateValue=value=>{
+   if(value===null||value===undefined||value==='')return null;
+   const raw=String(value).trim();let iso;
+   if(/^\d{4}-\d{2}-\d{2}/.test(raw))iso=raw.slice(0,10);
+   else if(/^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/.test(raw)){const [d,m,y]=raw.split(/[/-]/);iso=y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0');}
+   else if(/^\d+(\.\d+)?$/.test(raw)){const n=Number(raw);if(n<1||n>100000)return null;iso=new Date(Date.UTC(1899,11,30)+Math.floor(n)*86400000).toISOString().slice(0,10);}
+   if(!iso)return null;const dt=new Date(iso+'T12:00:00Z');return Number.isNaN(dt.getTime())||dt.toISOString().slice(0,10)!==iso?null:iso;
+  };
   if(physicalContract){
-   const dated=milestoneRows.map(r=>({advance:r.advance_paid_date,start:r.contract_start_date,paid:Number(r.advance)||0}));
-   const advanceDates=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort();
-   const startDates=dated.filter(r=>r.start).map(r=>r.start).sort();
-   const advanceDate=advanceDates[0]||null;
-   const hasPaidAdvance=dated.some(r=>r.paid>0);
-   const eventDate=hasPaidAdvance?advanceDate:(startDates[0]||null);
-   if(eventDate){
-    const dt=new Date(eventDate+"T12:00:00");
-    if(!Number.isNaN(dt.getTime())&&dt.getFullYear()===2026){
-     const m=dt.getMonth(),px=x(m);
-     make("line",{x1:px,x2:px,y1:38,y2:268,stroke:"#eac87b","stroke-width":"1.3","stroke-dasharray":"2 8",opacity:".65","pointer-events":"none"});
-     const hit=make("circle",{cx:px,cy:38,r:9,fill:"#d9b75c",stroke:"#fff1bb","stroke-width":"1.5",role:"button",tabindex:"0","aria-label":advanceDate?"Fecha de pago del anticipo":"Fecha de inicio del contrato"});
-     hit.style.cursor="pointer";
-     const eventText=(advanceDate?"ANTICIPO PAGADO":"INICIO DEL CONTRATO")+" · "+eventDate.split("-").reverse().join("/");
-     const tip=make("title",{},hit);tip.textContent=eventText;
-     const show=()=>{pointDetail.style.display="block";pointDetail.textContent=eventText;};
-     hit.addEventListener("click",show);
-     hit.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();show();}});
-    }
+   const dated=milestoneRows.map(r=>({advance:dateValue(r.advance_paid_date),start:dateValue(r.contract_start_date),end:dateValue(r.contract_end_date||r.raw_columns?.['51']),paid:Number(r.advance)||0}));
+   const paid=dated.some(r=>r.paid>0),advance=dated.filter(r=>r.paid>0&&r.advance).map(r=>r.advance).sort()[0],start=dated.filter(r=>r.start).map(r=>r.start).sort()[0];
+   const completion=[...dated].reverse().find(r=>r.end)?.end;
+   for(const event of [{date:paid?advance:start,label:paid?'ANTICIPO PAGADO':'INICIO DEL CONTRATO',color:'#eac87b',key:'advance'},{date:completion,label:'CULMINACIÓN DEL CONTRATO · COLUMNA 51',color:'#a8c4ff',key:'completion'}]){
+    if(!event.date)continue;const dt=new Date(event.date+'T12:00:00Z');if(dt.getUTCFullYear()!==2026)continue;
+    const month=dt.getUTCMonth(),px=x(month),group=make('g',{'data-alia-milestone':event.key,'data-month':month});
+    make('line',{x1:px,x2:px,y1:38,y2:268,stroke:event.color,'stroke-width':1.3,'stroke-dasharray':'2 8',opacity:'.65','pointer-events':'none'},group);
+    const hit=make(event.key==='completion'?'rect':'circle',event.key==='completion'?{x:px-7,y:16,width:14,height:14,rx:3,fill:event.color,stroke:'#eef5ff',role:'button',tabindex:0,'aria-label':'Fecha de culminación del contrato'}:{cx:px,cy:38,r:9,fill:event.color,stroke:'#fff1bb',role:'button',tabindex:0,'aria-label':paid?'Fecha de pago del anticipo':'Fecha de inicio del contrato'},group);
+    hit.style.cursor='pointer';const text=event.label+' · '+event.date.split('-').reverse().join('/');make('title',{},hit).textContent=text;
+    const show=()=>{pointDetail.style.display='block';pointDetail.textContent=text;};hit.onclick=show;hit.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show();}};
    }
   }
   const cutX=x(Math.max(0,Math.min(11,cutMonth-1)));
   make("line",{x1:cutX,x2:cutX,y1:31,y2:268,stroke:"#8edce6","stroke-width":"1.5","stroke-dasharray":"5 5",opacity:".8"});
   const cutLabel=make("text",{x:Math.min(cutX+6,674),y:22,fill:"#9cece6","font-size":"10"});cutLabel.textContent="CORTE";
   for(const l of visible){if(!l.points.length)continue;
-   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
+   if(l.label==="Devengado real"&&l.points.length>1){const first=l.points[0],last=l.points[l.points.length-1];make("polygon",{"data-alia-shade":"real",points:[x(first[0])+",268",...l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)),x(last[0])+",268"].join(" "),fill:l.color,opacity:".09"});}
    const path=make("polyline",{points:l.points.map(p=>x(p[0])+","+y(p[1],l===codedLine,l===physicalLine)).join(" "),fill:"none",stroke:l.color,"stroke-width":l.label==="Devengado real"?"3.8":"3","stroke-linecap":"round","stroke-linejoin":"round", "stroke-dasharray":l.label==="Proyección vigente"?"9 6":"none"});
    path.dataset.aliaSeries=l.label;
 
@@ -1306,9 +1265,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
     if(l.label==="Proyección vigente")continue;
     const px=x(p[0]),py=y(p[1],l===codedLine,l===physicalLine);
     const dot=make("circle",{cx:px,cy:py,r:3.5,fill:l.color,"pointer-events":"none",opacity:"0"});
-    const wait=3000*Math.min(p[0],cutMonth-1)/Math.max(1,cutMonth-1);
-    if(typeof dot.animate==="function")dot.animate([{opacity:0},{opacity:1}],{duration:120,delay:wait,fill:"forwards"});
-    else dot.setAttribute("opacity","1");
+    dot.setAttribute('opacity','1');dot.dataset.aliaPoint=l.label;
     const hit=make("circle",{cx:px,cy:py,r:11,fill:"transparent",role:"button",tabindex:"0","aria-label":"Consultar "+l.label+" de "+monthNames[p[0]]});
     hit.style.cursor="pointer";
     const tip=make("title",{},hit);tip.textContent=l.label+" · "+monthNames[p[0]]+" · "+(l===physicalLine?p[1].toFixed(1)+"%":money(p[1]));
@@ -1345,7 +1302,7 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
    realRing=make("circle",{cx:px,cy:py,r:7.5,fill:"#082c3d",stroke:"#5effd8","stroke-width":"2.8","pointer-events":"none"});
    const core=make("circle",{cx:px,cy:py,r:4.2,fill:"#baffed","pointer-events":"none"});
    realRing.style.visibility="hidden";core.style.visibility="hidden";
-   window.setTimeout(()=>{if(svg.isConnected){realHalo.style.visibility="visible";realRing.style.visibility="visible";core.style.visibility="visible";}},3000);
+   for(const marker of [realHalo,realRing,core]){marker.style.visibility='visible';marker.dataset.aliaRealEnd='true';}
    const tip=make("title",{},core);
    tip.textContent="Devengado al corte: "+(budget>0?(100*realEnd[1]/budget).toFixed(1)+"%":"sin codificado");
   }
@@ -1360,17 +1317,27 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
     const duration=3000;
     // La proyección empieza exclusivamente al finalizar el trazado real.
     const realPath=paths.find(path=>path.dataset.aliaSeries==="Devengado real");
-    let realAnimation=null;
-    const animateStroke=path=>{
-     if(!path||typeof path.animate!=="function")return null;
-     const len=path.getTotalLength();
-     if(!Number.isFinite(len)||len<=0)return null;
-     return path.animate([{strokeDasharray:String(len),strokeDashoffset:String(len)},{strokeDasharray:String(len),strokeDashoffset:"0"}],{duration,fill:"both",easing:"ease-in-out"});
+    // Una máscara horizontal comparte el mismo reloj para línea, sombra y puntos.
+    const begin=svg.getCurrentTime()+.05;
+    const revealLayer=(nodes,endX,label)=>{
+     const id='alia-sweep-'+Math.random().toString(36).slice(2),clip=make('clipPath',{id}),mask=make('rect',{x:50,y:0,width:0,height:320,'data-alia-sweep':label},clip);
+     for(const node of nodes)node.setAttribute('clip-path','url(#'+id+')');
+     const sweep=make('animate',{attributeName:'width',from:0,to:Math.max(1,endX-50+14),dur:'3s',begin:'indefinite',fill:'freeze'},mask);
+     if(typeof sweep.beginElementAt==='function')sweep.beginElementAt(Math.max(0,begin-svg.getCurrentTime()));else mask.setAttribute('width',Math.max(1,endX-50+14));
+     return sweep;
     };
     for(const path of paths){
-     if(path.dataset.aliaSeries==="Proyección vigente")continue;
-     const animation=animateStroke(path);
-     if(path===realPath)realAnimation=animation;
+     const label=path.dataset.aliaSeries;if(label==='Proyección vigente')continue;
+     const line=lines.find(l=>l.label===label),nodes=[path,...svg.querySelectorAll('[data-alia-point="'+label+'"]')];
+     if(path===realPath)nodes.push(...svg.querySelectorAll('[data-alia-shade], [data-alia-real-end]'));
+     revealLayer(nodes,x(line.points.at(-1)[0]),label);
+    }
+    for(const milestone of svg.querySelectorAll('[data-alia-milestone]')){
+     const month=Number(milestone.dataset.month),last=Math.max(0,cutMonth-1),realWidth=x(last)-50+14;
+     const delay=month<=last?duration*Math.max(0,x(month)-50)/realWidth:duration+1800*Math.max(0,x(month)-x(last)+3)/(x(11)-x(last)+9);
+     milestone.setAttribute('visibility','hidden');
+     const show=make('set',{attributeName:'visibility',to:'visible',begin:'indefinite',fill:'freeze'},milestone);
+     if(typeof show.beginElementAt==='function')show.beginElementAt(Math.max(0,begin-svg.getCurrentTime()+delay/1000));else milestone.setAttribute('visibility','visible');
     }
     if(realHalo&&realRing&&typeof realHalo.animate==="function"){
      realHalo.animate([{r:9,opacity:.30},{r:17,opacity:.06},{r:9,opacity:.30}],{duration:1900,iterations:Infinity,easing:"ease-in-out"});
@@ -1419,14 +1386,14 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
        }else marker.setAttribute("opacity","1");
       }
      };
-     if(realAnimation)realAnimation.finished.then(startProjection).catch(startProjection);
-     else startProjection();
+     // El reloj se comparte con el trazado real, incluso sin animaciones WAAPI.
+     window.setTimeout(startProjection,duration+50);
     }
    }
   }catch(error){console.warn("ALIA: animación opcional omitida",error);}
  }
  for(const l of lines){const b=document.createElement("button");b.type="button";b.className="exv-real-history-toggle";b.style.cssText="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #335c71;background:#0d3043;color:#d8eff5;cursor:pointer";const mark=document.createElement("span");mark.textContent="━";mark.style.color=l.color;mark.style.fontSize="18px";const label=document.createElement("span");label.textContent=l.label;b.append(mark,label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";b.onclick=()=>{if(active.has(l.label))active.delete(l.label);else active.add(l.label);b.setAttribute("aria-pressed",String(active.has(l.label)));b.style.opacity=active.has(l.label)?"1":".4";draw();};legend.append(b);}
- // Dibujar inmediatamente con las series financieras disponibles.
+ // Esperar el historial evita que avance físico, codificado e hitos lleguen tarde.
  draw();
 }
 
