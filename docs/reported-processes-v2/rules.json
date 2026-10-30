@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "checks": [
+    "reported unpublished overrides existing signature",
+    "reported published overrides later dated stages",
+    "adjudicated with no dates stays adjudicated",
+    "missing state not inferred as contracted",
+    "suspended process remains visible",
+    "deserted process remains visible",
+    "execution suspended is contractual",
+    "duplicate rows do not duplicate states",
+    "conflicting dates flagged without overriding reported status"
+  ]
+}

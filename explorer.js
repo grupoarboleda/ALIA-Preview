@@ -102,18 +102,16 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
    contractGroups.get(contractId).push(r);
   }
  }
- const uncommittedEntries=[...processGroups].map(([id,rows])=>{
-  const budget=rows.reduce((n,r)=>n+r.budget,0);
-  const committed=rows.reduce((n,r)=>n+r.committed,0);
-  return {id,rows,total:budget};
- }).filter(x=>!realMode||!(window.ALIAProcessTimeline.model(x.rows,2026,cut()).stage===3&&window.ALIAProcessTimeline.model(x.rows,2026,cut()).contracts.length)).filter(x=>x.total>0&&Math.abs(x.rows.reduce((n,r)=>n+r.committed,0))<0.005);
+ const latestScope=realMode&&latestProcessCut?fundingScope(filterBy(latestProcessCut.records,paneTrails[activePane])):filtered;
+ if(realMode){processGroups.clear();for(const r of latestScope){const id=String(r.process||r.raw_columns?.['15']||'').trim();if(!id)continue;if(!processGroups.has(id))processGroups.set(id,[]);processGroups.get(id).push(r);}}
+ const uncommittedEntries=[...processGroups].map(([id,rows])=>({id,rows,total:rows.reduce((n,r)=>n+(Number(r.budget)||0),0)})).filter(x=>realMode?window.ALIAProcessTimeline.reported(x.rows).precontractual:x.total>0&&Math.abs(x.rows.reduce((n,r)=>n+r.committed,0))<0.005);
  const undevengedEntries=[...contractGroups].map(([id,rows])=>{
   const committed=rows.reduce((n,r)=>n+r.committed,0);
   const accrued=rows.reduce((n,r)=>n+r.accrued,0);
   return {id,rows,total:Math.max(0,committed-accrued)};
  }).filter(x=>x.total>0||(realMode&&x.rows.reduce((n,r)=>n+r.committed,0)===0&&x.rows.reduce((n,r)=>n+r.budget,0)>0&&window.ALIAProcessTimeline.model(x.rows,2026,cut()).stage===3&&window.ALIAProcessTimeline.model(x.rows,2026,cut()).contracts.length));
  const balances=[
-  {label:"SALDO SIN COMPROMETER",type:"uncommitted",description:"Procesos con codificado > 0 y comprometido = 0"},
+  {label:realMode?"PROCESOS · ESTADO ACTUAL":"SALDO SIN COMPROMETER",type:"uncommitted",description:realMode?"Todos los procesos precontractuales del último reporte · estado columna 482 · con o sin codificado":"Procesos con codificado > 0 y comprometido = 0"},
   {label:"SALDO SIN DEVENGAR",type:"committed",description:"Comprometido − Devengado"}
  ];
  const balanceStats=type=>{
@@ -129,27 +127,28 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
  const detailTable=document.createElement("div");detailTable.className="exv-balance-table";
  detail.append(detailHead,detailTable);
  function showBalance(type,label){
-  detail.hidden=false;detailTitle.textContent=label+" · TOP 5 "+(type==="uncommitted"?"PROCESOS":"CONTRATOS");detailTable.replaceChildren();
+  detail.hidden=false;detailTitle.textContent=label+(realMode&&type==="uncommitted"?" · TODOS LOS ":" · TOP 5 ")+(type==="uncommitted"?"PROCESOS":"CONTRATOS");detailTable.replaceChildren();
   insightMetrics.querySelectorAll("button").forEach(b=>b.setAttribute("aria-expanded",String(b.dataset.balance===type)));
   const ranking=balanceStats(type).entries.map(({id,rows,total})=>({project:id,rows,total})).sort((a,b)=>b.total-a.total);
   const note=document.createElement("p");note.className="exv-balance-ranking-note";
-  note.textContent=ranking.length+(type==="uncommitted"?" procesos":" contratos")+" en seguimiento · Prioridad por monto pendiente. Selecciona uno para ver su evolución.";
+  note.textContent=(realMode&&type==='uncommitted'?'Último reporte '+String(latestProcessCut?.month||cut()).padStart(2,'0')+'/'+(latestProcessCut?.year||2026)+' · Estado: columna 482 · Incluye codificado cero. ':'')+ranking.length+(type==="uncommitted"?" procesos":" contratos")+(realMode&&type==="uncommitted"?" en seguimiento · Ordenados por codificado, incluidos los de valor cero. Selecciona uno para ver su evolución.":" en seguimiento · Prioridad por monto pendiente. Selecciona uno para ver su evolución.");
   detailTable.append(note);
+  if(realMode&&type==='uncommitted'){const counts=new Map();for(const entry of ranking){const state=window.ALIAProcessTimeline.reported(entry.rows).stateLabel;counts.set(state,(counts.get(state)||0)+1);}const summary=document.createElement('p');summary.className='exv-balance-ranking-note';summary.textContent=[...counts].sort((a,b)=>a[0].localeCompare(b[0])).map(([name,n])=>name+': '+n).join(' · ');detailTable.append(summary);}
   const rankingHeader=document.createElement("div");
   rankingHeader.className="exv-balance-ranking-header";
   const entityHeader=document.createElement("span");
   entityHeader.textContent=type==="uncommitted"?"PROCESO":"CONTRATO";
   const amountHeader=document.createElement("span");
-  amountHeader.textContent=type==="uncommitted"?"MONTO POR COMPROMETER":"MONTO POR DEVENGAR";
+  amountHeader.textContent=type==="uncommitted"?(realMode?"CODIFICADO · ÚLTIMO REPORTE":"MONTO POR COMPROMETER"):"MONTO POR DEVENGAR";
   rankingHeader.append(entityHeader,amountHeader);
   detailTable.append(rankingHeader);
   const rankingRoot=document.createElement("div");rankingRoot.className="exv-balance-ranking";detailTable.append(rankingRoot);
-  let showAll=false;
+  let showAll=realMode&&type==="uncommitted";
   const paint=()=>{
    rankingRoot.replaceChildren();
    const shown=showAll?ranking:ranking.slice(0,5);
    for(const [i,{project,rows,total}] of shown.entries()){
-    const current=realMode?window.ALIAProcessTimeline.model(rows,2026,cut()):managementDemoStatus(type,project,cut());
+    const current=realMode?window.ALIAProcessTimeline.model(rows,latestProcessCut?.year||2026,latestProcessCut?.month||cut()):managementDemoStatus(type,project,cut());
     const item=button("",()=>{
      selectedManagement={type,id:project};
      renderLatestDetailTable();
@@ -163,7 +162,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
     top.append(id,amount);
     const bottom=document.createElement("span");bottom.className="exv-management-item-status";
     bottom.textContent=type==="uncommitted"
-     ?(realMode?window.ALIAProcessTimeline.names[current.stage]+(current.days===null?' · sin fecha de hito':' · '+current.days+' días desde el hito'):current.stage+' · '+current.months+' reporte(s) en esta etapa')
+     ?(realMode?current.stateLabel+(current.days===null?' · sin fecha de hito':' · '+current.days+' días desde el hito'):current.stage+' · '+current.months+' reporte(s) en esta etapa')
      :realMode?'Devengado '+(rows.reduce((n,r)=>n+r.committed,0)>0?(100*rows.reduce((n,r)=>n+r.accrued,0)/rows.reduce((n,r)=>n+r.committed,0)).toFixed(1)+'%':'sin compromiso registrado'):'Devengado '+current.dev+'% · '+current.idle+' reporte(s) sin incremento';
     item.append(top,bottom);rankingRoot.append(item);
    }
@@ -194,6 +193,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
   const helpFooter=document.createElement("span");helpFooter.textContent=type==="uncommitted"
    ?"El total reúne el presupuesto de esos procesos, sin contar un mismo proceso dos veces."
    :"El total suma lo que falta devengar en esos contratos, sin contar un mismo contrato dos veces.";
+  if(realMode&&type==='uncommitted'){helpTitle.textContent='¿Cómo están los procesos a la fecha del último reporte?';helpBody.textContent='Se usa el estado reportado en la columna 482, no se deduce de fechas ni del compromiso. Incluye todos los procesos precontractuales y otros estados no contractuales, tengan o no codificado. El periodo financiero seleccionado no cambia este corte actual.';helpFooter.textContent='El importe es codificado del último reporte para este grupo. El número de procesos incluye codificado cero.';}
   explanation.append(helpTitle,helpBody,helpFooter);
   const toggleInfo=e=>{e.stopPropagation();explanation.hidden=!explanation.hidden;info.setAttribute("aria-expanded",String(!explanation.hidden));};
   info.addEventListener("click",toggleInfo);
@@ -900,7 +900,7 @@ function renderPanes(){
  }
 }
 
-let selectedManagement=null;
+let selectedManagement=null;let latestProcessCut=null;
 let unitManagementOpen=false;
 function renderTemporal(rs,cutMonth){
  if(realMode){renderRealTemporal(rs,cutMonth);return;}
@@ -1404,11 +1404,13 @@ function renderRealTemporal(rs,cutMonth){
  const heading=document.createElement("div");heading.className="exv-temporal-head";
  const title=document.createElement("div");heading.append(title);host.append(heading);
  const choice=selectedManagement;
+ if(choice?.type==='uncommitted'&&latestProcessCut){rs=fundingScope(filterBy(latestProcessCut.records,paneTrails[activePane]));cutMonth=Number(latestProcessCut.month);}
  const rows=choice?rs.filter(r=>(choice.type==="committed"?r.contract:r.process)===choice.id):rs;
  const total=sum(rows,cutMonth);
  const label=choice?(choice.type==="committed"?"CONTRATO ":"PROCESO ")+choice.id:"UNIDAD / ÁREA · DATOS REALES";
  title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
  title.querySelector("h3").textContent=label;
+ if(choice?.type==='uncommitted')title.querySelector('.exv-temporal-eyebrow').textContent='RAMA 02 / ÚLTIMO REPORTE · ESTADO COLUMNA 482';
  if(choice?.type==="committed"){
   const headingLine=title.querySelector("h3");
   headingLine.style.display="flex";headingLine.style.alignItems="center";headingLine.style.gap="9px";
@@ -1467,7 +1469,7 @@ function renderRealTemporal(rs,cutMonth){
  const warning=document.createElement("p");warning.className="exv-temporal-note";
  warning.textContent="Los gráficos utilizan exclusivamente los cortes mensuales cargados. Los valores son acumulados al cierre de cada reporte, no pagos del mes.";
  host.append(warning);
- if(choice?.type==='uncommitted')window.ALIAProcessTimeline.render(host,rows,2026,cutMonth,id=>{selectedManagement={type:'committed',id};renderLatestDetailTable();renderRealTemporal(rs,cutMonth);});
+ if(choice?.type==='uncommitted')window.ALIAProcessTimeline.render(host,rows,latestProcessCut?.year||2026,cutMonth,id=>{selectedManagement={type:'committed',id};renderLatestDetailTable();renderRealTemporal(rs,cutMonth);});
  else renderMonthlyExecutionChart(host,rows,cutMonth,choice?.type==="committed"?choice.id:null);
  if(choice){host.append(button("← VOLVER A EVOLUCIÓN GENERAL",()=>{selectedManagement=null;renderTemporal(rs,cutMonth);},"exv-count-link"));}
 }
@@ -1742,6 +1744,7 @@ function loadStagedCut(month){
  const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
  fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(async data=>{
   const history=await ensureRealHistory();if(request!==stagedRequest)return;
+  const latest=history.reduce((best,e)=>!best||Number(e.year||2026)*12+Number(e.month)>Number(best.year||2026)*12+Number(best.month)?e:best,null);latestProcessCut=latest?{...latest,year:latest.year||2026}:null;
   if(data?.mode==='REAL'){const entry=history.find(e=>Number(e.month)===Number(data.month)),byRow=new Map((entry?.records||[]).map(r=>[r.sourceRow,r]));data.records=data.records.map(r=>({...r,raw_columns:{...(byRow.get(r.sourceRow)?.raw_columns||{}),...(r.raw_columns||{})}}));}
   if(data?.mode==="REAL"&&data.records?.length){preserveDetailSelection=true;try{activateReal(data);}finally{preserveDetailSelection=false;}return;}
   if(!realMode)fetch("/__alia_data",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
