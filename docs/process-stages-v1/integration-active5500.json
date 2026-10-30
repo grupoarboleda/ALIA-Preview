@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checks": [
+    "process selection renders stage chart instead of devengo",
+    "signed process moves to contract block without inventing commitment",
+    "contract selection preserves financial chart"
+  ]
+}
