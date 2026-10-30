@@ -19,18 +19,21 @@ Tabla: **ID / Contrato y proceso / Administrador / [Programado, Devengado, N.º 
 - Número de trámite/caso:237 +8n; valor facturado SIN IVA:238 +8n; n=0..24. Rango de los25pagos:237–436.
 - Caso y trámite son sinónimos de negocio, conservando encabezados literales. Diccionario v1.3 documenta la comparación mensual.
 
-## Identificación del trámite por importe
+## Regla vigente de trámites — secuencial descendente
 
-Se busca en las facturas del mismo contrato/proceso, sin IVA: una factura o una combinación que sume exactamente el devengado mensual, a centavos. Los números se recuperan de la columna inmediatamente anterior a cada importe. El importe neto transferido no participa en esta búsqueda.
+Por corrección expresa del propietario, se elimina la búsqueda de combinaciones. Se recorren pagos registrados del mayor número de pago al menor, consecutivos, sin saltos:5/4 o4/3/2. Nunca3/1. Cada posición de pago incluye las asignaciones fuente de ese mismo número, sin escoger subconjuntos entre ellas.
 
-- Coincidencia única: números visibles; pulsar abre desglose de facturas, importes, filas y columnas.
-- Más de una combinación: ambigua, no se escoge una arbitrariamente.
-- Misma factura como única coincidencia de dos meses: requiere revisión, no se asigna dos veces automáticamente.
-- Sin coincidencia, ajustes negativos, falta de datos o límite de cálculo: se indican de forma diferenciada. El usuario puede inspeccionar las facturas fuente.
+Los meses se concilian del más reciente al anterior y un pago ya conciliado no se reutiliza. Un mes sin coincidencia no consume pagos, por lo que uno anterior todavía puede cotejarse contra los últimos disponibles. Se conserva el rango como filtro de visualización, sin cambiar los trámites al ocultar meses.
 
-Cálculo Decimal/centavos, búsqueda rápida de1/2/3facturas, meet-in-the-middle y sumas alcanzables para combinaciones mayores. Cálculo acotado para evitar bloquear la aplicación en contratos con muchas asignaciones. En la comprobación anual real quedaron dos búsquedas que requieren revisión por límite; no se presentan como ausencia demostrada de coincidencia. Una coincidencia de importe no certifica transferencia bancaria ni sustituye conciliación.
+Si la secuencia coincide exactamente a centavos con el devengado, se muestran sus trámites en ese mismo orden. Si no suma, falta un pago en la secuencia o falta número/importe, la tabla muestra exactamente **Revisar Pagos**. No hay mensajes de varias combinaciones ni saltos hacia una factura anterior que casualmente coincida. Pulsar permite inspeccionar fuente y motivo.
 
-## Comprobaciones
+## Diferencias visibles en la gráfica
+
+Se conservan los totales y las dos barras Programado/Devengado. Dentro de ellas se distinguen Programado sin devengo registrado (violeta) y Devengado fuera de programación/excedente (ámbar). Debajo se elige mes y se separan tres casos: sin programación registrada, por encima de lo programado y programado sin devengo registrado. Cada importe filtra la tabla de contratos; el grupo general de la gráfica se mantiene y el filtro puede quitarse.
+
+El cálculo se hace primero por contrato/proceso y después se suma. Así un exceso en uno no oculta lo pendiente de otro, aunque las barras globales fueran iguales. Programación o devengo vacíos se identifican como falta de registro; meses futuros no se clasifican como impagos. Ajustes negativos se conservan en los importes originales sin atribuirles categorías positivas.
+
+## Comprobaciones de la revisión anterior por rango
 
 43 pruebas Python de originales, HTTP, programación y rangos +7 reglas existentes PASS. Las pruebas sintéticas cubren una factura, suma de varias, ambigüedad, fuente sin IVA frente a neto, estado482, rango parcial/completo, futuros y estabilidad al cambiar el rango.
 
@@ -40,8 +43,12 @@ Cotejo independiente de agosto–octubre:30 grupos. Ambas series coinciden con l
 
 Evidencia sanitizada: `docs/programacion-pagos/range-v2/`. La activación final en5500 se registra tras comprobarla. PR3 y rama `feature/alia-programacion-pagos`; sin main/producción ni escrituras a los históricos.
 
-## Cierre de la revisión — 30 octubre 2026
+## Antecedente: cierre de la revisión por rango — 30 octubre 2026
 
-Implementación `63567747b6eac3a22198761a3d0ddace84a307f9` activa en http://localhost:5500/ , rama local `feature/alia-programacion-pagos`. Se completaron las19 comprobaciones de navegador sobre esa instalación: PASS, PC/móvil, sin errores JS. La comprobación final de API vuelve a confirmar el ejemplo privado del propietario, y los once archivos históricos siguen byte-idénticos.
+La revisión anterior, implementación `63567747b6eac3a22198761a3d0ddace84a307f9` activa en http://localhost:5500/ , rama local `feature/alia-programacion-pagos`. Se completaron las19 comprobaciones de navegador sobre esa instalación: PASS, PC/móvil, sin errores JS. La comprobación final de API vuelve a confirmar el ejemplo privado del propietario, y los once archivos históricos siguen byte-idénticos.
 
 PR vigente: https://github.com/grupoarboleda/ALIA-Preview/pull/3, descripción actualizada al alcance final por rango mensual. Cuenta conectada READ: no fusionado a develop, sin main/producción. La entrega funcional local está completada. Evidencia activa en `docs/programacion-pagos/range-v2/browser-active5500.json`.
+
+## Revisión secuencial y diferencias — 30 octubre 2026
+
+53 pruebas Python +7 reglas existentes PASS. Candidata5504:27 comprobaciones de navegador PASS, con filtros por diferencias, orden consecutivo, texto Revisar Pagos y regresiones de rango/tabla/contratos. La prueba de código rechaza3/1, no salta el pago más reciente, admite5/4 y4/3/2 y conserva la aceptación privada anterior. Cotejo real:17 meses conciliados del rango8–10, suma exacta, secuencia descendente y sin reutilización. El desglose de septiembre reconcilia los dos totales sin compensar contratos. Once archivos históricos byte-idénticos. Evidencia sanitizada: `docs/programacion-pagos/sequential-v3/`. Activación5500 pendiente de comprobación final de esta revisión.

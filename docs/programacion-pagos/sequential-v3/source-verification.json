@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "range": [
+    8,
+    10
+  ],
+  "matched_months_checked": 17,
+  "all_matches_consecutive_descending": true,
+  "no_payments_reused_in_evaluated_months": true,
+  "sequential_sums_equal_execution_to_cents": true,
+  "classification_reconciles_september_totals_without_cross_contract_netting": true,
+  "private_owner_example_preserved": true,
+  "legacy_files_byte_identical": 11
+}

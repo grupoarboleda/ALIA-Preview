@@ -1,6 +1,6 @@
 {
   "schema": "ALIA_BLOQUES_2026",
-  "version": "1.3",
+  "version": "1.4",
   "column_count": 564,
   "groups": [
     {
@@ -342,6 +342,7 @@
     ],
     "september_execution_id": 546,
     "excluded_456": "MULTAS COBRADAS (USD); no corresponde al devengado mensual",
-    "matching": "Igualdad exacta a centavos del devengado con una o más facturas sin IVA; no usar total neto transferido."
+    "matching": "Sumar pagos registrados consecutivos del último al primero, sin saltos ni subconjuntos; meses del más reciente al anterior, sin reutilizar pagos. Si no coincide: Revisar Pagos.",
+    "difference_analysis": "Comparar por contrato/proceso antes de sumar: sin programación registrada, exceso sobre programación y programado sin devengo registrado; futuro sin observación."
   }
 }

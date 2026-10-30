@@ -7,79 +7,43 @@ from original_records import load_cut
 
 def cents(value):return int((value*100).quantize(Decimal('1')))
 
-def match_amount(target,invoices,max_states=131072):
-    if target is None:return {'status':'missing','procedures':[],'matches':[]}
+def match_amount(target,invoices):
+    """Walk consecutive recorded payment slots, newest first. Never choose a subset."""
+    base={'procedures':[],'matches':[],'consumed_payment_numbers':[]}
+    if target is None:return dict(base,status='missing')
     total=cents(target)
-    if total==0:return {'status':'zero','procedures':[],'matches':[]}
-    if total<0:return {'status':'adjustment','procedures':[],'matches':[]}
-    if any(i['cents']<0 for i in invoices):return {'status':'adjustment_review','procedures':[],'matches':[]}
-    usable=[i for i in invoices if i['cents']>0 and i['cents']<=total]
-    # Find the common one/two/three-invoice cases cheaply, including duplicated amounts.
-    quick=[];seen=set();by_amount=defaultdict(list)
-    for index,item in enumerate(usable):by_amount[item['cents']].append(index)
-    def add_quick(indices):
-        key=tuple(sorted(indices))
-        if key not in seen:
-            seen.add(key);quick.append(tuple(usable[i]['key'] for i in key))
-    for i,item in enumerate(usable):
-        if item['cents']==total:add_quick((i,))
-        for j in by_amount.get(total-item['cents'],[]):
-            if j>i:add_quick((i,j))
-            if len(quick)>=2:break
-        if len(quick)>=2:break
-    if len(quick)<2 and len(usable)<=256:
-        for i in range(len(usable)):
-            for j in range(i+1,len(usable)):
-                for k in by_amount.get(total-usable[i]['cents']-usable[j]['cents'],[]):
-                    if k>j:add_quick((i,j,k))
-                    if len(quick)>=2:break
-                if len(quick)>=2:break
-            if len(quick)>=2:break
-    if len(quick)>=2:
-        lookup={i['key']:i for i in usable};alternatives=[[lookup[k] for k in keys] for keys in quick[:2]]
-        return {'status':'ambiguous','procedures':sorted({i['procedure'] for group in alternatives for i in group if i['procedure']}),'matches':alternatives}
-    mid=len(usable)//2
-    if 2**max(mid,len(usable)-mid)>max_states:
-        # Many repeated assignment amounts are cheaper as reachable sums than as subsets.
-        states={0:((),)}
-        for item in usable:
-            following=dict(states)
-            for subtotal,witnesses in states.items():
-                target_sum=subtotal+item['cents']
-                if target_sum>total:continue
-                found=list(following.get(target_sum,()))
-                for witness in witnesses:
-                    candidate=witness+(item['key'],)
-                    if candidate not in found and len(found)<2:found.append(candidate)
-                following[target_sum]=tuple(found)
-            states=following
-            if len(states.get(total,()))>=2:break
-            if len(states)>max_states:return {'status':'limit','procedures':[],'matches':[]}
-        lookup={i['key']:i for i in usable}
-        witnesses=states.get(total,())
-        alternatives=[[lookup[k] for k in keys] for keys in witnesses]
-        return {'status':'unique' if len(witnesses)==1 else 'ambiguous' if witnesses else 'unmatched',
-                'procedures':sorted({i['procedure'] for group in alternatives for i in group if i['procedure']}),'matches':alternatives}
-    def subsets(items):
-        states=[(0,())]
-        for item in items:
-            states += [(value+item['cents'],ids+(item['key'],)) for value,ids in states if value+item['cents']<=total]
-        return states
-    left=subsets(usable[:mid]);right=defaultdict(list)
-    for value,ids in subsets(usable[mid:]):
-        if len(right[value])<2:right[value].append(ids)
-    witnesses=[]
-    for value,ids in left:
-        for others in right.get(total-value,[]):
-            witness=ids+others
-            if witness and witness not in witnesses:witnesses.append(witness)
-            if len(witnesses)==2:break
-        if len(witnesses)==2:break
-    lookup={i['key']:i for i in usable}
-    alternatives=[[lookup[k] for k in keys] for keys in witnesses]
-    numbers=sorted({i['procedure'] for alternative in alternatives for i in alternative if i['procedure']})
-    return {'status':'unique' if len(witnesses)==1 else 'ambiguous' if witnesses else 'unmatched',
-            'procedures':numbers,'matches':alternatives}
+    if total==0:return dict(base,status='zero')
+    slots=defaultdict(list)
+    for invoice in invoices:slots[invoice['payment_number']].append(invoice)
+    if not slots:return dict(base,status='review',reason='No hay pagos registrados para conciliar.')
+    attempt=[];running=0;used=[]
+    for number in range(max(slots),0,-1):
+        if number not in slots:
+            return dict(base,status='review',reason=f'Falta el pago {number}; no se salta a pagos anteriores.',attempted=attempt)
+        current=sorted(slots[number],key=lambda i:(i['source_row'],i['key']))
+        attempt.extend(current)
+        if any(i.get('cents') is None or not i.get('procedure') for i in current):
+            return dict(base,status='review',reason=f'Pago {number} sin número de trámite/caso o importe completo.',attempted=attempt)
+        running+=sum(i['cents'] for i in current);used.append(number)
+        if running==total:
+            return {'status':'unique','procedures':list(dict.fromkeys(i['procedure'] for i in attempt)),
+                    'matches':[attempt],'consumed_payment_numbers':used}
+    return dict(base,status='review',reason='La suma del último pago hacia el primero no coincide con el devengado.',
+                attempted=attempt,sequence_total=running/100,difference=(total-running)/100)
+
+
+def compare_month(planned,executed,observed=True):
+    """Compare within each contract/process, so one contract cannot offset another."""
+    if not observed:return {'observed':False,'covered':None,'unplanned':None,'over_plan':None,'pending':None}
+    if (planned is not None and planned<0) or (executed is not None and executed<0):
+        return {'observed':True,'adjustment':True,'covered':None,'unplanned':None,'over_plan':None,'pending':None}
+    p=planned or Decimal(0);d=executed or Decimal(0)
+    return {'observed':True,'covered':dollars(min(p,d)),
+            'unplanned':dollars(d if p==0 else Decimal(0)),
+            'over_plan':dollars(max(d-p,Decimal(0)) if p>0 else Decimal(0)),
+            'pending':dollars(max(p-d,Decimal(0))),
+            'program_missing':planned is None,'execution_missing':executed is None}
+
 
 def validate_range_schema(batch):
     cat={int(c['id']):c for c in batch['column_catalog']}
@@ -99,10 +63,10 @@ def invoices_for(records):
         for i in range(25):
             number_id=237+i*8;amount_id=number_id+1
             amount=decimal(raw.get(str(amount_id)))
-            if amount is None or amount==0:continue
             procedure=clean(raw.get(str(number_id)))
             if procedure in ('0','0.0'):procedure=''
-            result.append({'key':str(record['source_row'])+':'+str(i+1),'procedure':procedure,'cents':cents(amount),'amount':dollars(amount),
+            if not procedure and amount in (None,0):continue
+            result.append({'key':str(record['source_row'])+':'+str(i+1),'procedure':procedure,'cents':cents(amount) if amount is not None else None,'amount':dollars(amount),
                            'source_row':record['source_row'],'payment_number':i+1,'number_column':number_id,'amount_column':amount_id})
     return result
 
@@ -121,15 +85,12 @@ def evaluate_range(root,year,start_month,end_month,basis='adjusted',cut_token=No
         executed=[v if i<int(cut['month']) else None for i,v in enumerate(executed)]
         if not any(planned[m-1] not in (None,0) or executed[m-1] not in (None,0) for m in months):continue
         invoices=invoices_for(records)
-        matches={m:match_amount(executed[m-1],invoices) for m in range(1,13)}
-        # Never assign one unique invoice to two different execution months.
-        uses=defaultdict(list)
-        for m,match in matches.items():
-            if match['status']=='unique':
-                for invoice in match['matches'][0]:uses[invoice['key']].append(m)
-        for used_months in uses.values():
-            if len(used_months)>1:
-                for m in used_months:matches[m]['status']='ambiguous_month'
+        matches={};remaining=list(invoices)
+        for month in range(12,0,-1):
+            result=match_amount(executed[month-1],remaining);matches[month]=result
+            if result['status']=='unique':
+                consumed=set(result['consumed_payment_numbers'])
+                remaining=[i for i in remaining if i['payment_number'] not in consumed]
         def distinct(field):return sorted({clean(r.get(field)) for r in records if clean(r.get(field))})
         statuses=sorted({clean(r['raw_columns'].get('482')) for r in records if clean(r['raw_columns'].get('482'))})
         monthly=[]
@@ -137,7 +98,7 @@ def evaluate_range(root,year,start_month,end_month,basis='adjusted',cut_token=No
             match=matches[m]
             monthly.append({'month':m,'planned':dollars(planned[m-1]),'executed':dollars(executed[m-1]),
                             'match':match,'program_column':baseline+m-1,'execution_column':538+m-1,
-                            'program_coverage':pc[m-1],'execution_coverage':ec[m-1]})
+                            'comparison':compare_month(planned[m-1],executed[m-1],m<=int(cut['month'])),'program_coverage':pc[m-1],'execution_coverage':ec[m-1]})
         rows.append({'id':identifier,'contract':key[0],'process_code':key[1],'process_names':distinct('process_name'),
                      'administrators':distinct('contract_administrator'),'process_status':statuses,'monthly':monthly,'invoices':invoices,'source_rows':[r['source_row'] for r in records]})
     chart=[]
@@ -150,5 +111,5 @@ def evaluate_range(root,year,start_month,end_month,basis='adjusted',cut_token=No
         chart.append(entry)
     return {'year':year,'start_month':start_month,'end_month':end_month,'months':months,'basis':basis,'source':source(cut),
             'rows':rows,'chart':chart,'column_mapping':{'planned_start':baseline,'executed_start':538,'status':482,'invoice_amount_start':238,'invoice_step':8},
-            'matching_rule':'Coincidencia exacta a centavos entre devengado mensual y una o varias facturas sin IVA del contrato/proceso. No acredita transferencia bancaria. Varias combinaciones o reutilización entre meses requieren revisión.',
+            'matching_rule':'Pagos consecutivos del último al primero, sin saltos ni combinaciones. Se asignan meses observados del más reciente al anterior, sin reutilizar pagos. Si la suma no coincide: Revisar Pagos.',
             'series_labels':['Programado','Devengado']}

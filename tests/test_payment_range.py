@@ -6,8 +6,10 @@ from payment_range import match_amount,evaluate_range
 from test_payment_followup import catalog,row,batch
 
 
-def invoice(key,amount,number=None):
-    return {'key':key,'cents':int(Decimal(str(amount))*100),'procedure':number or key,'amount':amount,'source_row':13,'payment_number':1,'number_column':237,'amount_column':238}
+def invoice(number,amount,procedure=None,source_row=13):
+    return {'key':str(source_row)+':'+str(number),'cents':int(Decimal(str(amount))*100) if amount is not None else None,
+            'procedure':procedure if procedure is not None else 'TEST-'+str(number),'amount':amount,'source_row':source_row,
+            'payment_number':int(number),'number_column':237+8*(int(number)-1),'amount_column':238+8*(int(number)-1)}
 
 def full_batch(rows):
     b=batch(rows)
@@ -16,23 +18,39 @@ def full_batch(rows):
     return b
 
 class InvoiceMatchingTests(unittest.TestCase):
-    def test_exact_single_invoice_cent_precision(self):
-        r=match_amount(Decimal('123456.78'),[invoice('1',123456.78,'SYNTH-CASE-01')])
-        self.assertEqual(r['status'],'unique');self.assertEqual(r['procedures'],['SYNTH-CASE-01'])
-    def test_sum_of_multiple_invoices(self):
-        r=match_amount(Decimal('100'),[invoice('1',30),invoice('2',25),invoice('3',45)])
-        self.assertEqual(r['status'],'unique');self.assertEqual(len(r['matches'][0]),3)
-    def test_multiple_combinations_not_arbitrarily_selected(self):
-        r=match_amount(Decimal('100'),[invoice('1',100),invoice('2',40),invoice('3',60)])
-        self.assertEqual(r['status'],'ambiguous');self.assertEqual(len(r['matches']),2)
-    def test_no_match_and_zero_are_distinct(self):
-        self.assertEqual(match_amount(Decimal('101'),[invoice('1',100)])['status'],'unmatched')
-        self.assertEqual(match_amount(Decimal('0'),[invoice('1',0)])['status'],'zero')
+    def test_single_latest_invoice_cent_precision(self):
+        r=match_amount(Decimal('123456.78'),[invoice(1,123456.78,'TEST-CASE')])
+        self.assertEqual(r['status'],'unique');self.assertEqual(r['procedures'],['TEST-CASE'])
+    def test_latest_two_are_chosen_in_descending_order(self):
+        r=match_amount(Decimal('100'),[invoice(3,100),invoice(4,40),invoice(5,60)])
+        self.assertEqual(r['status'],'unique');self.assertEqual(r['consumed_payment_numbers'],[5,4])
+        self.assertEqual(r['procedures'],['TEST-5','TEST-4'])
+    def test_last_three_consecutive_payments(self):
+        r=match_amount(Decimal('100'),[invoice(1,900),invoice(2,45),invoice(3,25),invoice(4,30)])
+        self.assertEqual(r['consumed_payment_numbers'],[4,3,2])
+    def test_cannot_combine_third_and_first_skipping_second(self):
+        r=match_amount(Decimal('100'),[invoice(1,40),invoice(2,10),invoice(3,60)])
+        self.assertEqual(r['status'],'review');self.assertEqual(r['procedures'],[])
+    def test_cannot_skip_newer_payment_to_find_an_old_exact_one(self):
+        r=match_amount(Decimal('100'),[invoice(1,100),invoice(2,60)])
+        self.assertEqual(r['status'],'review')
+    def test_hole_in_payment_numbers_is_not_skipped(self):
+        self.assertEqual(match_amount(Decimal('100'),[invoice(1,40),invoice(3,60)])['status'],'review')
+    def test_missing_procedure_or_amount_requires_review(self):
+        self.assertEqual(match_amount(Decimal('100'),[invoice(1,100),invoice(2,50,'')])['status'],'review')
+        self.assertEqual(match_amount(Decimal('100'),[invoice(1,100),invoice(2,None)])['status'],'review')
+    def test_repeated_amounts_are_deterministic_not_combinations(self):
+        r=match_amount(Decimal('100'),[invoice(1,50),invoice(2,50),invoice(3,50)])
+        self.assertEqual(r['status'],'unique');self.assertEqual(r['consumed_payment_numbers'],[3,2])
+    def test_all_assignments_in_same_payment_slot_are_used_together(self):
+        invoices=[invoice(2,30,source_row=13),invoice(2,20,source_row=14),invoice(1,50)]
+        self.assertEqual(match_amount(Decimal('100'),invoices)['consumed_payment_numbers'],[2,1])
+        self.assertEqual(match_amount(Decimal('30'),invoices)['status'],'review')
+    def test_zero_missing_and_negative_are_not_guessed(self):
+        self.assertEqual(match_amount(Decimal('0'),[])['status'],'zero')
         self.assertEqual(match_amount(None,[])['status'],'missing')
-    def test_negative_adjustments_require_review(self):
-        self.assertEqual(match_amount(Decimal('10'),[invoice('1',20),invoice('2',-10)])['status'],'adjustment_review')
-    def test_solver_bound_is_not_reported_as_no_match(self):
-        self.assertEqual(match_amount(Decimal('50'),[invoice(str(i),1) for i in range(40)],max_states=32)['status'],'limit')
+        r=match_amount(Decimal('100'),[invoice(2,-10),invoice(1,110)])
+        self.assertEqual(r['status'],'unique')
 
 class MonthlyRangeTests(unittest.TestCase):
     def setUp(self):
@@ -59,7 +77,8 @@ class MonthlyRangeTests(unittest.TestCase):
     def test_no_single_invoice_reuse_in_two_months(self):
         self.data['records'][0]['raw_columns']['547']='100'
         r=evaluate_range(None,2026,9,10)['rows'][0]
-        self.assertTrue(all(m['match']['status']=='ambiguous_month' for m in r['monthly']))
+        self.assertEqual(r['monthly'][1]['match']['status'],'unique')
+        self.assertEqual(r['monthly'][0]['match']['status'],'review')
     def test_future_month_not_assumed_zero(self):
         self.data['records'][0]['raw_columns']['533']='100'
         r=evaluate_range(None,2026,11,11)
