@@ -541,3 +541,6 @@
 - Tarjetas de diferencias: primero Programado No devengado, luego Devengado No Programado y después exceso. Fuentes y regla secuencial intactas.
 
 Verificación final: 9 comprobaciones de navegador PASS en el servidor local 5500: orden de leyenda y tarjetas, totales y porcentajes de septiembre/octubre, coherencia de colores, ajuste móvil y ausencia de errores JavaScript. Evidencia: docs/programacion-pagos/month-summary-v4/browser-active5500.json. Instalación local confirmada en ab3843c.
+
+## Selección múltiple de meses y tarjetas de totales · 2026-10-30
+Total Programado y Total Devengado filtran los contratos con importe distinto de cero en los meses elegidos. Mes para revisar ofrece casillas, Todos y Aplicar meses; por defecto muestra todo el rango. La tabla, sus totales y el resumen mensual muestran únicamente los meses seleccionados, incluso no consecutivos; las diferencias se filtran en cualquiera de esos meses. La gráfica conserva el rango como contexto y permite seleccionar un único mes. No se alteraron fuentes ni reglas de conciliación. Prueba de navegador candidata: 17 PASS.

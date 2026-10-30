@@ -59,3 +59,6 @@ Código `677c19fa01f0b3df83b5845bc60da761e8e56a26` activo en http://localhost:55
 
 ### Resumen del mes seleccionado
 La leyenda presenta Programado, Programado No devengado, Devengado y Devengado No programado con colores diferenciados. El mes seleccionado muestra Total Programado, Total Devengado y porcentaje de cumplimiento (Devengado / Programado × 100), sin limitarlo al 100 %. Sin base programada se muestra una indicación explícita. Las tarjetas de diferencias comienzan por Programado No devengado y Devengado No Programado. Verificación de navegador: 9 PASS; evidencia en docs/programacion-pagos/month-summary-v4/browser-active5500.json.
+
+### Selección múltiple de meses y filtros por totales
+En Mes para revisar, abrir el selector, marcar uno o varios meses y pulsar Aplicar meses. Todos restaura todos los meses del rango Desde/Hasta; no se permite aplicar una selección vacía. La tabla muestra solo las ternas de columnas seleccionadas y el resumen suma esos meses. Total Programado y Total Devengado permiten ver contratos con importe distinto de cero en al menos uno de esos meses. Las tarjetas de diferencias operan también sobre los meses elegidos. Ver todos los contratos elimina el filtro de contratos sin cambiar la selección de meses. Pulsar un mes de la gráfica selecciona únicamente ese mes.
