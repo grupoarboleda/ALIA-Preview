@@ -56,3 +56,6 @@ PR vigente: https://github.com/grupoarboleda/ALIA-Preview/pull/3, descripción a
 ### Activación de la revisión secuencial
 
 Código `677c19fa01f0b3df83b5845bc60da761e8e56a26` activo en http://localhost:5500/ . Prueba final sobre esa instalación:27 comprobaciones PASS, PC/móvil, sin errores JS. Once archivos históricos nuevamente byte-idénticos. Resultado sanitario en `docs/programacion-pagos/sequential-v3/browser-active5500.json`. PR3 actualizado a esta regla; integración remota pendiente por READ, sin main/producción.
+
+### Resumen del mes seleccionado
+La leyenda presenta Programado, Programado No devengado, Devengado y Devengado No programado con colores diferenciados. El mes seleccionado muestra Total Programado, Total Devengado y porcentaje de cumplimiento (Devengado / Programado × 100), sin limitarlo al 100 %. Sin base programada se muestra una indicación explícita. Las tarjetas de diferencias comienzan por Programado No devengado y Devengado No Programado. Verificación de navegador: 9 PASS; evidencia en docs/programacion-pagos/month-summary-v4/browser-active5500.json.

@@ -539,3 +539,5 @@
 - Leyenda ordenada: Programado / Programado No devengado / Devengado / Devengado No programado. Paleta consistente azul/magenta/verde/ámbar en barras, leyenda y tarjetas.
 - Al revisar un mes: Total Programado, Total Devengado y % de cumplimiento (Devengado ÷ Programado ×100, sin limitar100%; sin base si programado0).
 - Tarjetas de diferencias: primero Programado No devengado, luego Devengado No Programado y después exceso. Fuentes y regla secuencial intactas.
+
+Verificación final: 9 comprobaciones de navegador PASS en el servidor local 5500: orden de leyenda y tarjetas, totales y porcentajes de septiembre/octubre, coherencia de colores, ajuste móvil y ausencia de errores JavaScript. Evidencia: docs/programacion-pagos/month-summary-v4/browser-active5500.json. Instalación local confirmada en ab3843c.

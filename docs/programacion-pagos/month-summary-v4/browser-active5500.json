@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "checks": [
+    "requested legend order",
+    "requested difference cards order",
+    "selected month 9 totals",
+    "selected month 9 percentage",
+    "selected month 10 totals",
+    "selected month 10 percentage",
+    "chart and legend share palette",
+    "mobile fits",
+    "no JS errors"
+  ],
+  "errors": []
+}
