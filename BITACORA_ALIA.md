@@ -533,3 +533,4 @@
 - Regla expresa: últimos pagos hacia atrás, sin saltos;5/4 o4/3/2, nunca3/1. Meses del más reciente al anterior sin reutilizar pagos. Si no cuadra o faltan datos: Revisar Pagos, no combinaciones posibles. Diccionario1.4 actualizado.
 - Gráfica conserva Programado/Devengado y destaca pendientes/fuera de programación; tres filtros por mes llevan a los contratos concretos sin compensar diferencias entre contratos.
 - Python53 + reglas7 PASS; candidata5504 navegador27 PASS. Fuente real:17 secuencias conciliadas en8–10, aceptación del propietario conservada y11 archivos históricos idénticos. Evidencia sanitizada en sequential-v3; pendiente comprobación activa5500.
+- Cierre activo: revisión 677c19fa01f0b3df83b5845bc60da761e8e56a26 en localhost5500, navegador27 PASS y11 archivos históricos intactos; PR3 actualizado a pagos secuenciales y diferencias por contrato. No integración remota por READ ni producción. Texto de revisión exacto: Revisar Pagos.
