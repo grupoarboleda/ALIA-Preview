@@ -1741,10 +1741,11 @@ function loadStagedCut(month){
  // Precargar una sola vez por carga/cambio de corte, no por contrato.
  aliaHistoryGeneration++;aliaHistoricalCuts=null;aliaHistoryRequest=null;ensureRealHistory();
  const request=++stagedRequest;
+ const latestOriginalRequest=fetch('/__alia_original_records',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
  const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
  fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(async data=>{
-  const history=await ensureRealHistory();if(request!==stagedRequest)return;
-  const latest=history.reduce((best,e)=>!best||Number(e.year||2026)*12+Number(e.month)>Number(best.year||2026)*12+Number(best.month)?e:best,null);latestProcessCut=latest?{...latest,year:latest.year||2026}:null;
+  const [history,original]=await Promise.all([ensureRealHistory(),latestOriginalRequest]);if(request!==stagedRequest)return;
+  const latest=history.reduce((best,e)=>!best||Number(e.year||2026)*12+Number(e.month)>Number(best.year||2026)*12+Number(best.month)?e:best,null);latestProcessCut=original?.mode==='REAL'&&Array.isArray(original.records)?original:latest?{...latest,year:latest.year||2026}:null;
   if(data?.mode==='REAL'){const entry=history.find(e=>Number(e.month)===Number(data.month)),byRow=new Map((entry?.records||[]).map(r=>[r.sourceRow,r]));data.records=data.records.map(r=>({...r,raw_columns:{...(byRow.get(r.sourceRow)?.raw_columns||{}),...(r.raw_columns||{})}}));}
   if(data?.mode==="REAL"&&data.records?.length){preserveDetailSelection=true;try{activateReal(data);}finally{preserveDetailSelection=false;}return;}
   if(!realMode)fetch("/__alia_data",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
