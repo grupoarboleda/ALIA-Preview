@@ -164,7 +164,16 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
     bottom.textContent=type==="uncommitted"
      ?(realMode?current.stateLabel+(current.days===null?' · sin fecha de hito':' · '+current.days+' días desde el hito'):current.stage+' · '+current.months+' reporte(s) en esta etapa')
      :realMode?'Devengado '+(rows.reduce((n,r)=>n+r.committed,0)>0?(100*rows.reduce((n,r)=>n+r.accrued,0)/rows.reduce((n,r)=>n+r.committed,0)).toFixed(1)+'%':'sin compromiso registrado'):'Devengado '+current.dev+'% · '+current.idle+' reporte(s) sin incremento';
-    item.append(top,bottom);rankingRoot.append(item);
+    item.append(top,bottom);
+    const wrapper=document.createElement('div');wrapper.className='exv-management-entry';
+    const info=document.createElement('button');info.type='button';info.className='exv-item-info';info.textContent='i';info.setAttribute('aria-label','Información del '+(type==='uncommitted'?'proceso ':'contrato ')+project);info.setAttribute('aria-expanded','false');
+    const details=document.createElement('div');details.className='exv-item-details';details.hidden=true;details.id='ex-info-'+Math.random().toString(36).slice(2);info.setAttribute('aria-controls',details.id);
+    const normalize=v=>String(v||'').trim().toLocaleUpperCase('es');
+    const latest=(latestProcessCut?.records||[]).filter(r=>type==='uncommitted'?normalize(r.process||r.raw_columns?.['15'])===normalize(project):[r.contract,r.raw_columns?.['47'],r.raw_columns?.['41']].some(v=>normalize(v)===normalize(project)));
+    const metadata=latest.length?latest:rows;
+    for(const [label,field,column]of [['Nombre del proceso','process_name','17'],['Administrador del contrato','contract_administrator','59']]){const line=document.createElement('div'),caption=document.createElement('strong'),value=document.createElement('p');caption.textContent=label;const values=[...new Set(metadata.map(r=>String(r[field]||r.raw_columns?.[column]||'').trim()).filter(Boolean))];value.textContent=values.length?values.join(' · '):'No informado en la matriz';line.append(caption,value);details.append(line);}
+    const source=document.createElement('small');source.textContent=realMode?'Último reporte '+String(latestProcessCut?.month||cut()).padStart(2,'0')+'/'+(latestProcessCut?.year||2026)+' · columnas 17 y 59':'Datos de demostración';details.append(source);
+    info.onclick=()=>{details.hidden=!details.hidden;info.setAttribute('aria-expanded',String(!details.hidden));};wrapper.append(item,info,details);rankingRoot.append(wrapper);
    }
    if(ranking.length>5){
     const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+(type==="uncommitted"?" PROCESOS":" CONTRATOS"),()=>{showAll=!showAll;paint();},"exv-count-link");
