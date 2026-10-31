@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checks": [
+    "owner example sums to 16493.94 excluding VAT",
+    "different assignment amounts are summed",
+    "missing assignment produces explicit partial subtotal"
+  ]
+}

@@ -584,3 +584,6 @@ La ficha unificada añade sección Plazo y vigencia con tres celdas: acreditaci�
 
 ## Plazo y vigencia desplegable · 2026-10-30
 Se compacta la ficha i: Plazo y vigencia usa details/summary nativo, cerrado por defecto, + para abrir y − para cerrar. Conserva fechas, plazo, cálculo y avisos sin cambios. Foco visible y teclado nativo. Validación de navegador: 12 comprobaciones PASS, incluidos cálculos existentes, móvil y abrir/cerrar mediante teclado.
+
+## Corrección de montos por asignaciones · 2026-10-30
+El propietario confirma que cada fila de proceso/contrato es una proporción del presupuesto de la entidad. Se corrige la deduplicación por valor: fichas i suman todas las filas del mismo proceso/contrato en el último reporte, incluso importes iguales. Monto referencial 26, aprobado 23 si no hay referencial y contrato sin IVA 52. Cálculo en centavos; no combinar meses. Si hay importes ausentes, subtotal parcial explícito; si un importe presente es inválido, revisar formato. Regla registrada en diccionario. La instrucción actual sustituye el criterio anterior de no sumar valores repetidos/diferentes. Validación: 14 comprobaciones de interfaz y 3 del ejemplo/subtotal PASS.

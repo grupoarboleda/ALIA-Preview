@@ -354,5 +354,11 @@
     "status_id": 482,
     "rule": "Anticipo pagado > 0: acreditación + plazo; sin anticipo: suscripción + plazo. Días calendario, sin restar un día. No sustituir por inicio (50) ni fecha almacenada (51). Datos inválidos: revisar, nunca estimar.",
     "extensions": "Prórrogas (232), suspensión (474) y fecha integral (449) se conservan como contexto, sin modificar automáticamente la fórmula autorizada."
+  },
+  "entity_information_amount_rule": {
+    "process_reference_id": 26,
+    "process_approved_fallback_id": 23,
+    "contract_without_vat_id": 52,
+    "rule": "Cada fila es una asignación proporcional. Sumar todas las filas de la misma entidad dentro del mismo reporte, incluidos importes iguales. No deduplicar por valor ni combinar cortes mensuales. Suma en centavos. Si faltan importes, indicar subtotal disponible; si son inválidos, indicar revisión."
   }
 }
