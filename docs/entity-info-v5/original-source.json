@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checks": [
+    "captured contract header shows original process name and administrator",
+    "contract amount matches original column 52 excluding VAT",
+    "same information component used in lists and header"
+  ]
+}
