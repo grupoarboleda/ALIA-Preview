@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "checks": [
+    "advance date displayed",
+    "contractual term in calendar days",
+    "calculated end matches approved formula",
+    "advance label explicit",
+    "no advance uses contract signature",
+    "duplicate periods shown once",
+    "conflicting periods kept separate",
+    "missing advance date does not invent finish",
+    "mobile layout fits",
+    "keyboard closes disclosure",
+    "keyboard reopens disclosure",
+    "calendar collapsed by default"
+  ]
+}

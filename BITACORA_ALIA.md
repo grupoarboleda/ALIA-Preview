@@ -581,3 +581,6 @@ Verificación final instalada: 14 comprobaciones PASS y contraste real del contr
 
 ## Plazo y vigencia en todas las fichas i · 2026-10-30
 La ficha unificada añade sección Plazo y vigencia con tres celdas: acreditación del anticipo (235) si hay anticipo pagado; si no, suscripción (48/40); plazo contractual (49) en días; fecha de fin calculada según regla autorizada. Reutiliza ALIAContractDates.deadline para coincidir con alertas/gráfica. Diseño compacto de tres columnas en escritorio y una en móvil, fecha de fin destacada y fórmula explicativa. Periodos repetidos se deduplican por tupla completa; periodos diferentes se muestran separados y con aviso, sin combinar campos. Campos inválidos no generan fecha estimada y muestran motivo. Validación navegador: 9 PASS.
+
+## Plazo y vigencia desplegable · 2026-10-30
+Se compacta la ficha i: Plazo y vigencia usa details/summary nativo, cerrado por defecto, + para abrir y − para cerrar. Conserva fechas, plazo, cálculo y avisos sin cambios. Foco visible y teclado nativo. Validación de navegador: 12 comprobaciones PASS, incluidos cálculos existentes, móvil y abrir/cerrar mediante teclado.
