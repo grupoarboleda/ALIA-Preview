@@ -590,3 +590,6 @@ El propietario confirma que cada fila de proceso/contrato es una proporción del
 
 ## Arranque financiero sin corte provisional · 2026-10-30
 Se elimina el primer render de demostración del Explorador. HTML inicia con estado de preparación, selector sin mes prefijado y controles/datos ocultos hasta activar el corte real. Primera vista efectiva muestra directamente último corte y sus cifras; no se expone septiembre/demo durante lectura. Cambios históricos usan carga atómica; se mantienen selecciones deliberadas dentro del módulo. Al salir y reingresar se vuelve a consultar el último corte. Selector superior de fechas del panel general se oculta en Explorador para evitar dos fechas distintas. Error de lectura no vuelve a datos de demostración ni deja visibles cifras antiguas; presenta Reintentar que carga último corte. Validación navegador con respuestas retrasadas y fallo: 11 PASS.
+
+## Margen temporal en gráfica de procesos · 2026-10-30
+Eje horizontal ampliado un mes calendario antes del inicio y un mes después del final/corte. Curva, hitos, franjas y línea de corte conservan fechas reales; márgenes no representan avance ni proyección. Fin de mes se ajusta al último día válido (31 octubre + un mes = 30 noviembre). Comprobación: cuatro casos PASS, incluyendo año y febrero bisiesto.
