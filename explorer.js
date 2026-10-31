@@ -166,14 +166,7 @@ function buildManagementInsight(filtered,heading="LECTURA GERENCIAL · ¿DÓNDE 
      :realMode?'Devengado '+(rows.reduce((n,r)=>n+r.committed,0)>0?(100*rows.reduce((n,r)=>n+r.accrued,0)/rows.reduce((n,r)=>n+r.committed,0)).toFixed(1)+'%':'sin compromiso registrado'):'Devengado '+current.dev+'% · '+current.idle+' reporte(s) sin incremento';
     item.append(top,bottom);
     const wrapper=document.createElement('div');wrapper.className='exv-management-entry';
-    const info=document.createElement('button');info.type='button';info.className='exv-item-info';info.textContent='i';info.setAttribute('aria-label','Información del '+(type==='uncommitted'?'proceso ':'contrato ')+project);info.setAttribute('aria-expanded','false');
-    const details=document.createElement('div');details.className='exv-item-details';details.hidden=true;details.id='ex-info-'+Math.random().toString(36).slice(2);info.setAttribute('aria-controls',details.id);
-    const normalize=v=>String(v||'').trim().toLocaleUpperCase('es');
-    const latest=(latestProcessCut?.records||[]).filter(r=>type==='uncommitted'?normalize(r.process||r.raw_columns?.['15'])===normalize(project):[r.contract,r.raw_columns?.['47'],r.raw_columns?.['41']].some(v=>normalize(v)===normalize(project)));
-    const metadata=latest.length?latest:rows;
-    for(const [label,field,column]of [['Nombre del proceso','process_name','17'],['Administrador del contrato','contract_administrator','59']]){const line=document.createElement('div'),caption=document.createElement('strong'),value=document.createElement('p');caption.textContent=label;const values=[...new Set(metadata.map(r=>String(r[field]||r.raw_columns?.[column]||'').trim()).filter(Boolean))];value.textContent=values.length?values.join(' · '):'No informado en la matriz';line.append(caption,value);details.append(line);}
-    const source=document.createElement('small');source.textContent=realMode?'Último reporte '+String(latestProcessCut?.month||cut()).padStart(2,'0')+'/'+(latestProcessCut?.year||2026)+' · columnas 17 y 59':'Datos de demostración';details.append(source);
-    info.onclick=()=>{details.hidden=!details.hidden;info.setAttribute('aria-expanded',String(!details.hidden));};wrapper.append(item,info,details);rankingRoot.append(wrapper);
+    const {info,details}=entityInformation(type,project,rows);wrapper.append(item,info,details);rankingRoot.append(wrapper);
    }
    if(ranking.length>5){
     const more=button(showAll?"VER TOP 5":"VER TODOS LOS "+ranking.length+(type==="uncommitted"?" PROCESOS":" CONTRATOS"),()=>{showAll=!showAll;paint();},"exv-count-link");
@@ -1408,6 +1401,17 @@ function renderMonthlyExecutionChart(host,rows,cutMonth,physicalContract=null){
 }
 
 if(!document.getElementById("alia-monthly-chart-polish")){const style=document.createElement("style");style.id="alia-monthly-chart-polish";style.textContent=`#explorer .exv-monthly-chart-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}#explorer .exv-monthly-chart-header h4{margin:0}#explorer .exv-monthly-chart-header button{min-width:48px;text-align:center}#explorer .exv-real-history-plot svg{min-width:0}#explorer .exv-real-history-legend{justify-content:center}#explorer .exv-real-history-panel{overflow:hidden}@keyframes aliaMonthlyReveal{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){#explorer .exv-real-history-plot *{animation:none!important}}@media(max-width:560px){#explorer .exv-monthly-chart-header{align-items:flex-start}#explorer .exv-monthly-chart-header h4{max-width:65%}}`;document.head.append(style);}
+function entityInformation(type,id,fallbackRows){
+ const normalize=v=>String(v||'').trim().toLocaleUpperCase('es'),contract=type==='committed';
+ const matches=(latestProcessCut?.records||[]).filter(r=>contract?[r.contract,r.raw_columns?.['47'],r.raw_columns?.['41']].some(v=>normalize(v)===normalize(id)):normalize(r.process||r.raw_columns?.['15'])===normalize(id));
+ const metadata=matches.length?matches:fallbackRows,info=document.createElement('button'),details=document.createElement('div');info.type='button';info.className='exv-item-info';info.textContent='i';info.setAttribute('aria-label','Información del '+(contract?'contrato ':'proceso ')+id);info.setAttribute('aria-expanded','false');details.className='exv-item-details';details.hidden=true;details.id='ex-info-'+Math.random().toString(36).slice(2);info.setAttribute('aria-controls',details.id);
+ const append=(label,value)=>{const row=document.createElement('div'),caption=document.createElement('strong'),text=document.createElement('p');caption.textContent=label;text.textContent=value;row.append(caption,text);details.append(row);};
+ for(const[label,field,column]of [['Nombre del proceso','process_name','17'],['Administrador del contrato','contract_administrator','59']]){const values=[...new Set(metadata.map(r=>String(r[field]||r.raw_columns?.[column]||'').trim()).filter(Boolean))];append(label,values.length?values.join(' · '):'No informado en la matriz');}
+ const format=n=>n.toLocaleString('es-EC',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+ const amount=(column,label)=>{const raw=metadata.map(r=>r.raw_columns?.[String(column)]).filter(v=>v!==null&&v!==undefined&&String(v).trim()!==''),parsed=raw.map(window.ALIAContractDates.number),values=[...new Set(parsed.filter(v=>v!==null).map(v=>Math.round(v*100)/100))];append(label+' · sin IVA · col. '+column,!raw.length?'No informado en la matriz':parsed.some(v=>v===null)?'Formato no válido: revisar columna '+column:values.length===1?format(values[0]):values.map(format).join(' · ')+' (valores distintos entre filas; revisar, no se suman automáticamente)');return raw.length;};
+ if(contract)amount(52,'Monto del contrato');else{const present=amount(26,'Monto referencial del proceso');if(!present)amount(23,'Monto aprobado del proceso');}
+ const source=document.createElement('small');source.textContent=realMode?'Último reporte '+String(latestProcessCut?.month||cut()).padStart(2,'0')+'/'+(latestProcessCut?.year||2026)+' · importes originales, sin sumar duplicados':'Datos de demostración';details.append(source);info.onclick=()=>{details.hidden=!details.hidden;info.setAttribute('aria-expanded',String(!details.hidden));};return{info,details};
+}
 function renderRealTemporal(rs,cutMonth){
  const host=$("ex-pane-source");host.replaceChildren();host.classList.remove("exv-reserved-pane");host.classList.add("exv-temporal-pane");
  const heading=document.createElement("div");heading.className="exv-temporal-head";
@@ -1420,51 +1424,7 @@ function renderRealTemporal(rs,cutMonth){
  title.innerHTML='<span class="exv-temporal-eyebrow">RAMA 02 / DATOS REALES · CORTE SELECCIONADO</span><h3></h3><p>Información financiera acumulada al reporte · sin interpolación histórica</p>';
  title.querySelector("h3").textContent=label;
  if(choice?.type==='uncommitted')title.querySelector('.exv-temporal-eyebrow').textContent='RAMA 02 / ÚLTIMO REPORTE · ESTADO COLUMNA 482';
- if(choice?.type==="committed"){
-  const headingLine=title.querySelector("h3");
-  headingLine.style.display="flex";headingLine.style.alignItems="center";headingLine.style.gap="9px";
-  const info=document.createElement("button");info.type="button";info.className="exv-contract-info";
-  info.textContent="i";info.setAttribute("aria-label","Información del contrato "+choice.id);
-  info.setAttribute("aria-expanded","false");info.title="Nombre del proceso y administrador del contrato";
-  const panel=document.createElement("div");panel.className="exv-contract-info-panel";panel.hidden=true;
-  const unique=(field)=>[...new Set(rows.map(r=>String(r[field]||r.raw_columns?.[field==="process_name"?"17":"59"]||"").trim()).filter(Boolean))];
-  const processNames=unique("process_name");
-  const admins=unique("contract_administrator");
-  const addDetail=(name,values)=>{const line=document.createElement("div");const cap=document.createElement("strong");cap.textContent=name;const val=document.createElement("p");val.textContent=values.length?values.join(" · "):"No disponible en los datos cargados";line.append(cap,val);panel.append(line);};
-  addDetail("Nombre del proceso",processNames);
-  addDetail("Administrador del contrato",admins);
-  info.addEventListener("click",async()=>{
-   panel.hidden=!panel.hidden;
-   info.setAttribute("aria-expanded",String(!panel.hidden));
-   if(panel.hidden)return;
-   const fields=panel.querySelectorAll("p");
-   fields[0].textContent="Consultando último reporte cargado…";
-   fields[1].textContent="Consultando último reporte cargado…";
-   try{
-    // Metadata-only read: no change to the selected cut, financial records or chart.
-    const series=await ensureRealHistory();
-    const latest=series.reduce((best,item)=>!best||Number(item.month)>Number(best.month)?item:best,null);
-    const contract=String(choice.id||"").trim().toUpperCase();
-    const matches=(latest?.records||[]).filter(r=>{
-     const raw=r.raw_columns||{};
-     return [r.contract,raw["41"],raw["47"]].some(value=>String(value||"").trim().toUpperCase()===contract);
-    });
-    const values=(field,id)=>[...new Set(matches.map(r=>String(r[field]||r.raw_columns?.[id]||"").trim()).filter(Boolean))];
-    if(panel.hidden)return;
-    const names=values("process_name","17"),admins=values("contract_administrator","59");
-    fields[0].textContent=names.length?names.join(" · "):"No disponible en el último reporte cargado";
-    fields[1].textContent=admins.length?admins.join(" · "):"No disponible en el último reporte cargado";
-    let source=panel.querySelector(".exv-contract-info-source");
-    if(!source){source=document.createElement("small");source.className="exv-contract-info-source";panel.append(source);}
-    source.textContent=latest?"Fuente: reporte "+String(latest.month).padStart(2,"0")+" · último mes cargado":"No hay reportes mensuales cargados";
-   }catch(error){
-    if(panel.hidden)return;
-    fields[0].textContent="No se pudo consultar el último reporte";
-    fields[1].textContent="Verifica la conexión con ALIA Local";
-   }
-  });
-  headingLine.append(info);title.append(panel);
- }
+ if(choice){const headingLine=title.querySelector('h3');headingLine.style.cssText='display:flex;align-items:center;gap:9px';const {info,details}=entityInformation(choice.type,choice.id,rows);headingLine.append(info);title.append(details);}
  const summary=document.createElement("div");summary.className="exv-contract-variance exv-financial-summary";
  const cards=[["CODIFICADO AÑO N",total.budget],["COMPROMETIDO AÑO N",total.committed],["DEVENGADO AÑO N",total.accrued],["% DEVENGADO",total.budget>0?(100*total.accrued/total.budget).toFixed(1)+"%":"—"]];
  for(const [name,value] of cards){
