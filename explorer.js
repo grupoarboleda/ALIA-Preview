@@ -1693,7 +1693,7 @@ $("ex-cut").addEventListener("change",()=>{
  render();
 });
 for(const id of ["ex-area","ex-source","ex-project"])$(id).addEventListener("change",render);
-render();
+// El explorador espera el corte real; no renderizar una simulación provisional.
 function activateReal(data){
  if(!data||data.mode!=="REAL"||!Array.isArray(data.records)||!data.records.length)return;
  records=data.records.map(r=>({...r,budget:Number(r.budget)||0,committed:Number(r.committed)||0,accrued:Number(r.accrued)||0,advance:Number(r.advance)||0}));
@@ -1712,23 +1712,28 @@ function activateReal(data){
  cutSelect.disabled=!Array.isArray(data.available_months)||data.available_months.length<2;
  const marker=document.querySelector("#explorer .exv-demo");if(marker)marker.textContent="● DATOS REALES · "+Object.keys(data.report_dates||{}).join(", ");
  render();
+ const explorer=$('explorer');explorer.classList.remove('exv-loading');explorer.setAttribute('aria-busy','false');
 }
 
+function setExplorerLoading(message,error=false){const explorer=$('explorer');explorer.classList.add('exv-loading');explorer.setAttribute('aria-busy',String(!error));$('ex-load-message').textContent=message;$('ex-load-message').setAttribute('role',error?'alert':'status');$('ex-load-retry').hidden=!error;$('ex-cut').disabled=true;}
+$('ex-load-retry').onclick=()=>loadStagedCut();
 let stagedRequest=0;
 function loadStagedCut(month){
+ setExplorerLoading(month?'Cargando el corte seleccionado…':'Preparando el último corte disponible…');
  // Precargar una sola vez por carga/cambio de corte, no por contrato.
  aliaHistoryGeneration++;aliaHistoricalCuts=null;aliaHistoryRequest=null;ensureRealHistory();
  const request=++stagedRequest;
  const latestOriginalRequest=fetch('/__alia_original_records',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
  const url="/__alia_explorer_preview"+(month?"?month="+encodeURIComponent(month):"");
- fetch(url,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(async data=>{
+ fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("No se pudo consultar el último corte. Reintenta la carga.");return r.json();}).then(async data=>{
   const [history,original]=await Promise.all([ensureRealHistory(),latestOriginalRequest]);if(request!==stagedRequest)return;
   const latest=history.reduce((best,e)=>!best||Number(e.year||2026)*12+Number(e.month)>Number(best.year||2026)*12+Number(best.month)?e:best,null);latestProcessCut=original?.mode==='REAL'&&Array.isArray(original.records)?original:latest?{...latest,year:latest.year||2026}:null;
   if(data?.mode==='REAL'){const entry=history.find(e=>Number(e.month)===Number(data.month)),byRow=new Map((entry?.records||[]).map(r=>[r.sourceRow,r]));data.records=data.records.map(r=>({...r,raw_columns:{...(byRow.get(r.sourceRow)?.raw_columns||{}),...(r.raw_columns||{})}}));}
   if(data?.mode==="REAL"&&data.records?.length){preserveDetailSelection=true;try{activateReal(data);}finally{preserveDetailSelection=false;}return;}
-  if(!realMode)fetch("/__alia_data",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(activateReal).catch(()=>{});
- }).catch(()=>{});
+  setExplorerLoading('No hay una matriz real disponible para este corte. Revisa el Centro de importación.',true);
+ }).catch(error=>{if(request===stagedRequest)setExplorerLoading(error.message||'No se pudo cargar el corte. Reintenta.',true);});
 }
+document.querySelector('.nav[data-page="explorer"]')?.addEventListener('click',event=>{if(realMode&&!event.currentTarget.classList.contains('active'))loadStagedCut();},true);
 loadStagedCut();
 })();
 
